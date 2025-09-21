@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { motion } from "framer-motion";
@@ -42,8 +42,29 @@ const gameItems = [
 
 export const WelcomeBannerSection = (): JSX.Element => {
   return (
-    <section className="relative w-full h-75%">
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-8 px-8 py-16 max-w-7xl mx-auto">
+    <section className="relative w-full h-[75%] overflow-hidden">
+      {/* Background Layer */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(to bottom, rgba(61,255,136,0.3), rgba(0,0,0,2)), url('/bg/ho.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          transform: "rotate(180deg)", // only rotates the background
+        }}
+      />
+
+      {/* Bottom Gradient Line */}
+      <div
+        className="absolute bottom-0 left-0 w-full h-1"
+        style={{
+          background: "linear-gradient(to right, #3dff87, #000000)",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 px-8 py-16 max-w-7xl mx-auto">
         {/* Left Content */}
         <div className="flex-1 max-w-2xl">
           <div className="mb-8">
@@ -63,20 +84,19 @@ export const WelcomeBannerSection = (): JSX.Element => {
               For items in Murder Mystery 2,&nbsp;&nbsp;Grow a Garden, Blox
               Fruits, Steal a Brainrot, Blade Ball.
             </p>
-             <Button className="h-auto bg-transparent p-0 hover:bg-transparent border-none shadow-none">
-                <div className="w-[170px] h-[50px] rounded-[25px] bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
-                  <img
-                    className="absolute left-4 w-6 h-6 z-10"
-                    alt="Cart icon"
-                    src="/mask-group-3.png"
-                  />
-                  <span className="font-bold text-white text-[15px] ml-4 z-10">
-                    Start Buying
-                  </span>
-                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-                </div>
-              </Button>
-
+            <Button className="h-auto bg-transparent p-0 hover:bg-transparent border-none shadow-none">
+              <div className="w-[170px] h-[50px] rounded-[25px] bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
+                <img
+                  className="absolute left-4 w-6 h-6 z-10"
+                  alt="Cart icon"
+                  src="/mask-group-3.png"
+                />
+                <span className="font-bold text-white text-[15px] ml-4 z-10">
+                  Start Buying
+                </span>
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+              </div>
+            </Button>
           </div>
         </div>
 
@@ -84,7 +104,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
         <div className="flex-1 relative aspect-[4/3] max-w-[630px] mx-auto">
           {/* Main Character */}
           <img
-            className="absolute top-[180.8px] left-[30%] w-[45%] h-auto object-contain"
+            className="absolute top-[200px] left-[30%] w-[45%] h-auto object-contain"
             alt="Character"
             src="/073bb3b399c740a024f6d5bff073254ed283398d-2-690x388-efb76d42-17d1.png"
           />
@@ -136,14 +156,14 @@ export const WelcomeBannerSection = (): JSX.Element => {
                   />
 
                   {/* Item Name */}
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -rotate-45 text-xs font-semibold bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
+                  {/* <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -rotate-45 text-xs font-semibold bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
                     {item.name.split(" ").map((word, i) => (
                       <React.Fragment key={i}>
                         {word}
                         {i < item.name.split(" ").length - 1 && <br />}
                       </React.Fragment>
                     ))}
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </motion.div>

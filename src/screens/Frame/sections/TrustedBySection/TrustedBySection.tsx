@@ -96,57 +96,49 @@ export const TrustedBySection = (): JSX.Element => {
         </div>
 
         {/* Testimonials */}
-        <div className="relative">
-          {/* Gradient Overlays */}
-          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#030804] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#030804] to-transparent z-10 pointer-events-none" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: index * 0.1,
-                  ease: "easeOut"
-                }}
-                viewport={{ once: true }}
-              >
-                <Card className="bg-[#0A1A0F] border-[#2A2A2A] rounded-2xl h-full hover:border-[#3DFF87]/30 transition-colors duration-300">
+          <div className="relative overflow-hidden">
+            {/* Gradient Overlays */}
+            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#030804] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#030804] to-transparent z-10 pointer-events-none" />
+
+            {/* Scrolling Row */}
+            <motion.div
+              className="flex gap-6"
+              animate={{ x: ["0%", "-100%"] }}
+              transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+            >
+              {[...testimonials, ...testimonials].map((testimonial, index) => (
+                <Card
+                  key={index}
+                  className="bg-[#0A1A0F] border-[#2A2A2A] rounded-2xl min-w-[280px] hover:border-[#3DFF87]/30 transition-colors duration-300"
+                >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <StarRating />
-                      
-                      <div className="flex items-center gap-2">
-                        {testimonial.verified && (
-                          <>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 0L9.798 5.202H15.607L11.005 8.596L12.803 13.798L8 10.404L3.197 13.798L4.995 8.596L0.393 5.202H6.202L8 0Z" fill="#3DFF87"/>
-                            </svg>
-                            <span className="text-[#3DFF87] text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                              Verified
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      {testimonial.verified && (
+                        <div className="flex items-center gap-2">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 0L9.798 5.202H15.607L11.005 8.596L12.803 13.798L8 10.404L3.197 13.798L4.995 8.596L0.393 5.202H6.202L8 0Z" fill="#3DFF87"/>
+                          </svg>
+                          <span className="text-[#3DFF87] text-xs font-medium" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            Verified
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <h3 className="text-white font-semibold text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
                       {testimonial.name}
                     </h3>
-
                     <p className="text-[#CCCCCC] text-sm leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
                       {testimonial.testimonial}
                     </p>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </div>
-        </div>
+
       </div>
     </section>
   );

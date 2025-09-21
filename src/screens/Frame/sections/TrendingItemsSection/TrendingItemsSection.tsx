@@ -211,15 +211,15 @@ export const TrendingItemsSection = (): JSX.Element => {
           <motion.div 
             className="absolute top-8 -left-[40px] w-[35%] h-0.5 rounded-[0px_30px_42px_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)] "
             variants={lineVariants}
-            initial="hidden"
-            whileInView="visible"
+            initial="visible"
+           
             viewport={{ once: true }}
           />
           <motion.div 
             className="absolute top-8 -right-[40px] w-[35%] h-0.5 rounded-[50px_0px_0px_50px] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)] "
             variants={lineVariants}
-            initial="hidden"
-            whileInView="visible"
+            initial="visible"
+           
             viewport={{ once: true }}
           />
         </div>
@@ -228,14 +228,14 @@ export const TrendingItemsSection = (): JSX.Element => {
         <motion.div 
           className="text-center mb-16"
           variants={titleVariants}
-          initial="hidden"
-          whileInView="visible"
+          initial="visible"
+        
           viewport={{ once: true }}
         >
           <motion.h2 
-            className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent font-bold text-4xl md:text-5xl lg:text-6xl mb-6"
+            className="bg-gradient-to-r from-white via-gray-200 z-10 h-20 to-gray-400 bg-clip-text text-transparent font-bold text-xl md:text-xl lg:text-6xl mb-0"
             style={{ fontFamily: 'Poppins, sans-serif' }}
-            whileHover={{ scale: 1.05 }}
+           
             transition={{ type: "spring", stiffness: 200 }}
           >
             Trending Now
@@ -243,7 +243,7 @@ export const TrendingItemsSection = (): JSX.Element => {
           <motion.p 
             className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
             style={{ fontFamily: 'Poppins, sans-serif' }}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
             viewport={{ once: true }}
@@ -255,7 +255,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
         {/* Game Cards */}
         <motion.div 
-          className="flex flex-wrap gap-8 justify-center items-end"
+          className="flex flex-wrap gap-2 justify-center items-end"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -272,31 +272,31 @@ export const TrendingItemsSection = (): JSX.Element => {
               }}
               className="group"
             >
-              <AnimatedCard className="w-[280px] h-[380px] bg-[#030804] border border-[#2A2A2A] rounded-2xl shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
+              <AnimatedCard className="w-[300px] h-[360px] bg-[#030804] border border-[#2A2A2A] rounded-2xl shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
                 <CardContent className="flex flex-col items-center justify-start w-full h-full p-0 relative z-10">
                   
                   {/* Game Header */}
                   <motion.div 
-                    className="w-full flex flex-col items-center pt-8 pb-4"
-                    initial={{ opacity: 0, y: -20 }}
+                    className="w-auto gap-2 flex flex-row items-center pt-8 pb-4"
+                    initial={{ opacity: 1, y: 0 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: gameIndex * 0.1 + 0.4, duration: 0.5 }}
                     viewport={{ once: true }}
                   >
                     <motion.img
-                      className="w-8 h-8 rounded-lg object-cover mb-3 shadow-lg"
+                      className="w-6 h-6 rounded-lg object-cover mb-3 shadow-lg"
                       alt={game.title}
                       src={game.icon}
-                      whileHover={{ 
-                        scale: 1.2, 
-                        rotate: 360,
-                        transition: { duration: 0.6, type: "spring" }
-                      }}
+                      // whileHover={{ 
+                      //   scale: 1.2, 
+                      //   rotate: 360,
+                      //   transition: { duration: 0.6, type: "spring" }
+                      // }}
                     />
                     <motion.div 
                       className="w-full text-center font-bold text-xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2"
                       style={{ fontFamily: 'Poppins, sans-serif' }}
-                      whileHover={{ scale: 1.1 }}
+                      // whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
                       {game.title}
@@ -305,9 +305,9 @@ export const TrendingItemsSection = (): JSX.Element => {
 
                   {/* Items Grid */}
                   <motion.div 
-                    className="flex gap-4 justify-center w-full mb-6"
+                    className="flex gap-3 justify-center w-full mb-6"
                     variants={containerVariants}
-                    initial="hidden"
+                    initial="visible"
                     whileInView="visible"
                     viewport={{ once: true }}
                   >
@@ -315,7 +315,7 @@ export const TrendingItemsSection = (): JSX.Element => {
                       <motion.div
                         key={index}
                         variants={itemVariants}
-                        className={`relative w-[110px] h-[140px] rounded-xl flex flex-col items-center bg-opacity-60 ${item.cardGradient} backdrop-blur-sm border border-white/10 group/item`}
+                        className={`relative w-[120px] h-[160px] rounded-xl flex flex-col items-center bg-opacity-60 ${item.cardGradient} backdrop-blur-sm border border-white/10 group/item`}
                         whileHover={{ 
                           scale: 1.1, 
                           y: -8,
@@ -336,30 +336,30 @@ export const TrendingItemsSection = (): JSX.Element => {
                             rotate: -5,
                             transition: { type: "spring", stiffness: 300 }
                           }}
-                          animate={{ 
-                            y: [0, -12, 0],
-                            transition: { 
-                              duration: 3 + index * 0.5, 
-                              repeat: Infinity, 
-                              ease: "easeInOut",
-                              delay: index * 0.2
-                            }
-                          }}
+                          // animate={{ 
+                          //   y: [0, -12, 0],
+                          //   transition: { 
+                          //     duration: 3 + index * 0.5, 
+                          //     repeat: Infinity, 
+                          //     ease: "easeInOut",
+                          //     delay: index * 0.2
+                          //   }
+                          // }}
                         />
                         <motion.div 
-                          className="w-full text-center font-semibold text-xs mt-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
+                          className="w-full text-left  font-bold text-[15px] mt-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
                           style={{ fontFamily: 'Poppins, sans-serif' }}
-                          initial={{ opacity: 0 }}
+                          initial={{ opacity: 1 }}
                           whileInView={{ opacity: 1 }}
                           transition={{ delay: 0.2 }}
                         >
                           {item.name}
                         </motion.div>
                         <motion.div 
-                          className={`w-full text-center font-bold text-sm mt-1 ${item.priceColor} drop-shadow-lg`}
+                          className={`w-full text-left font-bold text-sm mt-0 px-2 ${item.priceColor} drop-shadow-lg`}
                           style={{ fontFamily: 'Poppins, sans-serif' }}
-                          whileHover={{ scale: 1.1 }}
-                          initial={{ opacity: 0, scale: 0.8 }}
+                          // whileHover={{ scale: 1.1 }}
+                          initial={{ opacity: 1, scale: 1 }}
                           whileInView={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.3, type: "spring" }}
                         >
@@ -379,14 +379,14 @@ export const TrendingItemsSection = (): JSX.Element => {
                     viewport={{ once: true }}
                   >
                     <Button
-                      className={`mt-4 w-[140px] h-[40px] rounded-xl border-none ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
+                      className={`mt-8 w-[140px] h-[40px] rounded-xl border-none ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
                     >
                       <motion.span 
-                        className="font-bold text-white text-sm tracking-wide leading-normal"
+                        className="font-bold text-white text-sm tracking-wide leading-normal pointer-events-none"
                         style={{ fontFamily: 'Poppins, sans-serif' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        Visit Market
+                        Visit Market   &gt;
                       </motion.span>
                     </Button>
                   </motion.div>
@@ -398,7 +398,7 @@ export const TrendingItemsSection = (): JSX.Element => {
                       z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
-                    initial={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 1, scale: 1 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
                     viewport={{ once: true }}
@@ -411,7 +411,7 @@ export const TrendingItemsSection = (): JSX.Element => {
         </motion.div>
 
         {/* Bottom Decorative Elements */}
-        <motion.div 
+        {/* <motion.div 
           className="mt-20 flex justify-center"
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -419,7 +419,7 @@ export const TrendingItemsSection = (): JSX.Element => {
           viewport={{ once: true }}
         >
         
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );
