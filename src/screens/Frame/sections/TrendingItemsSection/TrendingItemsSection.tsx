@@ -204,7 +204,11 @@ const lineVariants = {
 export const TrendingItemsSection = (): JSX.Element => {
   return (
     <section className="relative w-full min-h-screen bg-[#06100A] py-20 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
+      <div
+        className="absolute inset-0 bg-[url('/bg/pattern.png')] bg-repeat opacity-40 pointer-events-none"
+        style={{ backgroundSize: "200px 200px" }} // you can tweak size
+      />
+      <div className="max-w-7xl mx-auto px-6 z-10">
         
         {/* Animated Lines */}
         <div className="relative mb-16">
@@ -379,14 +383,14 @@ export const TrendingItemsSection = (): JSX.Element => {
                     viewport={{ once: true }}
                   >
                     <Button
-                      className={`mt-8 w-[140px] h-[40px] rounded-xl border-none ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
+                      className={`mt-8 w-[140px] h-[40px] rounded-xl border border-white ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
                     >
                       <motion.span 
                         className="font-bold text-white text-sm tracking-wide leading-normal pointer-events-none"
                         style={{ fontFamily: 'Poppins, sans-serif' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        Visit Market   &gt;
+                        Visit Market <img src="/icon/icon2.png" alt="arrow right" className="inline w-3 h-3 ml-2 object-contain" />
                       </motion.span>
                     </Button>
                   </motion.div>

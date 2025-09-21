@@ -78,11 +78,7 @@ export const TrustedBySection = (): JSX.Element => {
             viewport={{ once: true }}
           >
             <div className="flex gap-1 mb-2">
-              {[...Array(5)].map((_, i) => (
-                <svg key={i} width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 0L10.472 5.528H16L11.764 8.944L14.236 14.472L8 11.056L1.764 14.472L4.236 8.944L0 5.528H5.528L8 0Z" fill="#3DFF87"/>
-                </svg>
-              ))}
+               <img src="/icon/fourstart.png" alt="star" className=" h-4 object-contain" />
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-[#3DFF87] font-semibold text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
