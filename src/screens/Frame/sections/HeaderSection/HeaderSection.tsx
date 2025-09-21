@@ -201,7 +201,7 @@ export const HeaderSection = (): JSX.Element => {
   };
 
   return (
-    <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#000000] relative">
+    <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#0C1610] relative">
       {/* Left: Logo + Dropdown */}
       <div className="flex items-center gap-8 relative" ref={dropdownRef}>
         <img className="w-[159px] h-10 object-cover" alt="Ro CART" src="/ro-cart-33-2.png" />
