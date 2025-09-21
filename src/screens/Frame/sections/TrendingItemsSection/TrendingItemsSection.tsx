@@ -272,7 +272,7 @@ export const TrendingItemsSection = (): JSX.Element => {
               }}
               className="group"
             >
-              <AnimatedCard className="w-[300px] h-[360px] bg-[#030804] border border-[#2A2A2A] rounded-2xl shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
+              <AnimatedCard className="w-[300px] h-[360px] bg-[#030804] border border-[#2A2A2A] rounded-[35px] shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
                 <CardContent className="flex flex-col items-center justify-start w-full h-full p-0 relative z-10">
                   
                   {/* Game Header */}
@@ -394,7 +394,7 @@ export const TrendingItemsSection = (): JSX.Element => {
                  
                   {/* Background Mask */}
                   <motion.img
-                    className="flex justify-center items-center absolute bottom-0 left-0 -translate-x-1/2 w-[810px] h-[69px] 
+                    className="flex justify-center items-center  absolute bottom-0 left-0  w-[900px] h-[80px] 
                       z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
