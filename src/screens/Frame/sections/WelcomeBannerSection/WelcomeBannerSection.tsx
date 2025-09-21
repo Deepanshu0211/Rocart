@@ -76,7 +76,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
       <div
         className="absolute bottom-0 left-0 w-full h-1"
         style={{
-          background: "linear-gradient(to right, #3dff87, #000000)",
+          background: "linear-gradient(to right, #3DFF87, #000000)",
         }}
       />
 

@@ -203,7 +203,7 @@ const lineVariants = {
 
 export const TrendingItemsSection = (): JSX.Element => {
   return (
-    <section className="relative w-full min-h-screen bg-[#030804] py-20 overflow-hidden">
+    <section className="relative w-full min-h-screen bg-[#06100A] py-20 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         
         {/* Animated Lines */}

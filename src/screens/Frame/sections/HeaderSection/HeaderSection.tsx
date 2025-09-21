@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronDownIcon, Gamepad2 } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactCountryFlag from "react-country-flag";
@@ -98,13 +98,14 @@ const LanguageModal = ({
 
             {/* Manual selection */}
             <div className="mb-4">
-              <label className="text-sm text-gray-400 block mb-1">Change Country</label>
+              <label className="text-sm text-gray-400 block mb-1">
+                Change Country
+              </label>
               <select
                 className="w-full bg-[#222] p-2 rounded-md text-white"
                 value={country}
                 onChange={(e) => {
                   setCountry(e.target.value);
-                  // update currency when manual select
                   const currencyMap: Record<string, string> = {
                     US: "USD",
                     IN: "INR",
@@ -120,7 +121,6 @@ const LanguageModal = ({
                 <option value="GB">United Kingdom</option>
                 <option value="EU">Europe</option>
                 <option value="JP">Japan</option>
-                {/* add more */}
               </select>
             </div>
 
@@ -149,7 +149,6 @@ export const HeaderSection = (): JSX.Element => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
-  // country + currency state here
   const [country, setCountry] = useState("US");
   const [currency, setCurrency] = useState("USD");
 
@@ -168,12 +167,42 @@ export const HeaderSection = (): JSX.Element => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const games = [
-    { id: 1, name: "Blox Fruits", subtitle: "🏁", bgColor: "bg-blue-600", bgImage: "/bgs/image2.png", useIcon: true },
-    { id: 2, name: "Murder Mystery 2", subtitle: "🔪", bgColor: "bg-red-600", bgImage: "/bgs/image3.png" },
-    { id: 3, name: "Adopt Me!", subtitle: "🏠", bgColor: "bg-green-600", bgImage: "/bgs/image4.png" },
-    { id: 4, name: "Blade Ball", subtitle: "⚔️", bgColor: "bg-cyan-600", bgImage: "/bgs/image1.png" },
-    { id: 5, name: "Steal A Brainrot", subtitle: "💎", bgColor: "bg-purple-600", bgImage: "/bgs/image5.png" },
- 
+    {
+      id: 1,
+      name: "Blox Fruits",
+      subtitle: "🏁",
+      bgColor: "bg-blue-600",
+      bgImage: "/bgs/image2.png",
+      useIcon: true,
+    },
+    {
+      id: 2,
+      name: "Murder Mystery 2",
+      subtitle: "🔪",
+      bgColor: "bg-red-600",
+      bgImage: "/bgs/image3.png",
+    },
+    {
+      id: 3,
+      name: "Adopt Me!",
+      subtitle: "🏠",
+      bgColor: "bg-green-600",
+      bgImage: "/bgs/image4.png",
+    },
+    {
+      id: 4,
+      name: "Blade Ball",
+      subtitle: "⚔️",
+      bgColor: "bg-cyan-600",
+      bgImage: "/bgs/image1.png",
+    },
+    {
+      id: 5,
+      name: "Steal A Brainrot",
+      subtitle: "💎",
+      bgColor: "bg-purple-600",
+      bgImage: "/bgs/image5.png",
+    },
   ];
 
   const handleGameSelect = (game: any) => {
@@ -183,7 +212,10 @@ export const HeaderSection = (): JSX.Element => {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -204,31 +236,51 @@ export const HeaderSection = (): JSX.Element => {
     <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#0C1610] relative">
       {/* Left: Logo + Dropdown */}
       <div className="flex items-center gap-8 relative" ref={dropdownRef}>
-        <img className="w-[159px] h-10 object-cover" alt="Ro CART" src="/ro-cart-33-2.png" />
+        <img
+          className="w-[159px] h-10 object-cover"
+          alt="Ro CART"
+          src="/ro-cart-33-2.png"
+        />
 
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className={`w-[212px] h-[50px] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
             style={{
-              backgroundImage: selectedGame.bgImage ? `url(${selectedGame.bgImage})` : undefined,
+              backgroundImage: selectedGame.bgImage
+                ? `url(${selectedGame.bgImage})`
+                : undefined,
               backgroundSize: selectedGame.bgImage ? "contain" : undefined,
               backgroundRepeat: selectedGame.bgImage ? "no-repeat" : undefined,
             }}
           >
-            {!selectedGame.bgImage && <div className="absolute inset-0 bg-[#0f0f0f]" />}
-            {selectedGame.bgImage && <div className="absolute inset-0 bg-black/40" />}
+            {!selectedGame.bgImage && (
+              <div className="absolute inset-0 bg-[#0f0f0f]" />
+            )}
+            {selectedGame.bgImage && (
+              <div className="absolute inset-0 bg-black/40" />
+            )}
 
+            {/* 🔹 Custom Gamepad Icon here */}
             <div className="ml-[15px] w-[27px] h-[27px] flex items-center justify-center relative z-10">
-              {selectedGame.useIcon ? <Gamepad2 className="w-6 h-6 text-white" /> : selectedGame.subtitle || "🎮"}
+              {selectedGame.useIcon ? (
+                <img
+                  src="/icon/gamepad.png"
+                  alt="Gamepad"
+                  className="w-6 h-6 object-contain"
+                />
+              ) : (
+                selectedGame.subtitle || "🎮"
+              )}
             </div>
+
             <div className="ml-[10px] flex-1 flex items-center justify-between relative z-10">
               <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
                 {selectedGame.name}
               </span>
               <ChevronDownIcon
                 className={`w-[13px] h-[13px] text-white mr-[15px] transition-transform duration-200 ${
-                  isDropdownOpen ? "rotate-180" : ""
+                  isDropdownOpen ? "rotate-0" : ""
                 }`}
               />
             </div>
@@ -251,15 +303,37 @@ export const HeaderSection = (): JSX.Element => {
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     className="relative flex items-center gap-3 w-full px-4 py-2 h-[60px] text-left bg-cover bg-center"
-                    style={{ backgroundImage: game.bgImage ? `url(${game.bgImage})` : undefined }}
+                    style={{
+                      backgroundImage: game.bgImage
+                        ? `url(${game.bgImage})`
+                        : undefined,
+                    }}
                   >
                     <div className="absolute inset-0 bg-black/60" />
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative z-10">
-                      <div className={`w-full h-full flex items-center justify-center ${game.bgColor}`}>
-                        <Gamepad2 className="w-6 h-6 text-white" />
+                      <div
+                        className={`w-full h-full flex items-center justify-center ${game.bgColor}`}
+                      >
+                        {/* Keep Lucide icon in dropdown */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6.75 7.5l10.5 9m0-9l-10.5 9"
+                          />
+                        </svg>
                       </div>
                     </div>
-                    <span className="text-white font-medium text-[15px] truncate relative z-10">{game.name}</span>
+                    <span className="text-white font-medium text-[15px] truncate relative z-10">
+                      {game.name}
+                    </span>
                   </motion.button>
                 ))}
               </motion.div>
@@ -274,7 +348,6 @@ export const HeaderSection = (): JSX.Element => {
           onClick={() => setIsLangModalOpen(true)}
           className="cursor-pointer w-[194px] h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center"
         >
-          {/* dynamic flag inside header */}
           <ReactCountryFlag
             countryCode={country}
             svg
@@ -291,7 +364,9 @@ export const HeaderSection = (): JSX.Element => {
 
         <Button className="w-[100px] h-[37px] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[11px] border-0 p-0 flex items-center justify-center gap-2">
           <div className="w-[19px] h-[19px] bg-[url(/mask-group-38.png)] bg-cover" />
-          <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">Log in</span>
+          <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">
+            Log in
+          </span>
         </Button>
       </div>
 

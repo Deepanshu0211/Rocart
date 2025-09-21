@@ -41,7 +41,7 @@ export const TrustedBySection = (): JSX.Element => {
   );
 
   return (
-    <section className="relative w-full bg-[#030804] py-16 overflow-hidden">
+    <section className="relative w-full bg-[#030804] bg-[url('/bg/pattern.png')] bg-repeat py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-12">

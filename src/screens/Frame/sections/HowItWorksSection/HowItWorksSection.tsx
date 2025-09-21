@@ -79,7 +79,7 @@ export const HowItWorksSection = (): JSX.Element => {
   };
 
   return (
-    <section className="w-full py-16">
+    <section className="w-full py-16 bg-[url('/bg/pattern.png')] bg-repeat bg-[#06100A] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 relative">
         {/* Title Section */}
         <motion.div

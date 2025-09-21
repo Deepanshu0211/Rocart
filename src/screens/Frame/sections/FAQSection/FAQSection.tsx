@@ -47,7 +47,9 @@ export const FAQSection = () => {
   ];
 
   return (
-    <section className="w-full py-16 md:py-20 lg:py-24 bg-[#030804] min-h-screen">
+    <section className="w-full py-16 md:py-20 lg:py-24 bg-[#06100A] min-h-screen ">
+      <div className="absolute inset-0 bg-[url('/bg/pattern.png')] bg-repeat opacity-20 pointer-events-none" />
+      
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -61,7 +63,7 @@ export const FAQSection = () => {
         </div>
 
         {/* FAQ Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-8">
           {faqData.map((faq) => {
             const isOpen = openItem === faq.id;
 
