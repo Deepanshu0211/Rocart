@@ -10,7 +10,7 @@ import { WelcomeBannerSection } from "./sections/WelcomeBannerSection/WelcomeBan
 
 export const Frame = (): JSX.Element => {
   return (
- <div className="bg-[url(/background.png)] bg-cover bg-no-repeat overflow-x-hidden w-full relative">
+ <div className=" bg-[#06100A] overflow-x-hidden w-full relative">
   <div className="max-w-[1920px] mx-auto">
     <HeaderSection />
     <WelcomeBannerSection />

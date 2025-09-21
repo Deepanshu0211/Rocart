@@ -1,161 +1,309 @@
-import { useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronDownIcon, Gamepad2 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import ReactCountryFlag from "react-country-flag";
 
+// =======================
+// Language & Currency Modal
+// =======================
+const LanguageModal = ({
+  isOpen,
+  onClose,
+  country,
+  setCountry,
+  currency,
+  setCurrency,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  country: string;
+  setCountry: (c: string) => void;
+  currency: string;
+  setCurrency: (c: string) => void;
+}) => {
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const currencyMap: Record<string, string> = {
+    US: "USD",
+    IN: "INR",
+    GB: "GBP",
+    EU: "EUR",
+    JP: "JPY",
+    // add more here
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      // auto-detect
+      fetch("https://ipapi.co/json/")
+        .then((res) => res.json())
+        .then((data) => {
+          const code = (data.country_code || "").toUpperCase();
+          if (code) {
+            setCountry(code);
+            setCurrency(currencyMap[code] || "USD");
+          } else {
+            const userLang = navigator.language || "en-US";
+            const code2 = userLang.split("-")[1]?.toUpperCase() || "US";
+            setCountry(code2);
+            setCurrency(currencyMap[code2] || "USD");
+          }
+        })
+        .catch(() => {
+          const userLang = navigator.language || "en-US";
+          const code2 = userLang.split("-")[1]?.toUpperCase() || "US";
+          setCountry(code2);
+          setCurrency(currencyMap[code2] || "USD");
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-[#111] rounded-xl p-6 w-[350px] shadow-xl text-white"
+          >
+            <h2 className="text-lg font-semibold mb-4">Language & Currency</h2>
+
+            {/* Auto-detected */}
+            <div className="mb-3 flex items-center gap-3">
+              <p className="text-sm text-gray-400">Detected Country:</p>
+              {loading ? (
+                <p className="text-base font-medium">Detecting...</p>
+              ) : (
+                <>
+                  <ReactCountryFlag
+                    countryCode={country}
+                    svg
+                    style={{ width: "1.5em", height: "1.5em" }}
+                    title={country}
+                  />
+                  <p className="text-base font-medium">{country}</p>
+                </>
+              )}
+            </div>
+
+            {/* Manual selection */}
+            <div className="mb-4">
+              <label className="text-sm text-gray-400 block mb-1">Change Country</label>
+              <select
+                className="w-full bg-[#222] p-2 rounded-md text-white"
+                value={country}
+                onChange={(e) => {
+                  setCountry(e.target.value);
+                  // update currency when manual select
+                  const currencyMap: Record<string, string> = {
+                    US: "USD",
+                    IN: "INR",
+                    GB: "GBP",
+                    EU: "EUR",
+                    JP: "JPY",
+                  };
+                  setCurrency(currencyMap[e.target.value] || "USD");
+                }}
+              >
+                <option value="US">United States</option>
+                <option value="IN">India</option>
+                <option value="GB">United Kingdom</option>
+                <option value="EU">Europe</option>
+                <option value="JP">Japan</option>
+                {/* add more */}
+              </select>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-gray-400">Currency</p>
+              <p className="text-base font-medium">{currency}</p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-full py-2 rounded-md bg-green-600 hover:bg-green-700 font-semibold"
+            >
+              Confirm
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// =======================
+// Main Header Section
+// =======================
 export const HeaderSection = (): JSX.Element => {
-  const [isGameModalOpen, setIsGameModalOpen] = useState(false);
-  const [selectedGame, setSelectedGame] = useState("Choose a game");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+
+  // country + currency state here
+  const [country, setCountry] = useState("US");
+  const [currency, setCurrency] = useState("USD");
+
+  const [selectedGame, setSelectedGame] = useState<{
+    subtitle?: string;
+    name: string;
+    bgImage?: string;
+    bgColor?: string;
+    useIcon?: boolean;
+  }>({
+    name: "Choose a game",
+    subtitle: "🎮",
+    useIcon: true,
+  });
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const games = [
-    {
-      id: 1,
-      name: "Race Traits",
-      subtitle: "Tap to view Items",
-      image: "🏁",
-      bgColor: "bg-blue-600"
-    },
-    {
-      id: 2,
-      name: "Murder Mystery 2",
-      subtitle: "Tap to view Items",
-      image: "🔪",
-      bgColor: "bg-red-600"
-    },
-    {
-      id: 3,
-      name: "Adopt Me!",
-      subtitle: "Tap to view Items",
-      image: "🏠",
-      bgColor: "bg-green-600"
-    },
-    {
-      id: 4,
-      name: "Blade Ball",
-      subtitle: "Tap to view Items",
-      image: "⚔️",
-      bgColor: "bg-cyan-600"
-    },
-    {
-      id: 5,
-      name: "Steal A Baghemet",
-      subtitle: "Tap to view Items",
-      image: "💎",
-      bgColor: "bg-purple-600"
-    },
-    {
-      id: 6,
-      name: "Grow A Garden",
-      subtitle: "Tap to view Items",
-      image: "🌱",
-      bgColor: "bg-emerald-600"
-    }
+    { id: 1, name: "Blox Fruits", subtitle: "🏁", bgColor: "bg-blue-600", bgImage: "/bgs/image2.png", useIcon: true },
+    { id: 2, name: "Murder Mystery 2", subtitle: "🔪", bgColor: "bg-red-600", bgImage: "/bgs/image3.png" },
+    { id: 3, name: "Adopt Me!", subtitle: "🏠", bgColor: "bg-green-600", bgImage: "/bgs/image4.png" },
+    { id: 4, name: "Blade Ball", subtitle: "⚔️", bgColor: "bg-cyan-600", bgImage: "/bgs/image1.png" },
+    { id: 5, name: "Steal A Brainrot", subtitle: "💎", bgColor: "bg-purple-600", bgImage: "/bgs/image5.png" },
+ 
   ];
 
-  const handleGameSelect = (game: { id?: number; name: any; subtitle?: string; image?: string; bgColor?: string; }) => {
-    setSelectedGame(game.name);
-    setIsGameModalOpen(false);
+  const handleGameSelect = (game: any) => {
+    setSelectedGame(game);
+    setIsDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    show: { opacity: 1, y: 0 },
   };
 
   return (
-    <>
-      <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#060606]">
-        {/* Left: Logo + Game dropdown */}
-        <div className="flex items-center gap-8">
-          <img
-            className="w-[159px] h-10 object-cover"
-            alt="Ro CART"
-            src="/ro-cart-33-2.png"
-          />
+    <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#000000] relative">
+      {/* Left: Logo + Dropdown */}
+      <div className="flex items-center gap-8 relative" ref={dropdownRef}>
+        <img className="w-[159px] h-10 object-cover" alt="Ro CART" src="/ro-cart-33-2.png" />
 
+        <div className="relative">
           <button
-            onClick={() => setIsGameModalOpen(true)}
-            className="w-[212px] h-[50px] bg-[#0f0f0f] rounded-[11px] flex items-center hover:bg-[#1a1a1a] transition-colors"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className={`w-[212px] h-[50px] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
+            style={{
+              backgroundImage: selectedGame.bgImage ? `url(${selectedGame.bgImage})` : undefined,
+              backgroundSize: selectedGame.bgImage ? "contain" : undefined,
+              backgroundRepeat: selectedGame.bgImage ? "no-repeat" : undefined,
+            }}
           >
-            <img
-              className="ml-[15px] w-[27px] h-[27px]"
-              alt="Mask group"
-              src="/mask-group-35.png"
-            />
-            <div className="ml-[10px] flex-1 flex items-center justify-between">
+            {!selectedGame.bgImage && <div className="absolute inset-0 bg-[#0f0f0f]" />}
+            {selectedGame.bgImage && <div className="absolute inset-0 bg-black/40" />}
+
+            <div className="ml-[15px] w-[27px] h-[27px] flex items-center justify-center relative z-10">
+              {selectedGame.useIcon ? <Gamepad2 className="w-6 h-6 text-white" /> : selectedGame.subtitle || "🎮"}
+            </div>
+            <div className="ml-[10px] flex-1 flex items-center justify-between relative z-10">
               <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
-                {selectedGame}
+                {selectedGame.name}
               </span>
-              <ChevronDownIcon className="w-[13px] h-[13px] text-white mr-[15px]" />
+              <ChevronDownIcon
+                className={`w-[13px] h-[13px] text-white mr-[15px] transition-transform duration-200 ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </div>
           </button>
+
+          {/* Dropdown */}
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                initial="hidden"
+                animate="show"
+                exit="hidden"
+                variants={containerVariants}
+                className="absolute top-[55px] left-0 w-[260px] rounded-xl shadow-lg z-50 overflow-hidden border border-[#222] bg-[#0d0d0d]"
+              >
+                {games.map((game) => (
+                  <motion.button
+                    key={game.id}
+                    onClick={() => handleGameSelect(game)}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02 }}
+                    className="relative flex items-center gap-3 w-full px-4 py-2 h-[60px] text-left bg-cover bg-center"
+                    style={{ backgroundImage: game.bgImage ? `url(${game.bgImage})` : undefined }}
+                  >
+                    <div className="absolute inset-0 bg-black/60" />
+                    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative z-10">
+                      <div className={`w-full h-full flex items-center justify-center ${game.bgColor}`}>
+                        <Gamepad2 className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <span className="text-white font-medium text-[15px] truncate relative z-10">{game.name}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+      </div>
 
-        {/* Right: Language + Login */}
-        <div className="flex items-center gap-6">
-          {/* Language */}
-          <div className="w-[194px] h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center">
-            <img
-              className="ml-5 w-[30px] h-4 rounded object-cover"
-              alt="Download"
-              src="/download-1.png"
-            />
-            <div className="ml-[8px] flex-1 flex items-center justify-between">
-              <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
-                English/USD
-              </span>
-              <ChevronDownIcon className="w-[13px] h-[13px] text-white mr-[15px]" />
-            </div>
-          </div>
-
-          {/* Login Button */}
-          <Button className="w-[100px] h-[37px] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[11px] border-0 p-0 flex items-center justify-center gap-2">
-            <div className="w-[19px] h-[19px] bg-[url(/mask-group-38.png)] bg-cover" />
-            <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">
-              Log in
+      {/* Right: Language + Login */}
+      <div className="flex items-center gap-6">
+        <div
+          onClick={() => setIsLangModalOpen(true)}
+          className="cursor-pointer w-[194px] h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center"
+        >
+          {/* dynamic flag inside header */}
+          <ReactCountryFlag
+            countryCode={country}
+            svg
+            style={{ width: "1.5em", height: "1.5em", marginLeft: "16px" }}
+            title={country}
+          />
+          <div className="ml-[8px] flex-1 flex items-center justify-between">
+            <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
+              English/{currency}
             </span>
-          </Button>
-        </div>
-      </header>
-
-      {/* Game Selection Modal */}
-      {isGameModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-[#0a0a0a] border border-green-500 rounded-2xl p-8 max-w-2xl w-full mx-4 relative">
-            {/* Close Button */}
-            <button
-              onClick={() => setIsGameModalOpen(false)}
-              className="absolute top-4 right-4 text-white hover:text-green-400 transition-colors text-2xl"
-            >
-              ×
-            </button>
-
-            {/* Modal Header */}
-            <div className="text-center mb-8">
-              <h2 className="text-white text-2xl font-bold mb-2">CHOOSE A GAME</h2>
-            </div>
-
-            {/* Games Grid */}
-            <div className="grid grid-cols-3 gap-6">
-              {games.map((game) => (
-                <button
-                  key={game.id}
-                  onClick={() => handleGameSelect(game)}
-                  className={`${game.bgColor} rounded-xl p-6 text-center hover:scale-105 transition-transform duration-200 flex flex-col items-center justify-center min-h-[140px]`}
-                >
-                  <div className="text-4xl mb-3">{game.image}</div>
-                  <h3 className="text-white font-bold text-sm mb-1">{game.name}</h3>
-                  <p className="text-white text-xs opacity-80">{game.subtitle}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="text-center mt-8">
-              <img
-                className="w-[159px] h-10 object-cover mx-auto"
-                alt="Ro CART"
-                src="/ro-cart-33-2.png"
-              />
-              <p className="text-gray-400 text-sm mt-2">Select your favorite game</p>
-            </div>
+            <ChevronDownIcon className="w-[13px] h-[13px] text-white mr-[15px]" />
           </div>
         </div>
-      )}
-    </>
+
+        <Button className="w-[100px] h-[37px] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[11px] border-0 p-0 flex items-center justify-center gap-2">
+          <div className="w-[19px] h-[19px] bg-[url(/mask-group-38.png)] bg-cover" />
+          <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">Log in</span>
+        </Button>
+      </div>
+
+      {/* Modal */}
+      <LanguageModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+        country={country}
+        setCountry={setCountry}
+        currency={currency}
+        setCurrency={setCurrency}
+      />
+    </header>
   );
 };
