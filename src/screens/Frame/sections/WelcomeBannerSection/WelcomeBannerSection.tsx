@@ -1,4 +1,3 @@
-
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { motion } from "framer-motion";
@@ -43,17 +42,35 @@ const gameItems = [
 export const WelcomeBannerSection = (): JSX.Element => {
   return (
     <section className="relative w-full h-[75%] overflow-hidden">
-      {/* Background Layer */}
+      {/* Base background image */}
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(61,255,136,0.3), rgba(0,0,0,2)), url('/bg/ho.png')",
+          backgroundImage: "url('/bg/ho.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          transform: "rotate(180deg)", // only rotates the background
+          transform: "rotate(0deg)",
         }}
       />
+      
+      {/* Your custom image layer */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "url('/bg/image.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 1,
+        }}
+      />
+      
+      {/* Gradient overlay */}
+      {/* <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(to top, rgba(61,255,136,0.3), rgba(0,0,0,1))",
+        }}
+      /> */}
 
       {/* Bottom Gradient Line */}
       <div
@@ -154,16 +171,6 @@ export const WelcomeBannerSection = (): JSX.Element => {
                     alt="Badge icon"
                     src={item.maskImage}
                   />
-
-                  {/* Item Name */}
-                  {/* <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -rotate-45 text-xs font-semibold bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
-                    {item.name.split(" ").map((word, i) => (
-                      <React.Fragment key={i}>
-                        {word}
-                        {i < item.name.split(" ").length - 1 && <br />}
-                      </React.Fragment>
-                    ))}
-                  </div> */}
                 </CardContent>
               </Card>
             </motion.div>
