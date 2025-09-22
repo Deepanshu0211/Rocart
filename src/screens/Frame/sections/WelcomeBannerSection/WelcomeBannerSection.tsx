@@ -102,7 +102,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
               Fruits, Steal a Brainrot, Blade Ball.
             </p>
             <Button className="h-auto bg-transparent p-0 hover:bg-transparent border-none shadow-none">
-              <div className="w-[170px] h-[50px] rounded-[25px] bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
+              <div className="w-[170px] h-[50px] rounded-[18px] bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
                 <img
                   className="absolute left-4 w-6 h-6 z-10"
                   alt="Cart icon"

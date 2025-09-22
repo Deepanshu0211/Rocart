@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Twitter, Youtube, Music2, MessageCircle } from "lucide-react";
 
@@ -29,12 +28,11 @@ const legalLinks = [
 ];
 
 const paymentMethods = [
-  { name: "AMEX", color: "from-[#006fcf] to-[#0099ff]" },
-  { name: "VISA", color: "from-[#1a1f71] to-[#2d3a8c]" },
-  { name: "DISC", color: "from-[#ff6000] to-[#ff8533]" },
-  { name: "PP", color: "from-[#003087] to-[#0070ba]" },
-  { name: "MC", color: "from-[#eb001b] to-[#ff5f00]" },
-  { name: "CARD", color: "from-[#333333] to-[#555555]" },
+  { name: "visa" },
+  { name: "amex" },
+  { name: "mastercard" },
+  { name: "paypal" },
+  { name: "discover" },
 ];
 
 const containerVariants = {
@@ -210,13 +208,12 @@ export const MainContentSection = (): JSX.Element => {
           </motion.div>
         </div>
 
-        {/* Bottom Section - Payment Methods */}
+        {/* Bottom Section - Social Media (left) + Payment Methods (right) */}
         <motion.div 
-          className=" flex-col sm:flex-col   items-start  pt-6 border-t border-[#ffffff15]"
+          className="flex items-center justify-between pt-6 border-t border-[#ffffff15]"
           variants={itemVariants}
         >
-          
-          {/* Social Media Icons */}
+          {/* Social Media Icons (Left) */}
           <div className="flex space-x-3">
             {socialMediaIcons.map((item, index) => {
               const IconComponent = item.icon;
@@ -235,18 +232,21 @@ export const MainContentSection = (): JSX.Element => {
             })}
           </div>
 
-          {/* Payment Methods */}
-          <div className="flex justify-end top-100 items-center  gap-2">
-          
+          {/* Payment Methods (Right) */}
+          <div className="flex items-center gap-3">
             {paymentMethods.map((method, index) => (
-              <motion.button
+              <motion.div
                 key={index}
-                className={`w-10 h-6 bg-gradient-to-r ${method.color} rounded flex items-center justify-center cursor-pointer`}
+                className="w-12 h-8 flex items-center justify-center cursor-pointer"
                 whileHover={paymentHover}
                 whileTap={{ scale: 0.95 }}
               >
-                <span className="text-white text-xs font-bold">{method.name}</span>
-              </motion.button>
+                <img
+                  src={`/cards/${method.name}.png`}
+                  alt={method.name}
+                  className="w-full h-full object-contain"
+                />
+              </motion.div>
             ))}
           </div>
         </motion.div>

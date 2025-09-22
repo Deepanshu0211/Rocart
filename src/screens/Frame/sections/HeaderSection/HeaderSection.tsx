@@ -171,37 +171,42 @@ export const HeaderSection = (): JSX.Element => {
       id: 1,
       name: "Blox Fruits",
       subtitle: "🏁",
-      bgColor: "bg-blue-600",
+    
       bgImage: "/bgs/image2.png",
+      icon: "/game/bloxfruits.png",
       useIcon: true,
     },
     {
       id: 2,
       name: "Murder Mystery 2",
       subtitle: "🔪",
-      bgColor: "bg-red-600",
+    
       bgImage: "/bgs/image3.png",
+      icon: "/game/murder.png",
     },
     {
       id: 3,
       name: "Adopt Me!",
       subtitle: "🏠",
-      bgColor: "bg-green-600",
+     
       bgImage: "/bgs/image4.png",
+      icon: "/game/adoptme.png",
     },
     {
       id: 4,
       name: "Blade Ball",
       subtitle: "⚔️",
-      bgColor: "bg-cyan-600",
+     
       bgImage: "/bgs/image1.png",
+      icon: "/game/bundle.png",
     },
     {
       id: 5,
       name: "Steal A Brainrot",
       subtitle: "💎",
-      bgColor: "bg-purple-600",
-      bgImage: "/bgs/image5.png",
+    
+     
+       icon: "/game/brainrot.png",
     },
   ];
 
@@ -294,7 +299,7 @@ export const HeaderSection = (): JSX.Element => {
                 animate="show"
                 exit="hidden"
                 variants={containerVariants}
-                className="absolute top-[55px] left-0 w-[260px] rounded-xl shadow-lg z-50 overflow-hidden border border-[#222] bg-[#0d0d0d]"
+                className="absolute top-[55px] left-0 w-[260px] rounded-xl shadow-lg z-50 overflow-hidden border border-[#222] bg-[#5d5757]"
               >
                 {games.map((game) => (
                   <motion.button
@@ -312,23 +317,14 @@ export const HeaderSection = (): JSX.Element => {
                     <div className="absolute inset-0 bg-black/60" />
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative z-10">
                       <div
-                        className={`w-full h-full flex items-center justify-center ${game.bgColor}`}
+                        className={`w-full h-full flex items-center justify-center `}
                       >
-                        {/* Keep Lucide icon in dropdown */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-6 h-6 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6.75 7.5l10.5 9m0-9l-10.5 9"
-                          />
-                        </svg>
+                   
+                            <img
+                                  src={game.icon}
+                                  alt={game.name}
+                                  className="w-8 h-8 object-contain"
+                                />
                       </div>
                     </div>
                     <span className="text-white font-medium text-[15px] truncate relative z-10">
