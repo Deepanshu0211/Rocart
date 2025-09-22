@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 const gameItems = [
   {
@@ -39,38 +40,63 @@ const gameItems = [
   },
 ];
 
+const games = [
+  {
+    name: "Blox Fruits",
+    icon: "/logo/bloxmain.png",
+    bgImage: "/logo/blox.png",
+  },
+  {
+    name: "Murder Mystery 2",
+    icon: "/logo/murder.png",
+    bgImage: "/logo/murdermain.png",
+  },
+  {
+    name: "Adopt Me",
+    icon: "/logo/adopt.png",
+    bgImage: "/logo/adoptmain.png",
+  },
+  {
+    name: "Blade Ball",
+    icon: "/logo/blade.png",
+    bgImage: "/logo/blademain.png",
+  },
+  {
+    name: "Steal a Brainrot",
+    icon: "/logo/steal.png",
+    bgImage: "/logo/stealmain.png",
+  },
+  {
+    name: "Grow a Garden",
+    icon: "/logo/grow.png",
+    bgImage: "/logo/growmain.png",
+  },
+];
+
 export const WelcomeBannerSection = (): JSX.Element => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <section className="relative w-full h-[75%] overflow-hidden">
-      {/* Base background image */}
+      {/* Base Background */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: "url('/bg/ho.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          transform: "rotate(0deg)",
         }}
       />
-      
-      {/* Your custom image layer */}
+
+      {/* Custom Image Layer */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: "url('/bg/image.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 1,
         }}
       />
-      
-      {/* Gradient overlay */}
-      {/* <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(to top, rgba(61,255,136,0.3), rgba(0,0,0,1))",
-        }}
-      /> */}
 
       {/* Bottom Gradient Line */}
       <div
@@ -80,7 +106,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
         }}
       />
 
-      {/* Content */}
+      {/* Main Content */}
       <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 px-8 py-16 max-w-7xl mx-auto">
         {/* Left Content */}
         <div className="flex-1 max-w-2xl">
@@ -101,14 +127,19 @@ export const WelcomeBannerSection = (): JSX.Element => {
               For items in Murder Mystery 2,&nbsp;&nbsp;Grow a Garden, Blox
               Fruits, Steal a Brainrot, Blade Ball.
             </p>
-            <Button className="h-auto bg-transparent  p-0 hover:bg-transparent  shadow-none">
+
+            {/* Start Buying Button */}
+            <Button
+              onClick={() => setIsOpen(true)}
+              className="h-auto bg-transparent p-0 hover:bg-transparent shadow-none"
+            >
               <div className="w-[170px] h-[50px] rounded-[18px] border border-white bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
                 <img
                   className="absolute left-4 w-6 h-6 z-10"
                   alt="Cart icon"
                   src="/mask-group-3.png"
                 />
-                <span className="font-bold  text-white text-[15px] ml-4 z-10">
+                <span className="font-bold text-white text-[15px] ml-4 z-10">
                   Start Buying
                 </span>
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
@@ -144,7 +175,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
                 ease: "easeInOut",
               }}
             >
-              <Card className="relative top-[60px] w-full h-full bg-transparent border-none">
+              <Card className="relative top-[60px] w-full h-full bg-transparent shadow-none border-none">
                 <CardContent className="p-0 relative w-full h-full">
                   {/* Background gradient */}
                   <div
@@ -177,6 +208,79 @@ export const WelcomeBannerSection = (): JSX.Element => {
           ))}
         </div>
       </div>
+
+        <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+            className="relative border-none rounded-[30px] p-8 w-[90%] max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3dff87] scrollbar-track-transparent shadow-[0_0_30px_rgba(61,255,135,0.15)]"
+            style={{
+              backgroundImage: "url('/bg/modalbg.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              {/* Header */}
+              <div className="flex justify-center relative mb-8">
+                <h2 className="text-2xl font-bold tracking-wide bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                  CHOOSE A GAME
+                </h2>
+
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="absolute right-0 top-0 text-white hover:text-[#3dff87] text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Grid of Games */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                {games.map((game, i) => (
+                  <Card
+                    key={i}
+                    className="relative rounded-[4px] h-[200px] overflow-hidden hover:scale-[1.03] transition-transform duration-300 cursor-pointer bg-transparent shadow-none border-none"
+                    style={{
+                      backgroundImage: `url(${game.bgImage})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      backgroundBlendMode: "overlay",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-[4px]" />
+
+                    <CardContent className="relative z-10 flex flex-col items-center justify-center p-9 text-center">
+                      <img
+                        src={game.icon}
+                        alt={game.name}
+                        className="w-18 h-16 mb-2"
+                      />
+                      <p className="text-white font-semibold text-lg">{game.name}</p>
+                      <p className="text-[#ffffff] text-sm mt-1">Tap to view Items</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Footer Rocart Logo */}
+              <div className="flex justify-center mt-10">
+                <img src="/logo/rocart.png" alt="Rocart logo" className="h-auto w-auto" />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
