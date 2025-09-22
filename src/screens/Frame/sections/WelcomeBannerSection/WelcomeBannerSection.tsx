@@ -45,32 +45,39 @@ const games = [
     name: "Blox Fruits",
     icon: "/logo/bloxmain.png",
     bgImage: "/logo/blox.png",
+    gradient: "linear-gradient(90deg, #41A7FF, #D9EDFF)",
   },
   {
     name: "Murder Mystery 2",
     icon: "/logo/murder.png",
     bgImage: "/logo/murdermain.png",
+    gradient: "linear-gradient(90deg, #E90303, #FFA3A3)",
   },
   {
     name: "Adopt Me",
     icon: "/logo/adopt.png",
     bgImage: "/logo/adoptmain.png",
+    gradient: "linear-gradient(90deg, #F7FE49, #D9EDFF)",
   },
   {
     name: "Blade Ball",
     icon: "/logo/blade.png",
     bgImage: "/logo/blademain.png",
+    gradient: "linear-gradient(90deg, #FF41A3, #D9EDFF)",
   },
   {
     name: "Steal a Brainrot",
     icon: "/logo/steal.png",
     bgImage: "/logo/stealmain.png",
+    gradient: "linear-gradient(90deg, #A641FF, #D9EDFF)",
   },
   {
     name: "Grow a Garden",
     icon: "/logo/grow.png",
     bgImage: "/logo/growmain.png",
+    gradient: "linear-gradient(90deg, #2ECC71, #27AE60)",
   },
+  
 ];
 
 export const WelcomeBannerSection = (): JSX.Element => {
@@ -212,13 +219,16 @@ export const WelcomeBannerSection = (): JSX.Element => {
         <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+            className="fixed inset-0 z-50 flex items-center justify-center "
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-            className="relative border-none rounded-[30px] p-8 w-[90%] max-w-5xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-[#3dff87] scrollbar-track-transparent shadow-[0_0_30px_rgba(61,255,135,0.15)]"
+           className="relative rounded-[50px] p-10 w-[1800px] max-w-5xl max-h-[90vh] 
+             overflow-y-auto 
+             scrollbar-none
+             bg-[url('/bg/modalbg.png')] bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: "url('/bg/modalbg.png')",
               backgroundSize: "cover",
@@ -233,7 +243,7 @@ export const WelcomeBannerSection = (): JSX.Element => {
             >
               {/* Header */}
               <div className="flex justify-center relative mb-8">
-                <h2 className="text-2xl font-bold tracking-wide bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold tracking-tigjt bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                   CHOOSE A GAME
                 </h2>
 
@@ -266,8 +276,13 @@ export const WelcomeBannerSection = (): JSX.Element => {
                         alt={game.name}
                         className="w-18 h-16 mb-2"
                       />
-                      <p className="text-white font-semibold text-lg">{game.name}</p>
-                      <p className="text-[#ffffff] text-sm mt-1">Tap to view Items</p>
+                    <p
+                          className="font-bold text-lg bg-clip-text text-transparent"
+                          style={{ backgroundImage: game.gradient }}
+                        >
+                          {game.name}
+                        </p>
+                     <p className="text-[#ffffff] text-sm mt-1">Tap to view Items</p>
                     </CardContent>
                   </Card>
                 ))}

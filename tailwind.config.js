@@ -74,6 +74,15 @@ module.exports = {
     },
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
   },
-  plugins:  [require("tailwind-scrollbar")],
+plugins: [
+  require("tailwind-scrollbar"),
+  function ({ addUtilities }) {
+    addUtilities({
+      ".no-scrollbar-buttons": {
+        "::-webkit-scrollbar-button": { display: "none" },
+      },
+    });
+  },
+],
   darkMode: ["class"],
 };

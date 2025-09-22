@@ -299,7 +299,7 @@ const games = [
             </div>
 
             <div className="ml-[10px] flex-1 flex items-center justify-between relative z-10">
-              <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
+              <span className="font-poppins font-bold text-white text-sm leading-[21px]">
                 {selectedGame.name}
               </span>
               <ChevronDownIcon

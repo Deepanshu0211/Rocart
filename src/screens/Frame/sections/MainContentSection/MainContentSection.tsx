@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Twitter, Youtube, Music2, MessageCircle } from "lucide-react";
+import { Twitter, Youtube, Music2, MessageCircle, CreditCard, ShoppingBag } from "lucide-react";
 
 const socialMediaIcons = [
   { icon: Twitter, name: "Twitter", href: "#" },
@@ -28,11 +28,31 @@ const legalLinks = [
 ];
 
 const paymentMethods = [
-  { name: "visa" },
-  { name: "amex" },
-  { name: "mastercard" },
-  { name: "paypal" },
-  { name: "discover" },
+  { 
+    name: "visa", 
+    icon: CreditCard,
+    color: "#1a1f71"
+  },
+  { 
+    name: "amex", 
+    icon: CreditCard,
+    color: "#0055a4"
+  },
+  { 
+    name: "mastercard", 
+    icon: CreditCard,
+    color: "#eb001b"
+  },
+  { 
+    name: "paypal", 
+    icon: ShoppingBag,
+    color: "#003087"
+  },
+  { 
+    name: "discover", 
+    icon: CreditCard,
+    color: "#ff6600"
+  },
 ];
 
 const containerVariants = {
@@ -234,20 +254,38 @@ export const MainContentSection = (): JSX.Element => {
 
           {/* Payment Methods (Right) */}
           <div className="flex items-center gap-3">
-            {paymentMethods.map((method, index) => (
-              <motion.div
-                key={index}
-                className="w-12 h-8 flex items-center justify-center cursor-pointer"
-                whileHover={paymentHover}
-                whileTap={{ scale: 0.95 }}
-              >
-                <img
-                  src={`/cards/${method.name}.png`}
-                  alt={method.name}
-                  className="w-full h-full object-contain"
-                />
-              </motion.div>
-            ))}
+            {paymentMethods.map((method, index) => {
+              const IconComponent = method.icon;
+              return (
+                <motion.div
+                  key={index}
+                  className="w-12 h-8 bg-white rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
+                  style={{ 
+                    border: `2px solid ${method.color || '#e5e7eb'}`,
+                    color: method.color || '#374151'
+                  }}
+                  whileHover={paymentHover}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {/* Fallback icon */}
+                  <IconComponent 
+                    size={18} 
+                    className="text-gray-600"
+                  />
+                  
+                  {/* Image overlay - will show if image loads successfully */}
+                  <img
+                    src={`/cards/${method.name}.png`}
+                    alt={method.name}
+                    className="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-200"
+                    onError={(e) => {
+                      // Hide image if it fails to load, icon will show instead
+                      e.currentTarget.style.opacity = '0';
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       </div>

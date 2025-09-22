@@ -186,6 +186,13 @@
   }
 }
 
+
+/* Hide scrollbar arrows/buttons in WebKit browsers */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+
 @layer base {
   * {
     @apply border-border;
