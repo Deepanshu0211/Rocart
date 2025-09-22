@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "../../../../components/ui/card";
 import { motion } from "framer-motion";
 
@@ -49,10 +48,10 @@ export const BenefitsSection = (): JSX.Element => {
   };
 
   const itemVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       y: 20,
-      scale: 0.95
+      scale: 0.95,
     },
     visible: {
       opacity: 1,
@@ -60,9 +59,9 @@ export const BenefitsSection = (): JSX.Element => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   const textVariants = {
@@ -72,33 +71,34 @@ export const BenefitsSection = (): JSX.Element => {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   return (
     <section className="w-full py-16">
+      <div
+        className="absolute inset-0 bg-[url('/bg/mesh.png')]  bg-no-repeat bg-center opacity-100 pointer-events-none"
+        style={{ backgroundSize: "120em auto", top: "20%" }}
+      />
+
       <div className="max-w-7xl mx-auto px-4">
-        <motion.div 
+        <motion.div
           className="text-center mb-12"
           variants={textVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
         >
-          <motion.h2 
+          <motion.h2
             className="[font-family:'Poppins',Helvetica] font-bold text-white text-4xl lg:text-5xl tracking-[-0.02em] leading-tight mb-6"
             initial={{ opacity: 0, y: -20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            Why Choose{" "}
-            <span className=" text-[#3dff87] ">
-              Rocart
-            </span>
-            ?
+            Why Choose <span className=" text-[#3dff87] ">Rocart</span>?
           </motion.h2>
           <p className="[font-family:'Poppins',Helvetica] font-medium text-[#999999] text-sm tracking-[0] leading-[normal] max-w-4xl mx-auto">
             Enjoy lightning - fast delivery, unbeatable prices, and a safe,
@@ -110,7 +110,7 @@ export const BenefitsSection = (): JSX.Element => {
           </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           variants={containerVariants}
           initial="hidden"
@@ -121,10 +121,10 @@ export const BenefitsSection = (): JSX.Element => {
             <motion.div
               key={index}
               variants={itemVariants}
-              whileHover={{ 
+              whileHover={{
                 scale: 1.05,
                 y: -5,
-                transition: { duration: 0.2 }
+                transition: { duration: 0.2 },
               }}
               whileTap={{ scale: 0.95 }}
             >
@@ -134,7 +134,7 @@ export const BenefitsSection = (): JSX.Element => {
                 <CardContent className="p-6 h-full">
                   <div className="flex flex-col h-full">
                     <div className="flex items-start justify-between mb-4">
-                      <motion.h3 
+                      <motion.h3
                         className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[13px] tracking-[0] leading-[normal]"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -150,19 +150,19 @@ export const BenefitsSection = (): JSX.Element => {
                         initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
                         whileInView={{ opacity: 1, rotate: 0, scale: 1 }}
                         viewport={{ once: true }}
-                        transition={{ 
-                          delay: index * 0.1 + 0.4, 
+                        transition={{
+                          delay: index * 0.1 + 0.4,
                           duration: 0.4,
-                          ease: "easeOut"
+                          ease: "easeOut",
                         }}
-                        whileHover={{ 
+                        whileHover={{
                           rotate: 10,
                           scale: 1.1,
-                          transition: { duration: 0.2 }
+                          transition: { duration: 0.2 },
                         }}
                       />
                     </div>
-                    <motion.p 
+                    <motion.p
                       className="[font-family:'Poppins',Helvetica] font-medium text-[#d9d9d9] text-[11px] tracking-[0] leading-[normal] whitespace-pre-line"
                       initial={{ opacity: 0, y: 10 }}
                       whileInView={{ opacity: 1, y: 0 }}

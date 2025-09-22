@@ -165,50 +165,69 @@ export const HeaderSection = (): JSX.Element => {
   });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const games = [
-    {
-      id: 1,
-      name: "Blox Fruits",
-      subtitle: "🏁",
-    
-     
-      icon: "/game/blox.png",
-      useIcon: true,
-    },
-    {
-      id: 2,
-      name: "Murder Mystery 2",
-      subtitle: "🔪",
-    
-    
-      icon: "/game/murder.png",
-    },
-    {
-      id: 3,
-      name: "Adopt Me!",
-      subtitle: "🏠",
-     
-     
-      icon: "/game/adoptme.png",
-    },
-    {
-      id: 4,
-      name: "Blade Ball",
-      subtitle: "⚔️",
-     
-     
-      icon: "/game/bundle.png",
-    },
-    {
-      id: 5,
-      name: "Steal A Brainrot",
-      subtitle: "💎",
-    
-     
-       icon: "/game/brainrot.png",
-    },
-  ];
+const games = [
+  {
+    id: 1,
+    name: "Murder Mystery 2",
+    subtitle: "🔪",
+    icon: "/game/murder.png",
+  },
+  {
+    id: 2,
+    name: "Grow A Garden",
+    subtitle: "🌱",
+    icon: "/game/garden.png",
+  },
+  {
+    id: 3,
+    name: "Steal A Brainrot",
+    subtitle: "💎",
+    icon: "/game/brainrot.png",
+  },
+  {
+    id: 4,
+    name: "Adopt Me!",
+    subtitle: "🏠",
+    icon: "/game/adopt.png",
+  },
+  {
+    id: 5,
+    name: "Blade Ball",
+    subtitle: "⚔️",
+    icon: "/game/blade.png",
+  },
+  {
+    id: 6,
+    name: "Blox Fruits",
+    subtitle: "🏁",
+    icon: "/game/blox.png",
+    useIcon: true,
+  },
+  {
+    id: 7,
+    name: "99 Nights In The Forest",
+    subtitle: "🌲",
+    icon: "/game/99.png",
+  },
+  {
+    id: 8,
+    name: "Anime Vanguards",
+    subtitle: "🔥",
+    icon: "/game/anime.png",
+  },
+  {
+    id: 9,
+    name: "Dress To Impress",
+    subtitle: "👗",
+    icon: "/game/dress.png",
+  },
+  {
+    id: 10,
+    name: "Garden Tower Defense",
+    subtitle: "🛡️",
+    icon: "/game/tower.png",
+  },
+];
 
   const handleGameSelect = (game: any) => {
     setSelectedGame(game);
@@ -299,38 +318,41 @@ export const HeaderSection = (): JSX.Element => {
                 animate="show"
                 exit="hidden"
                 variants={containerVariants}
-                className="absolute top-[55px] left-0 w-[260px] rounded-xl shadow-lg z-50 overflow-hidden border border-[#222] bg-[#5d5757]"
+                className="absolute top-[55px] left-0 w-[250px] 
+                          rounded-xl shadow-lg z-50 border border-[#213d2d] 
+                          bg-[#0C1610] p-2
+                          h-auto overflow-y-auto" // 🔹 fixed height + scroll
               >
-                {games.map((game) => (
-                  <motion.button
-                    key={game.id}
-                    onClick={() => handleGameSelect(game)}
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.02 }}
-                    className="relative flex items-center gap-3 w-full px-4 py-2 h-[60px] text-left bg-cover bg-center"
-                
-                  >
-                    <div className="absolute inset-0 bg-black/60" />
-                    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative z-10">
-                      <div
-                        className={`w-full h-full flex items-center justify-center `}
-                      >
-                   
-                            <img
-                                  src={game.icon}
-                                  alt={game.name}
-                                  className="w-8 h-8 object-contain"
-                                />
-                      </div>
+                <div className="flex flex-col ">
+                  {games.map((game) => (
+                    <motion.button
+                      key={game.id}
+                      onClick={() => handleGameSelect(game)}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.02 }}
+                      className="relative flex items-center gap-3 w-full px-3 py-2 
+                                h-[45px] text-left bg-cover bg-center rounded-lg"
+                    >
+                      <div className="absolute inset-0 bg-black/30 rounded-lg" />
+                     <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 relative z-10">
+                      <img
+                        src={game.icon}
+                        alt={game.name}
+                        className="w-full h-full object-cover rounded-md"
+                      />
                     </div>
-                    <span className="text-white font-medium text-[15px] truncate relative z-10">
-                      {game.name}
-                    </span>
-                  </motion.button>
-                ))}
+
+                      <span className="flex flex-col text-white font-medium text-[14px] relative z-10 leading-tight">
+                        <span className="truncate">{game.name}</span>
+                      </span>
+                    </motion.button>
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+
         </div>
       </div>
 

@@ -1,4 +1,3 @@
-
 import { BenefitsSection } from "./sections/BenefitsSection/BenefitsSection";
 import { FAQSection } from "./sections/FAQSection/FAQSection";
 import { HeaderSection } from "./sections/HeaderSection/HeaderSection";
@@ -10,18 +9,17 @@ import { WelcomeBannerSection } from "./sections/WelcomeBannerSection/WelcomeBan
 
 export const Frame = (): JSX.Element => {
   return (
- <div className=" bg-[#06100A] overflow-x-hidden w-full relative">
-  <div className="max-w-[1920px] mx-auto">
-    <HeaderSection />
-    <WelcomeBannerSection />
-    <TrendingItemsSection />
-    <TrustedBySection />
-    <BenefitsSection />
-    <HowItWorksSection />
-    <FAQSection />
-    <MainContentSection />
-  </div>
-</div>
-
+    <div className=" bg-[#06100A] overflow-x-hidden relative">
+      <div className="mx-absolute ">
+        <HeaderSection />
+        <WelcomeBannerSection />
+        <TrendingItemsSection />
+        <TrustedBySection />
+        <BenefitsSection />
+        <HowItWorksSection />
+        <FAQSection />
+        <MainContentSection />
+      </div>
+    </div>
   );
 };

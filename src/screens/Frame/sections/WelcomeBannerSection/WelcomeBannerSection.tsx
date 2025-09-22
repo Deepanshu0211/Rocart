@@ -101,14 +101,14 @@ export const WelcomeBannerSection = (): JSX.Element => {
               For items in Murder Mystery 2,&nbsp;&nbsp;Grow a Garden, Blox
               Fruits, Steal a Brainrot, Blade Ball.
             </p>
-            <Button className="h-auto bg-transparent p-0 hover:bg-transparent border-none shadow-none">
-              <div className="w-[170px] h-[50px] rounded-[18px] bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
+            <Button className="h-auto bg-transparent  p-0 hover:bg-transparent  shadow-none">
+              <div className="w-[170px] h-[50px] rounded-[18px] border border-white bg-gradient-to-r from-[#3dff87] to-[#25a651] flex items-center justify-center relative overflow-hidden group hover:from-[#45ff91] hover:to-[#2bb85a] transition-all duration-800">
                 <img
                   className="absolute left-4 w-6 h-6 z-10"
                   alt="Cart icon"
                   src="/mask-group-3.png"
                 />
-                <span className="font-bold text-white text-[15px] ml-4 z-10">
+                <span className="font-bold  text-white text-[15px] ml-4 z-10">
                   Start Buying
                 </span>
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
