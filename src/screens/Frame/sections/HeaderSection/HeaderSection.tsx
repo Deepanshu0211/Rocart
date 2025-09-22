@@ -172,8 +172,8 @@ export const HeaderSection = (): JSX.Element => {
       name: "Blox Fruits",
       subtitle: "🏁",
     
-      bgImage: "/bgs/image2.png",
-      icon: "/game/bloxfruits.png",
+     
+      icon: "/game/blox.png",
       useIcon: true,
     },
     {
@@ -181,7 +181,7 @@ export const HeaderSection = (): JSX.Element => {
       name: "Murder Mystery 2",
       subtitle: "🔪",
     
-      bgImage: "/bgs/image3.png",
+    
       icon: "/game/murder.png",
     },
     {
@@ -189,7 +189,7 @@ export const HeaderSection = (): JSX.Element => {
       name: "Adopt Me!",
       subtitle: "🏠",
      
-      bgImage: "/bgs/image4.png",
+     
       icon: "/game/adoptme.png",
     },
     {
@@ -197,7 +197,7 @@ export const HeaderSection = (): JSX.Element => {
       name: "Blade Ball",
       subtitle: "⚔️",
      
-      bgImage: "/bgs/image1.png",
+     
       icon: "/game/bundle.png",
     },
     {
@@ -308,11 +308,7 @@ export const HeaderSection = (): JSX.Element => {
                     variants={itemVariants}
                     whileHover={{ scale: 1.02 }}
                     className="relative flex items-center gap-3 w-full px-4 py-2 h-[60px] text-left bg-cover bg-center"
-                    style={{
-                      backgroundImage: game.bgImage
-                        ? `url(${game.bgImage})`
-                        : undefined,
-                    }}
+                
                   >
                     <div className="absolute inset-0 bg-black/60" />
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 relative z-10">
