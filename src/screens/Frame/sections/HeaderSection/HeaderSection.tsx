@@ -269,7 +269,7 @@ const games = [
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-[212px] h-[50px] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
+            className={`w-[auto] h-[50px] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
             style={{
               backgroundImage: selectedGame.bgImage
                 ? `url(${selectedGame.bgImage})`
@@ -298,7 +298,7 @@ const games = [
               )}
             </div>
 
-            <div className="ml-[10px] flex-1 flex items-center justify-between relative z-10">
+            <div className="ml-[10px] flex-1 flex items-center gap-2 relative z-10">
               <span className="font-poppins font-bold text-white text-sm leading-[21px]">
                 {selectedGame.name}
               </span>

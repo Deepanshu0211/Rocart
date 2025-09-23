@@ -16,20 +16,14 @@ const gameData = [
         price: "$15",
         image: "/img-5467--1--1.png",
         priceColor: "text-[#3dff87]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,16,10,0.3)_0%,rgba(44,118,73,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(61,255,136,0.7)_0%,rgba(37,153,81,0)_100%)]",
+        backgroundImage: "/trendingbg/1.png",
       },
       {
         name: "QUEEN BEE",
         price: "$10",
         image: "/img-5478-1.png",
         priceColor: "text-[#ffd801]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,16,10,0.3)_0%,rgba(118,113,44,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,236,61,0.7)_0%,rgba(153,130,37,0)_100%)]",
+        backgroundImage: "/trendingbg/2.png",
       },
     ],
   },
@@ -46,20 +40,14 @@ const gameData = [
         price: "$15",
         image: "/p11-1.png",
         priceColor: "text-[#ff3c3c]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,6,6,0.3)_0%,rgba(151,41,41,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,61,0.7)_0%,rgba(153,37,37,0)_100%)]",
+        backgroundImage: "/trendingbg/3.png",
       },
       {
         name: "GINGERSCOPE",
         price: "$10",
         image: "/65-1.png",
         priceColor: "text-[#be8832]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,12,6,0.3)_0%,rgba(118,82,44,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,161,61,0.7)_0%,rgba(153,112,37,0)_100%)]",
+        backgroundImage: "/trendingbg/4.png",
       },
     ],
   },
@@ -76,20 +64,14 @@ const gameData = [
         price: "$15",
         image: "/image-2-1.png",
         priceColor: "text-[#dd00ff]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(12,6,16,0.3)_0%,rgba(116,44,118,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,242,0.7)_0%,rgba(149,37,153,0)_100%)]",
+        backgroundImage: "/trendingbg/5.png",
       },
       {
         name: "QUEEN BEE",
         price: "$10",
         image: "/undefined---imgur-1.png",
         priceColor: "text-[#ff38f1]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,6,13,0.3)_0%,rgba(118,44,96,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,197,0.7)_0%,rgba(153,37,118,0)_100%)]",
+        backgroundImage: "/trendingbg/6.png",
       },
     ],
   },
@@ -106,20 +88,14 @@ const gameData = [
         price: "$15",
         image: "/elephant-17-9fcc194d-4ed1-475f-9992-6ede479175b9-1.png",
         priceColor: "text-[#31a6ff]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,12,16,0.3)_0%,rgba(44,86,118,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(61,200,255,0.7)_0%,rgba(37,103,153,0)_100%)]",
+        backgroundImage: "/trendingbg/7.png",
       },
       {
         name: "QUEEN BEE",
         price: "$10",
         image: "/cow-12-04a274cd-d0f3-448a-8729-45826f64f935-1.png",
         priceColor: "text-white",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(24,24,24,0.3)_0%,rgba(164,164,164,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,255,255,0.7)_0%,rgba(210,210,210,0)_100%)]",
+        backgroundImage: "/trendingbg/8.png",
       },
     ],
   },
@@ -208,7 +184,7 @@ export const TrendingItemsSection = (): JSX.Element => {
         className="absolute inset-0 bg-[url('/bg/mesh.png')] bg-repeat opacity-90 pointer-events-none from-[#06100A] via-transparent to-[#2A2A2A]"
         style={{
           backgroundSize: "90em 90em",
-          backgroundBlendMode: "overlay", // optional: blends gradient and image
+          backgroundBlendMode: "overlay",
         }}
       />
       <div className="max-w-7xl mx-auto px-6 z-10">
@@ -289,16 +265,10 @@ export const TrendingItemsSection = (): JSX.Element => {
                       className="w-6 h-6 rounded-lg object-cover mb-3 shadow-lg"
                       alt={game.title}
                       src={game.icon}
-                      // whileHover={{
-                      //   scale: 1.2,
-                      //   rotate: 360,
-                      //   transition: { duration: 0.6, type: "spring" }
-                      // }}
                     />
                     <motion.div
                       className="w-full text-center font-bold text-xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2"
                       style={{ fontFamily: "Poppins, sans-serif" }}
-                      // whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
                       {game.title}
@@ -317,7 +287,8 @@ export const TrendingItemsSection = (): JSX.Element => {
                       <motion.div
                         key={index}
                         variants={itemVariants}
-                        className={`relative w-[120px] h-[160px] rounded-xl flex flex-col items-center bg-opacity-60 ${item.cardGradient} backdrop-blur-sm border border-white/10 group/item`}
+                        className="relative w-[120px] h-[160px] rounded-xl flex flex-col items-center backdrop-blur-sm border border-white/10 group/item"
+                        style={{ backgroundImage: `url(${item.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                         whileHover={{
                           scale: 1.1,
                           y: -8,
@@ -340,18 +311,9 @@ export const TrendingItemsSection = (): JSX.Element => {
                             rotate: -5,
                             transition: { type: "spring", stiffness: 300 },
                           }}
-                          // animate={{
-                          //   y: [0, -12, 0],
-                          //   transition: {
-                          //     duration: 3 + index * 0.5,
-                          //     repeat: Infinity,
-                          //     ease: "easeInOut",
-                          //     delay: index * 0.2
-                          //   }
-                          // }}
                         />
                         <motion.div
-                          className="w-full text-left  font-bold text-[15px] mt-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
+                          className="w-full text-left font-bold text-[15px] mt-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
                           style={{ fontFamily: "Poppins, sans-serif" }}
                           initial={{ opacity: 1 }}
                           whileInView={{ opacity: 1 }}
@@ -362,7 +324,6 @@ export const TrendingItemsSection = (): JSX.Element => {
                         <motion.div
                           className={`w-full text-left font-bold text-sm mt-0 px-2 ${item.priceColor} drop-shadow-lg`}
                           style={{ fontFamily: "Poppins, sans-serif" }}
-                          // whileHover={{ scale: 1.1 }}
                           initial={{ opacity: 1, scale: 1 }}
                           whileInView={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.3, type: "spring" }}
@@ -383,7 +344,8 @@ export const TrendingItemsSection = (): JSX.Element => {
                     viewport={{ once: true }}
                   >
                     <Button
-                      className={`mt-8 w-[140px] h-[40px] rounded-xl border border-white ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
+                      className={`mt-8 w-[140px] h-[40px] rounded-xl border-[0.25px] sm:border-[0.25px]
+                         border-[#9B9B9B] ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
                     >
                       <motion.span
                         className="font-bold text-white text-sm tracking-wide leading-normal pointer-events-none"
@@ -402,7 +364,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
                   {/* Background Mask */}
                   <motion.img
-                    className="flex justify-center items-center  absolute bottom-0 left-0  w-[900px] h-[80px] 
+                    className="flex justify-center items-center absolute bottom-0 left-0 w-[900px] h-[80px] 
                       z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
@@ -416,17 +378,6 @@ export const TrendingItemsSection = (): JSX.Element => {
             </motion.div>
           ))}
         </motion.div>
-
-        {/* Bottom Decorative Elements */}
-        {/* <motion.div 
-          className="mt-20 flex justify-center"
-          initial={{ opacity: 0, scale: 0 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1, duration: 0.8, type: "spring" }}
-          viewport={{ once: true }}
-        >
-        
-        </motion.div> */}
       </div>
     </section>
   );

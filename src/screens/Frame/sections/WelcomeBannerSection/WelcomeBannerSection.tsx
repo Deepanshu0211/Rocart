@@ -6,36 +6,30 @@ import { AnimatePresence, motion } from "framer-motion";
 const gameItems = [
   {
     name: "Chroma Evergun",
-    image: "/10-1.png",
-    maskImage: "/mask-group.png",
-    bgGradient:
-      "linear-gradient(180deg,rgba(61,255,136,1) 0%,rgba(19,52,32,1) 100%)",
-    badgeColor: "#3dff87",
-    top: "30%",
+    image: "/homeico/1.png",
+ 
+  
+    top: "10%",
     left: "0%",
-    rotation: "",
+    rotation: "rotate-[-55deg]",
   },
   {
     name: "Control Fruit",
-    image: "/permanent-control-fruit-1.png",
-    maskImage: "/mask-group-1.png",
-    bgGradient:
-      "linear-gradient(180deg,rgba(63,109,247,1) 0%,rgba(0,17,67,1) 100%)",
-    badgeColor: "#3f6df7",
-    top: "-20%",
-    left: "72%",
-    rotation: "rotate-[49.57deg]",
+    image: "/homeico/3.png",
+  
+   
+    top: "-25%",
+    left: "65%",
+    rotation: "rotate-[45.57deg]",
   },
   {
     name: "Gold disco Bee",
     image:
-      "/rn-image-picker-lib-temp-303cba6c-796b-4321-adb9-f934f27de874-1.png",
-    maskImage: "/mask-group-2.png",
-    bgGradient:
-      "linear-gradient(180deg,rgba(239,0,85,1) 0%,rgba(47,0,17,1) 100%)",
-    badgeColor: "#ef0055",
+      "/homeico/2.png",
+   
+ 
     top: "-35%",
-    left: "10%",
+    left: "20%",
     rotation: "rotate-[-30.90deg]",
   },
 ];
@@ -84,7 +78,7 @@ const games = [
     gradient: "linear-gradient(90deg, #FF8132, #E9E9E9)",
   },
   {
-    name: "Tower of Hell",
+    name: "Garden Tower Defense",
     icon: "/logo/tower.png",
     bgImage: "/logo/towermain.png",
     gradient: "linear-gradient(90deg, #F7A35D, #E9E9E9)",
@@ -145,45 +139,45 @@ export const WelcomeBannerSection = () => {
               with Rocart!
             </h1>
 
-            <p className="font-normal text-[#c8c8c8] text-[2vw] sm:text-[1.8vw] lg:text-[1.2vw] leading-relaxed mb-[2vh]">
-              Rocart the fastest, safest shop for in-game items with automated
-              delivery. <br />
-              Get what you need in seconds.
-              <br />
-              For items in Murder Mystery 2,&nbsp;Grow a Garden, Blox
-              Fruits, Steal a Brainrot, Blade Ball.
-            </p>
+       <p className="font-normal text-[#c8c8c8] text-[2vw] sm:text-[1.8vw] lg:text-[1.2vw] leading-relaxed mb-[4vh]">
+                    Rocart the fastest, safest shop for in-game items with automated
+                    delivery. <br />
+                    Get what you need in seconds.
+                    <br />
+                    For items in Murder Mystery 2,&nbsp;Grow a Garden, Blox
+                    Fruits, Steal a Brainrot, Blade Ball.
+                  </p>
 
-            {/* Start Buying Button */}
-            <Button
-                  onClick={() => setIsOpen(true)}
-                 className="relative h-[10vh] w-[20vw] sm:w-[18vw] lg:w-[15vw]
-                            rounded-[25px] p-2 flex items-center justify-center
-                            bg-gradient-to-r from-[#a9d692] via-[#3DFF88] to-[#259951]
-                            hover:shadow-xl hover:shadow-[#259951]/30
-                            transition-all duration-300 overflow-hidden"
-                >
-                  {/* Background overlay for hover effect */}
-                  <motion.div
-                    className="absolute inset-0 bg-white/10"
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 0.15 }}
-                    transition={{ duration: 0.3 }}
-                  />
+                  {/* Start Buying Button */}
+                  <Button
+                    onClick={() => setIsOpen(true)}
+                 className="mt-[6vh] h-[7vh] w-[16vw] sm:w-[14vw] lg:w-[12vw]
+                    rounded-[15px] p-2 flex items-center justify-center
+                    bg-gradient-to-r from-[#a9d692] via-[#3DFF88] to-[#259951]
+                    hover:shadow-xl hover:shadow-[#259951]/30
+                    transition-all duration-300 overflow-hidden"
 
-                  {/* Icon + Text */}
-                  <div className="relative z-10 flex items-center space-x-3">
-                    <img
-                      className="w-[3vw] sm:w-[2.5vw] h-[3vw] sm:h-[2.5vw] object-contain"
-                      alt="Cart icon"
-                      src="/icon/shop.png"
-                    />
-                    <span className="font-bold text-white text-[2vw] sm:text-[1.5vw] lg:text-[1.2vw]">
-                      Start Buying
-                    </span>
-                  </div>
-                </Button>
+                  >
+                    {/* Background overlay for hover effect */}
+             <motion.div
+                  className="absolute inset-0 bg-white/10 pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 0.15 }}
+                  transition={{ duration: 0.3 }}
+                />
 
+                    {/* Icon + Text */}
+                    <div className="relative z-10 flex items-center space-x-3">
+                      <img
+                        className="w-[3vw] sm:w-[2.5vw] h-[3vw] sm:h-[2.5vw] object-contain"
+                        alt="Cart icon"
+                        src="/icon/shop.png"
+                      />
+                      <span className="font-bold text-white text-[2vw] sm:text-[1.5vw] lg:text-[1.2vw]">
+                        Start Buying
+                      </span>
+                    </div>
+                  </Button>
           </div>
         </div>
 
@@ -219,28 +213,29 @@ export const WelcomeBannerSection = () => {
                   {/* Background gradient */}
                   <div
                     className="absolute inset-0 rounded-[2.5vw] opacity-[0.12] -rotate-45"
-                    style={{ background: item.bgGradient }}
+                  
                   />
 
                   {/* Item Image */}
-                  <img
-                    className={`absolute inset-0 w-[70%] h-[70%] m-auto object-contain ${item.rotation}`}
-                    alt={item.name}
-                    src={item.image}
-                  />
+                      <img
+                        className={`absolute inset-0 w-[100%] h-[100%] m-auto object-contain scale-150 ${item.rotation}`}
+                        alt={item.name}
+                        src={item.image}
+                      />
+
 
                   {/* Badge */}
                   <div
                     className="absolute bottom-[20%] right-[10%] w-[2.5vw] h-[2.5vw] rounded-[0.8vw] -rotate-45"
-                    style={{ backgroundColor: item.badgeColor }}
+                  
                   />
 
                   {/* Badge Icon */}
-                  <img
+                  {/* <img
                     className="absolute bottom-[20%] right-[10%] w-[2vw] h-[2vw] object-contain"
                     alt="Badge icon"
                     src={item.maskImage}
-                  />
+                  /> */}
                 </CardContent>
               </Card>
             </motion.div>
@@ -301,7 +296,7 @@ export const WelcomeBannerSection = () => {
                       >
                         {game.name}
                       </p>
-                      <p className="text-[#ffffff] text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
+                      <p className="text-[#FFFFFF] text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
                         Tap to view Items
                       </p>
                     </CardContent>
