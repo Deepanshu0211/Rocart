@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Twitter, Youtube, Music2, MessageCircle, CreditCard, ShoppingBag } from "lucide-react";
 
+// Social media, support, resource, and legal links (unchanged)
 const socialMediaIcons = [
   { icon: Twitter, name: "Twitter", href: "#" },
   { icon: Youtube, name: "YouTube", href: "#" },
@@ -30,28 +31,39 @@ const legalLinks = [
 const paymentMethods = [
   { 
     name: "visa", 
-    icon: CreditCard,
-    color: "#1a1f71"
+    icon: CreditCard, // Fallback icon
+  
+    image: "/cards/visa.png" // Explicit image path
   },
   { 
     name: "amex", 
     icon: CreditCard,
-    color: "#0055a4"
+   
+    image: "/cards/amex.png"
   },
   { 
     name: "mastercard", 
     icon: CreditCard,
-    color: "#eb001b"
+ 
+    image: "/cards/mastermind.png"
+  },
+   { 
+    name: "Applepay", 
+    icon: CreditCard,
+  
+    image: "/cards/apple.png"
   },
   { 
     name: "paypal", 
     icon: ShoppingBag,
-    color: "#003087"
+   
+    image: "/cards/paypal.png"
   },
   { 
     name: "discover", 
     icon: CreditCard,
-    color: "#ff6600"
+   
+    image: "/cards/discover.png"
   },
 ];
 
@@ -145,7 +157,6 @@ export const MainContentSection = (): JSX.Element => {
             className="grid grid-cols-2 md:grid-cols-4 gap-6"
             variants={itemVariants}
           >
-            
             {/* Social Media Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
@@ -260,27 +271,27 @@ export const MainContentSection = (): JSX.Element => {
                 <motion.div
                   key={index}
                   className="w-12 h-8 bg-white rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
-                  style={{ 
-                    border: `2px solid ${method.color || '#e5e7eb'}`,
-                    color: method.color || '#374151'
-                  }}
+                 
                   whileHover={paymentHover}
                   whileTap={{ scale: 0.95 }}
+                  title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
                 >
-                  {/* Fallback icon */}
+                  {/* Fallback icon (hidden by default) */}
                   <IconComponent 
                     size={18} 
-                    className="text-gray-600"
+                    className="text-gray-600 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200"
                   />
                   
-                  {/* Image overlay - will show if image loads successfully */}
+                  {/* Payment method image */}
                   <img
-                    src={`/cards/${method.name}.png`}
-                    alt={method.name}
+                    src={method.image}
+                    alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
                     className="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-200"
                     onError={(e) => {
-                      // Hide image if it fails to load, icon will show instead
-                      e.currentTarget.style.opacity = '0';
+                      e.currentTarget.style.opacity = '0'; // Hide image on error
+                      if (e.currentTarget.previousSibling) {
+                        (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1'; // Show fallback icon
+                      }
                     }}
                   />
                 </motion.div>

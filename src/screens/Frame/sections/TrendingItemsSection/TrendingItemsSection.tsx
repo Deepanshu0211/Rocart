@@ -283,7 +283,7 @@ export const TrendingItemsSection = () => {
                       <motion.div
                         key={index}
                         variants={itemVariants}
-                        className="relative w-[120px] h-[160px] rounded-xl flex flex-col items-center backdrop-blur-sm border border-white/10 group/item"
+                        className="relative w-[120px] h-[160px] rounded-xl flex flex-col items-center backdrop-blur-sm border-none group/item"
                         style={{ backgroundImage: `url(${item.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                         whileHover={{
                           scale: 1.1,
