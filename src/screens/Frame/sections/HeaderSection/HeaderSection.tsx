@@ -79,7 +79,7 @@ const LanguageModal = ({
             <h2 className="text-lg font-semibold mb-4">Language & Currency</h2>
 
             {/* Auto-detected */}
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-3 flex items-center gap-2">
               <p className="text-sm text-gray-400">Detected Country:</p>
               {loading ? (
                 <p className="text-base font-medium">Detecting...</p>
@@ -360,7 +360,7 @@ const games = [
       <div className="flex items-center gap-6">
         <div
           onClick={() => setIsLangModalOpen(true)}
-          className="cursor-pointer w-[194px] h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center"
+          className="cursor-pointer w-[auto]  h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center"
         >
           <ReactCountryFlag
             countryCode={country}
@@ -368,7 +368,7 @@ const games = [
             style={{ width: "1.5em", height: "1.5em", marginLeft: "16px" }}
             title={country}
           />
-          <div className="ml-[8px] flex-1 flex items-center justify-between">
+          <div className="ml-[8px] flex-1 flex items-center gap-2 justify-between">
             <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
               English/{currency}
             </span>
@@ -377,7 +377,7 @@ const games = [
         </div>
 
         <Button className="w-[100px] h-[37px] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[11px] border-0 p-0 flex items-center justify-center gap-2">
-          <div className="w-[19px] h-[19px] bg-[url(/mask-group-38.png)] bg-cover" />
+          <div className="w-[19px] h-[19px] bg-[url(/icon/person.png)] bg-cover" />
           <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">
             Log in
           </span>

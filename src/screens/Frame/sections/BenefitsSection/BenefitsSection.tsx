@@ -6,7 +6,7 @@ export const BenefitsSection = (): JSX.Element => {
     {
       bgColor: "bg-[#0e2514]",
       borderColor: "border-[#3dff87]",
-      icon: "/mask-group-15.png",
+      icon: "/buttonbg/tick.png",
       title: "Fast & Reliable",
       description:
         "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
@@ -14,7 +14,7 @@ export const BenefitsSection = (): JSX.Element => {
     {
       bgColor: "bg-[#0f1827]",
       borderColor: "border-[#31a6ff]",
-      icon: "/mask-group-12.png",
+      icon: "/buttonbg/tick2.png",
       title: "Fast & Reliable",
       description:
         "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
@@ -22,7 +22,7 @@ export const BenefitsSection = (): JSX.Element => {
     {
       bgColor: "bg-[#1b1028]",
       borderColor: "border-[#cf25ff]",
-      icon: "/mask-group-13.png",
+      icon: "/buttonbg/tick3.png",
       title: "Fast & Reliable",
       description:
         "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
@@ -30,7 +30,7 @@ export const BenefitsSection = (): JSX.Element => {
     {
       bgColor: "bg-[#250e0e]",
       borderColor: "border-[#ff3c3c]",
-      icon: "/mask-group-14.png",
+      icon: "/buttonbg/tick4.png",
       title: "Fast & Reliable",
       description:
         "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
