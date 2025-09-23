@@ -43,8 +43,8 @@ const gameItems = [
 const games = [
   {
     name: "Blox Fruits",
-    icon: "/logo/bloxmain.png",
-    bgImage: "/logo/blox.png",
+    icon: "/logo/blox.png",
+    bgImage: "/logo/bloxmain.png",
     gradient: "linear-gradient(90deg, #41A7FF, #D9EDFF)",
   },
   {
@@ -156,31 +156,33 @@ export const WelcomeBannerSection = () => {
 
             {/* Start Buying Button */}
             <Button
-              onClick={() => setIsOpen(true)}
-              className="h-auto bg-transparent p-2 hover:bg-transparent shadow-none"
-            >
-              <div
-                className="relative flex items-center justify-center overflow-hidden group"
-                style={{
-                  backgroundImage: "url('/icon/button.png')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  width: "20vw",
-                  height: "10vh",
-                  borderRadius: "10px",
-                }}
-              >
-                {/* <img
-                  className="absolute left-[1vw] w-[3vw] sm:w-[2.5vw] h-[3vw] sm:h-[2.5vw] object-contain z-10"
-                  alt="Cart icon"
-                  src="/icon/shop.png"
-                />
-                <span className="font-bold text-white text-[2vw] sm:text-[1.5vw] lg:text-[1.2vw] ml-[3vw] z-10">
-                  Start Buying
-                </span>
-                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300" /> */}
-              </div>
-            </Button>
+                  onClick={() => setIsOpen(true)}
+                 className="relative h-[10vh] w-[20vw] sm:w-[18vw] lg:w-[15vw]
+                            rounded-[25px] p-2 flex items-center justify-center
+                            bg-gradient-to-r from-[#a9d692] via-[#3DFF88] to-[#259951]
+                            hover:shadow-xl hover:shadow-[#259951]/30
+                            transition-all duration-300 overflow-hidden"
+                >
+                  {/* Background overlay for hover effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-white/10"
+                    initial={{ opacity: 0 }}
+                    whileHover={{ opacity: 0.15 }}
+                    transition={{ duration: 0.3 }}
+                  />
+
+                  {/* Icon + Text */}
+                  <div className="relative z-10 flex items-center space-x-3">
+                    <img
+                      className="w-[3vw] sm:w-[2.5vw] h-[3vw] sm:h-[2.5vw] object-contain"
+                      alt="Cart icon"
+                      src="/icon/shop.png"
+                    />
+                    <span className="font-bold text-white text-[2vw] sm:text-[1.5vw] lg:text-[1.2vw]">
+                      Start Buying
+                    </span>
+                  </div>
+                </Button>
 
           </div>
         </div>
@@ -254,7 +256,7 @@ export const WelcomeBannerSection = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="relative rounded-[3vw] p-[2vw] w-[80vw] sm:w-[60vw] lg:w-[50vw] max-h-[85vh] overflow-y-auto scrollbar-none bg-[url('/bg/modalbg.png')] bg-cover bg-center bg-no-repeat"
+              className="relative rounded-[3vw] p-[2vw] w-[80vw] sm:w-[60vw] lg:w-[70vw] max-h-[85vh] overflow-y-auto scrollbar-none bg-[url('/bg/modalbg.png')] bg-cover bg-center bg-no-repeat"
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }}
@@ -279,7 +281,7 @@ export const WelcomeBannerSection = () => {
                 {games.map((game, i) => (
                   <Card
                     key={i}
-                    className="relative rounded-[0.5vw] h-[20vh] sm:h-[20vh] overflow-hidden hover:scale-[1.03] transition-transform duration-300 cursor-pointer bg-transparent shadow-none border-none"
+                    className="relative rounded-[25px] w-[auto] h-[20vh] sm:h-[20vh] overflow-hidden hover:scale-[1.03] transition-transform duration-300 cursor-pointer bg-transparent shadow-none border-none"
                     style={{
                       backgroundImage: `url(${game.bgImage})`,
                       backgroundSize: "cover",
@@ -287,7 +289,7 @@ export const WelcomeBannerSection = () => {
                       backgroundBlendMode: "overlay",
                     }}
                   >
-                    <CardContent className="relative z-10 flex flex-col items-center justify-center p-[2vw] text-center">
+                    <CardContent className="relative z-10 flex flex-col items-center justify-center p-[1vw] text-center">
                       <img
                         src={game.icon}
                         alt={game.name}

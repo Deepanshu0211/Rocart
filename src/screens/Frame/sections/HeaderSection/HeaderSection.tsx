@@ -319,7 +319,7 @@ const games = [
                 exit="hidden"
                 variants={containerVariants}
                 className="absolute top-[55px] left-0 w-[250px] 
-                          rounded-xl shadow-lg z-50 border border-[#213d2d] 
+                          rounded-xl shadow-lg z-50 
                           bg-[#0C1610] p-2
                           h-auto overflow-y-auto" // 🔹 fixed height + scroll
               >
@@ -330,10 +330,10 @@ const games = [
                       onClick={() => handleGameSelect(game)}
                       variants={itemVariants}
                       whileHover={{ scale: 1.02 }}
-                      className="relative flex items-center gap-3 w-full px-3 py-2 
+                      className="relative flex items-center gap-3 w-full px-3 py-4 
                                 h-[45px] text-left bg-cover bg-center rounded-lg"
                     >
-                      <div className="absolute inset-0 bg-black/30 rounded-lg" />
+                      <div className="absolute inset-0  rounded-lg" />
                      <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 relative z-10">
                       <img
                         src={game.icon}
