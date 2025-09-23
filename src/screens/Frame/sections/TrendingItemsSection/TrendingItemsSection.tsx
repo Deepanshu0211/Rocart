@@ -8,8 +8,7 @@ const gameData = [
     title: "Grow A Garden",
     icon: "/gag-jqsy7lwj-1.png",
     maskGroup: "/mask-group-21.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(6,16,10,1)_0%,rgba(44,118,74,1)_100%)]",
+    buttonImage: "/buttonbg/1.png",
     items: [
       {
         name: "RACCOON",
@@ -32,8 +31,7 @@ const gameData = [
     title: "MM2",
     icon: "/mm2-ddbykew2-2.png",
     maskGroup: "/mask-group-22.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(16,7,6,1)_0%,rgba(145,19,19,1)_100%)]",
+    buttonImage: "/buttonbg/2.png",
     items: [
       {
         name: "RACCOON",
@@ -56,8 +54,7 @@ const gameData = [
     title: "Steal A brainrot",
     icon: "/ttd-cljlmppy-2.png",
     maskGroup: "/mask-group-24.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(13,6,16,1)_0%,rgba(108,44,118,1)_100%)]",
+    buttonImage: "/buttonbg/3.png",
     items: [
       {
         name: "RACCOON",
@@ -80,8 +77,7 @@ const gameData = [
     title: "Adopt Me",
     icon: "/am-yek4mbfs-1.png",
     maskGroup: "/mask-group-26.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(6,13,16,1)_0%,rgba(40,134,205,1)_100%)]",
+    buttonImage: "/buttonbg/4.png",
     items: [
       {
         name: "RACCOON",
@@ -177,7 +173,7 @@ const lineVariants = {
   },
 };
 
-export const TrendingItemsSection = (): JSX.Element => {
+export const TrendingItemsSection = () => {
   return (
     <section className="relative w-full min-h-screen bg-[#06100A] py-20 overflow-hidden">
       <div
@@ -191,13 +187,13 @@ export const TrendingItemsSection = (): JSX.Element => {
         {/* Animated Lines */}
         <div className="relative mb-16">
           <motion.div
-            className="absolute top-8 -left-[40px] w-[35%] h-0.5 rounded-[0px_30px_42px_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)] "
+            className="absolute top-8 -left-[40px] w-[35%] h-0.5 rounded-[0px_30px_42px_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
           />
           <motion.div
-            className="absolute top-8 -right-[40px] w-[35%] h-0.5 rounded-[50px_0px_0px_50px] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)] "
+            className="absolute top-8 -right-[40px] w-[35%] h-0.5 rounded-[50px_0px_0px_50px] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
@@ -338,25 +334,25 @@ export const TrendingItemsSection = (): JSX.Element => {
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 1, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: gameIndex * 0.1 + 0.6, duration: 0.5 }}
                     viewport={{ once: true }}
                   >
                     <Button
-                      className={`mt-8 w-[140px] h-[40px] rounded-xl border-[0.25px] sm:border-[0.25px]
-                         border-[#9B9B9B] ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
+                      className="mt-11 w-[110px] h-[34px] z-100 rounded-lg group-hover:scale-105 transition-transform duration-300"
+                      style={{ backgroundImage: `url(${game.buttonImage})`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundColor: '#000000', opacity: 1, border: 'none' }}
                     >
                       <motion.span
-                        className="font-bold text-white text-sm tracking-wide leading-normal pointer-events-none"
+                        className="font-medium text-white text-[10px] opacity-100 tracking-tight leading-none pointer-events-none"
                         style={{ fontFamily: "Poppins, sans-serif" }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        Visit Market{" "}
+                        Visit Market
                         <img
                           src="/icon/icon2.png"
                           alt="arrow right"
-                          className="inline w-3 h-3 ml-2 object-contain"
+                          className="inline w-2.5 h-2.5 ml-1 object-contain"
                         />
                       </motion.span>
                     </Button>
@@ -364,8 +360,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
                   {/* Background Mask */}
                   <motion.img
-                    className="flex justify-center items-center absolute bottom-0 left-0 w-[900px] h-[80px] 
-                      z-0 opacity-100 filter brightness-150"
+                    className="flex justify-center items-center absolute bottom-0 left-0 w-[900px] h-[60px] z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
                     initial={{ opacity: 1, scale: 1 }}
