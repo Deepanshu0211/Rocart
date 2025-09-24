@@ -74,35 +74,35 @@ const LanguageModal = ({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-[#111] rounded-xl p-6 w-[350px] shadow-xl text-white"
+            className="bg-[#111] rounded-xl p-[1.5vw] w-[22vw] shadow-xl text-white"
           >
-            <h2 className="text-lg font-semibold mb-4">Language & Currency</h2>
+            <h2 className="text-[1.2vw] font-semibold mb-[1vh]">Language & Currency</h2>
 
             {/* Auto-detected */}
-            <div className="mb-3 flex items-center gap-2">
-              <p className="text-sm text-gray-400">Detected Country:</p>
+            <div className="mb-[0.8vh] flex items-center gap-[0.5vw]">
+              <p className="text-[0.9vw] text-gray-400">Detected Country:</p>
               {loading ? (
-                <p className="text-base font-medium">Detecting...</p>
+                <p className="text-[1vw] font-medium">Detecting...</p>
               ) : (
                 <>
                   <ReactCountryFlag
                     countryCode={country}
                     svg
-                    style={{ width: "1.5em", height: "1.5em" }}
+                    style={{ width: "1.2vw", height: "1.2vw" }}
                     title={country}
                   />
-                  <p className="text-base font-medium">{country}</p>
+                  <p className="text-[1vw] font-medium">{country}</p>
                 </>
               )}
             </div>
 
             {/* Manual selection */}
-            <div className="mb-4">
-              <label className="text-sm text-gray-400 block mb-1">
+            <div className="mb-[1vh]">
+              <label className="text-[0.9vw] text-gray-400 block mb-[0.3vh]">
                 Change Country
               </label>
               <select
-                className="w-full bg-[#222] p-2 rounded-md text-white"
+                className="w-full bg-[#222] p-[0.5vw] rounded-md text-white text-[0.9vw]"
                 value={country}
                 onChange={(e) => {
                   setCountry(e.target.value);
@@ -124,14 +124,14 @@ const LanguageModal = ({
               </select>
             </div>
 
-            <div className="mb-6">
-              <p className="text-sm text-gray-400">Currency</p>
-              <p className="text-base font-medium">{currency}</p>
+            <div className="mb-[1.5vh]">
+              <p className="text-[0.9vw] text-gray-400">Currency</p>
+              <p className="text-[1vw] font-medium">{currency}</p>
             </div>
 
             <button
               onClick={onClose}
-              className="w-full py-2 rounded-md bg-green-600 hover:bg-green-700 font-semibold"
+              className="w-full py-[0.5vh] rounded-md bg-green-600 hover:bg-green-700 font-semibold text-[0.9vw]"
             >
               Confirm
             </button>
@@ -257,11 +257,11 @@ const games = [
   };
 
   return (
-    <header className="w-full h-[103px] flex items-center justify-between px-10 bg-[#0C1610] relative">
+    <header className="w-full h-[10vh] flex items-center justify-between px-[2vw] bg-[#0C1610] relative">
       {/* Left: Logo + Dropdown */}
-      <div className="flex items-center gap-8 relative" ref={dropdownRef}>
+      <div className="flex items-center gap-[2vw] relative" ref={dropdownRef}>
         <img
-          className="w-[auto] h-[5vh] object-cover"
+          className="w-auto h-[5vh] object-cover"
           alt="Ro CART"
           src="/ro-cart-33-2.png"
         />
@@ -269,7 +269,7 @@ const games = [
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-[auto] h-[8vh] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
+            className={`w-auto h-[6vh] rounded-[0.7vw] flex items-center relative overflow-hidden bg-center transition-colors`}
             style={{
               backgroundImage: selectedGame.bgImage
                 ? `url(${selectedGame.bgImage})`
@@ -286,24 +286,24 @@ const games = [
             )}
 
             {/* 🔹 Custom Gamepad Icon here */}
-            <div className="ml-[15px] w-[2vw] h-[2vh] flex items-center justify-center relative z-10">
+            <div className="ml-[1vw] w-[1.5vw] h-[1.5vw] flex items-center justify-center relative z-10">
               {selectedGame.useIcon ? (
                 <img
                   src="/icon/gamepad.png"
                   alt="Gamepad"
-                  className="w-6 h-6 object-contain"
+                  className="w-[1.5vw] h-[1.5vw] object-contain"
                 />
               ) : (
                 selectedGame.subtitle || "🎮"
               )}
             </div>
 
-            <div className="ml-[1vmin] flex-1 flex items-center gap-2 relative z-10">
-              <span className="font-poppins font-bold text-white text-sm leading-[21px]">
+            <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
+              <span className="font-poppins font-bold text-white text-[1vw] leading-tight">
                 {selectedGame.name}
               </span>
               <ChevronDownIcon
-                className={`w-[13px] h-[13px] text-white mr-[15px] transition-transform duration-200 ${
+                className={`w-[1vw] h-[1vw] text-white mr-[1vw] transition-transform duration-200 ${
                   isDropdownOpen ? "rotate-0" : ""
                 }`}
               />
@@ -318,9 +318,9 @@ const games = [
                 animate="show"
                 exit="hidden"
                 variants={containerVariants}
-                className="absolute top-[55px] left-0 w-[250px] 
+                className="absolute top-[6vh] left-0 w-[16vw] 
                           rounded-xl shadow-lg z-50 
-                          bg-[#0C1610] p-2
+                          bg-[#0C1610] p-[0.5vw]
                           h-auto overflow-y-auto" // 🔹 fixed height + scroll
               >
                 <div className="flex flex-col ">
@@ -330,11 +330,11 @@ const games = [
                       onClick={() => handleGameSelect(game)}
                       variants={itemVariants}
                       whileHover={{ scale: 1.02 }}
-                      className="relative flex items-center gap-3 w-full px-3 py-4 
-                                h-[45px] text-left bg-cover bg-center rounded-lg"
+                      className="relative flex items-center gap-[0.8vw] w-full px-[0.8vw] py-[3vh] 
+                                h-[3vh] text-left bg-cover bg-center rounded-lg"
                     >
                       <div className="absolute inset-0  rounded-lg" />
-                     <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 relative z-10">
+                     <div className="w-[2vw] h-[2vw] rounded-md overflow-hidden flex-shrink-0 relative z-10">
                       <img
                         src={game.icon}
                         alt={game.name}
@@ -342,7 +342,7 @@ const games = [
                       />
                     </div>
 
-                      <span className="flex flex-col text-white font-medium text-[14px] relative z-10 leading-tight">
+                      <span className="flex flex-col text-white font-medium text-[0.9vw] relative z-10 leading-tight">
                         <span className="truncate">{game.name}</span>
                       </span>
                     </motion.button>
@@ -357,28 +357,28 @@ const games = [
       </div>
 
       {/* Right: Language + Login */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-[1.5vw]">
         <div
           onClick={() => setIsLangModalOpen(true)}
-          className="cursor-pointer w-[auto]  h-[50px] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[11px] flex items-center"
+          className="cursor-pointer w-auto h-[5vh] bg-[linear-gradient(87deg,rgba(15,15,15,1)_0%,rgba(13,13,13,1)_100%)] rounded-[0.7vw] flex items-center"
         >
           <ReactCountryFlag
             countryCode={country}
             svg
-            style={{ width: "1.5em", height: "1.5em", marginLeft: "16px" }}
+            style={{ width: "2vw", height: "2vw", marginLeft: "1vw" }}
             title={country}
           />
-          <div className="ml-[8px] flex-1 flex items-center gap-2 justify-between">
-            <span className="font-poppins font-semibold text-white text-sm leading-[21px]">
+          <div className="ml-[0.5vw] flex-1 flex items-center gap-[0.5vw] justify-between">
+            <span className="font-poppins font-semibold text-white text-[0.9vw] leading-tight">
               English/{currency}
             </span>
-            <ChevronDownIcon className="w-[13px] h-[13px] text-white mr-[15px]" />
+            <ChevronDownIcon className="w-[0.8vw] h-[0.8vw] text-white mr-[1vw]" />
           </div>
         </div>
 
-        <Button className="w-[100px] h-[37px] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[11px] border-0 p-0 flex items-center justify-center gap-2">
-          <div className="w-[19px] h-[19px] bg-[url(/icon/person.png)] bg-cover" />
-          <span className="font-poppins font-semibold text-white text-sm leading-[21px] whitespace-nowrap">
+        <Button className="w-[6vw] h-[5vh] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[0.7vw] border-0 p-0 flex items-center justify-center gap-[0.5vw]">
+          <div className="w-[1.2vw] h-[1.2vw] bg-[url(/icon/person.png)] bg-cover" />
+          <span className="font-poppins font-semibold text-white text-[0.9vw] leading-tight whitespace-nowrap">
             Log in
           </span>
         </Button>
