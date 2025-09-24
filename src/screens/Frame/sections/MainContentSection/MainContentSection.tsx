@@ -206,7 +206,7 @@ export const MainContentSection = (): JSX.Element => {
 
         {/* Bottom Section - Social Media (left) + Payment Methods (right) */}
         <motion.div 
-          className="flex items-center justify-between pt-6"
+          className="flex items-center justify-between -mt-6"
           variants={itemVariants}
         >
           {/* Social Media Icons (Left) */}
