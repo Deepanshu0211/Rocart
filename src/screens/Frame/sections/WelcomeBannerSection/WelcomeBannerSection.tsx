@@ -167,13 +167,13 @@ export const WelcomeBannerSection = () => {
                 />
 
                     {/* Icon + Text */}
-                    <div className="relative z-10 flex items-center space-x-3">
+                    <div className="relative z-10 flex items-center space-x-2">
                       <img
-                        className="w-[3vw] sm:w-[2.5vw] h-[3vw] sm:h-[2.5vw] object-contain"
+                        className="w-[2vw] sm:w-[2vw] h-[3vw] sm:h-[2.5vw] object-contain"
                         alt="Cart icon"
                         src="/icon/shop.png"
                       />
-                      <span className="font-bold text-white text-[2vw] sm:text-[1.5vw] lg:text-[1.2vw]">
+                      <span className="font-bold text-white text-[3vw] sm:text-[3vw] lg:text-[1vw]">
                         Start Buying
                       </span>
                     </div>
@@ -185,7 +185,7 @@ export const WelcomeBannerSection = () => {
         <div className="flex-1 relative aspect-[4/3] w-full max-w-[95vw] sm:max-w-[50vw] lg:max-w-[40vw] mx-auto">
           {/* Main Character */}
           <img
-            className="absolute top-[42%] left-[30%] w-[50%] h-auto object-contain"
+            className="absolute top-[25vh] left-[30%] w-[50%] h-auto object-contain"
             alt="Character"
             src="/073bb3b399c740a024f6d5bff073254ed283398d-2-690x388-efb76d42-17d1.png"
           />

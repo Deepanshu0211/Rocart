@@ -261,7 +261,7 @@ const games = [
       {/* Left: Logo + Dropdown */}
       <div className="flex items-center gap-8 relative" ref={dropdownRef}>
         <img
-          className="w-[159px] h-10 object-cover"
+          className="w-[auto] h-[5vh] object-cover"
           alt="Ro CART"
           src="/ro-cart-33-2.png"
         />
@@ -269,7 +269,7 @@ const games = [
         <div className="relative">
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-[auto] h-[50px] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
+            className={`w-[auto] h-[8vh] rounded-[11px] flex items-center relative overflow-hidden bg-center transition-colors`}
             style={{
               backgroundImage: selectedGame.bgImage
                 ? `url(${selectedGame.bgImage})`
@@ -286,7 +286,7 @@ const games = [
             )}
 
             {/* 🔹 Custom Gamepad Icon here */}
-            <div className="ml-[15px] w-[27px] h-[27px] flex items-center justify-center relative z-10">
+            <div className="ml-[15px] w-[2vw] h-[2vh] flex items-center justify-center relative z-10">
               {selectedGame.useIcon ? (
                 <img
                   src="/icon/gamepad.png"
@@ -298,7 +298,7 @@ const games = [
               )}
             </div>
 
-            <div className="ml-[10px] flex-1 flex items-center gap-2 relative z-10">
+            <div className="ml-[1vmin] flex-1 flex items-center gap-2 relative z-10">
               <span className="font-poppins font-bold text-white text-sm leading-[21px]">
                 {selectedGame.name}
               </span>
