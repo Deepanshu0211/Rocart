@@ -259,12 +259,12 @@ export const TrendingItemsSection = () => {
                     viewport={{ once: true }}
                   >
                     <motion.img
-                      className="w-[2vw] h-[2vw] rounded-[0.8vw] object-cover mb-[1.5vh] shadow-lg"
+                      className="w-[1.8vw] h-[1.8vw] rounded-[0.4vw] object-cover mb-[1.5vh] shadow-lg"
                       alt={game.title}
                       src={game.icon}
                     />
                     <motion.div
-                      className="w-full text-center font-bold text-[1.8vw] sm:text-[1.6vw] lg:text-[1.4vw] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-[1vh]"
+                      className="w-full text-center font-bold text-[0.5vw] sm:text-[0.5vw] lg:text-[0.8vw] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-[1vh]"
                       style={{ fontFamily: "Poppins, sans-serif" }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
