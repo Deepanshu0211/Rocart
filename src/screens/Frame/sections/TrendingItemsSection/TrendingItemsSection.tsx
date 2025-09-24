@@ -209,7 +209,7 @@ export const TrendingItemsSection = () => {
           viewport={{ once: true }}
         >
           <motion.h2
-            className="bg-gradient-to-r from-white via-gray-200 z-10 h-[10vh] to-gray-400 bg-clip-text text-transparent font-bold text-[6vw] sm:text-[5vw] lg:text-[4vw] mb-0"
+            className="bg-gradient-to-r from-white via-gray-200 z-10 h-[12vh] to-gray-400 bg-clip-text text-transparent font-bold text-[6vw] sm:text-[5vw] lg:text-[4vw] mb-0"
             style={{ fontFamily: "Poppins, sans-serif" }}
             transition={{ type: "spring", stiffness: 200 }}
           >
