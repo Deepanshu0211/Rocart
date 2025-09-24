@@ -175,25 +175,26 @@ const lineVariants = {
 
 export const TrendingItemsSection = () => {
   return (
-    <section className="relative w-full min-h-screen bg-[#06100A] py-20 overflow-hidden">
+    <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] overflow-hidden">
       <div
         className="absolute inset-0 bg-[url('/bg/mesh.png')] bg-repeat opacity-90 pointer-events-none from-[#06100A] via-transparent to-[#2A2A2A]"
         style={{
-          backgroundSize: "90em 90em",
+          backgroundSize: "800px 800px",
           backgroundBlendMode: "overlay",
+          backgroundAttachment: "fixed",
         }}
       />
-      <div className="max-w-7xl mx-auto px-6 z-10">
+      <div className="max-w-[95vw] mx-auto px-[3vw] z-10">
         {/* Animated Lines */}
-        <div className="relative mb-16">
+        <div className="relative mb-[10vh]">
           <motion.div
-            className="absolute top-8 -left-[40px] w-[35%] h-0.5 rounded-[0px_30px_42px_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)]"
+            className="absolute top-[6vh] -left-[2vw] w-[35%] h-[0.2vh] rounded-[0px_2vw_3vw_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
           />
           <motion.div
-            className="absolute top-8 -right-[40px] w-[35%] h-0.5 rounded-[50px_0px_0px_50px] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)]"
+            className="absolute top-[6vh] -right-[2vw] w-[35%] h-[0.2vh] rounded-[3vw_0px_0px_3vw] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
@@ -202,20 +203,20 @@ export const TrendingItemsSection = () => {
 
         {/* Title Section */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-[10vh]"
           variants={titleVariants}
           initial="visible"
           viewport={{ once: true }}
         >
           <motion.h2
-            className="bg-gradient-to-r from-white via-gray-200 z-10 h-20 to-gray-400 bg-clip-text text-transparent font-bold text-xl md:text-xl lg:text-6xl mb-0"
+            className="bg-gradient-to-r from-white via-gray-200 z-10 h-[10vh] to-gray-400 bg-clip-text text-transparent font-bold text-[6vw] sm:text-[5vw] lg:text-[4vw] mb-0"
             style={{ fontFamily: "Poppins, sans-serif" }}
             transition={{ type: "spring", stiffness: 200 }}
           >
             Trending Now
           </motion.h2>
           <motion.p
-            className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
+            className="text-gray-300 text-[2.5vw] sm:text-[2vw] lg:text-[1.5vw] max-w-[80vw] mx-auto leading-relaxed"
             style={{ fontFamily: "Poppins, sans-serif" }}
             initial={{ opacity: 1, y: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -230,7 +231,7 @@ export const TrendingItemsSection = () => {
 
         {/* Game Cards */}
         <motion.div
-          className="flex flex-wrap gap-2 justify-center items-end"
+          className="flex flex-wrap gap-[1.5vw] justify-center items-end"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -247,23 +248,23 @@ export const TrendingItemsSection = () => {
               }}
               className="group"
             >
-              <AnimatedCard className="w-[300px] h-[360px] bg-[#030804] border border-[#2A2A2A] rounded-[35px] shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
+              <AnimatedCard className="w-[22vw] sm:w-[22vw] lg:w-[18vw] h-[52vh] sm:h-[48vh] lg:h-[43vh] bg-[#030804] border border-[#2A2A2A] rounded-[2.5vw] shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
                 <CardContent className="flex flex-col items-center justify-start w-full h-full p-0 relative z-10">
                   {/* Game Header */}
                   <motion.div
-                    className="w-auto gap-2 flex flex-row items-center pt-8 pb-4"
+                    className="w-auto gap-[1vw] flex flex-row items-center pt-[3vh] pb-[2vh]"
                     initial={{ opacity: 1, y: 0 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: gameIndex * 0.1 + 0.4, duration: 0.5 }}
                     viewport={{ once: true }}
                   >
                     <motion.img
-                      className="w-6 h-6 rounded-lg object-cover mb-3 shadow-lg"
+                      className="w-[2vw] h-[2vw] rounded-[0.8vw] object-cover mb-[1.5vh] shadow-lg"
                       alt={game.title}
                       src={game.icon}
                     />
                     <motion.div
-                      className="w-full text-center font-bold text-xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2"
+                      className="w-full text-center font-bold text-[1.8vw] sm:text-[1.6vw] lg:text-[1.4vw] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-[1vh]"
                       style={{ fontFamily: "Poppins, sans-serif" }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
@@ -273,7 +274,7 @@ export const TrendingItemsSection = () => {
 
                   {/* Items Grid */}
                   <motion.div
-                    className="flex gap-3 justify-center w-full mb-6"
+                    className="flex gap-[1.2vw] justify-center w-[20vw] mb-[4vh]"
                     variants={containerVariants}
                     initial="visible"
                     whileInView="visible"
@@ -283,7 +284,7 @@ export const TrendingItemsSection = () => {
                       <motion.div
                         key={index}
                         variants={itemVariants}
-                        className="relative w-[120px] h-[160px] rounded-xl flex flex-col items-center backdrop-blur-sm border-none group/item"
+                        className="relative w-[7vw] h-[22vh] sm:h-[20vh] lg:h-[18vh] rounded-[1.2vw] flex flex-col items-center backdrop-blur-sm border-none group/item"
                         style={{ backgroundImage: `url(${item.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                         whileHover={{
                           scale: 1.1,
@@ -296,10 +297,10 @@ export const TrendingItemsSection = () => {
                           },
                         }}
                       >
-                        <motion.div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-300" />
+                        <motion.div className="absolute inset-0 rounded-[1.2vw] bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-300" />
                         <AnimatedImg
-                          className="mt-4 rounded-lg object-cover shadow-xl z-10"
-                          style={{ width: 70, height: 70 }}
+                          className="mt-[2vh] rounded-[0.8vw] object-cover shadow-xl z-10"
+                          style={{ width: "5vw", height: "5vw" }}
                           alt={item.name}
                           src={item.image}
                           whileHover={{
@@ -309,7 +310,7 @@ export const TrendingItemsSection = () => {
                           }}
                         />
                         <motion.div
-                          className="w-full text-left font-bold text-[15px] mt-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
+                          className="w-full text-left font-bold text-[1.3vw] sm:text-[1.1vw] lg:text-[0.9vw] mt-[3vh] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-[0.8vw]"
                           style={{ fontFamily: "Poppins, sans-serif" }}
                           initial={{ opacity: 1 }}
                           whileInView={{ opacity: 1 }}
@@ -318,7 +319,7 @@ export const TrendingItemsSection = () => {
                           {item.name}
                         </motion.div>
                         <motion.div
-                          className={`w-full text-left font-bold text-sm mt-0 px-2 ${item.priceColor} drop-shadow-lg`}
+                          className={`w-full text-left font-bold text-[1.1vw] sm:text-[1vw] lg:text-[0.8vw] mt-0 px-[0.8vw] ${item.priceColor} drop-shadow-lg`}
                           style={{ fontFamily: "Poppins, sans-serif" }}
                           initial={{ opacity: 1, scale: 1 }}
                           whileInView={{ opacity: 1, scale: 1 }}
@@ -340,11 +341,11 @@ export const TrendingItemsSection = () => {
                     viewport={{ once: true }}
                   >
                     <Button
-                      className="mt-11 w-[110px] h-[34px] z-100 rounded-lg group-hover:scale-105 transition-transform duration-300"
+                      className="mt-[4vh] w-[8vw] h-[4vh] z-100 rounded-[0.8vw] group-hover:scale-105 transition-transform duration-300"
                       style={{ backgroundImage: `url(${game.buttonImage})`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundColor: '#000000', opacity: 1, border: 'none' }}
                     >
                       <motion.span
-                        className="font-medium text-white text-[10px] opacity-100 tracking-tight leading-none pointer-events-none"
+                        className="font-medium text-white text-[0.9vw] sm:text-[0.8vw] lg:text-[0.7vw] opacity-100 tracking-tight leading-none pointer-events-none"
                         style={{ fontFamily: "Poppins, sans-serif" }}
                         whileHover={{ scale: 1.05 }}
                       >
@@ -352,7 +353,7 @@ export const TrendingItemsSection = () => {
                         <img
                           src="/icon/icon2.png"
                           alt="arrow right"
-                          className="inline w-2.5 h-2.5 ml-1 object-contain"
+                          className="inline w-[0.8vw] h-[0.8vw] ml-[0.3vw] object-contain"
                         />
                       </motion.span>
                     </Button>
@@ -360,7 +361,7 @@ export const TrendingItemsSection = () => {
 
                   {/* Background Mask */}
                   <motion.img
-                    className="flex justify-center items-center absolute bottom-0 left-0 w-[900px] h-[60px] z-0 opacity-100 filter brightness-150"
+                    className="flex justify-center items-center absolute bottom-0 left-0 w-[70vw] h-[8vh] z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
                     initial={{ opacity: 1, scale: 1 }}

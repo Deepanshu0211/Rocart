@@ -187,7 +187,7 @@ export const WelcomeBannerSection = () => {
           <img
             className="absolute top-[25vh] left-[30%] w-[50%] h-auto object-contain"
             alt="Character"
-            src="/073bb3b399c740a024f6d5bff073254ed283398d-2-690x388-efb76d42-17d1.png"
+            src="/logo/char.png"
           />
 
           {/* Floating Game Items */}
