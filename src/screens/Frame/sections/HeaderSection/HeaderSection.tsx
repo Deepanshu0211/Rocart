@@ -291,7 +291,7 @@ const games = [
                 <img
                   src="/icon/gamepad.png"
                   alt="Gamepad"
-                  className="w-[1.5vw] h-[1.5vw] object-contain"
+                  className="w-[4vw] h-[2vw] object-contain"
                 />
               ) : (
                 selectedGame.subtitle || "🎮"
