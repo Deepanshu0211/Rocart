@@ -52,7 +52,7 @@ const gameData = [
   {
     id: 3,
     title: "Steal A brainrot",
-    icon: "/ttd-cljlmppy-2.png",
+    icon: "/logo/brain.png",
     maskGroup: "/mask-group-24.png",
     buttonImage: "/buttonbg/3.png",
     items: [
