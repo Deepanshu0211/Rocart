@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Twitter, Youtube, Music2, MessageCircle, CreditCard, ShoppingBag } from "lucide-react";
+import { CreditCard, ShoppingBag } from "lucide-react";
 
-// Social media, support, resource, and legal links (unchanged)
+// Social media, support, resource, and legal links (updated to use custom icon)
 const socialMediaIcons = [
-  { icon: Twitter, name: "Twitter", href: "#" },
-  { icon: Youtube, name: "YouTube", href: "#" },
-  { icon: Music2, name: "TikTok", href: "#" },
-  { icon: MessageCircle, name: "Discord", href: "#" },
+  { name: "Twitter", href: "#", image: "/link/x.png" },
+  { name: "YouTube", href: "#", image: "/link/yt.png" },
+  { name: "TikTok", href: "#", image: "/link/tiktok.png" },
+  { name: "Discord", href: "#", image: "/link/dc.png" },
 ];
 
 const supportLinks = [
@@ -31,38 +31,32 @@ const legalLinks = [
 const paymentMethods = [
   { 
     name: "visa", 
-    icon: CreditCard, // Fallback icon
-  
-    image: "/cards/visa.png" // Explicit image path
+    icon: CreditCard,
+    image: "/cards/visa.png"
   },
   { 
     name: "amex", 
     icon: CreditCard,
-   
     image: "/cards/amex.png"
   },
   { 
     name: "mastercard", 
     icon: CreditCard,
- 
     image: "/cards/mastermind.png"
   },
-   { 
+  { 
     name: "Applepay", 
     icon: CreditCard,
-  
     image: "/cards/apple.png"
   },
   { 
     name: "paypal", 
     icon: ShoppingBag,
-   
     image: "/cards/paypal.png"
   },
   { 
     name: "discover", 
     icon: CreditCard,
-   
     image: "/cards/discover.png"
   },
 ];
@@ -241,26 +235,27 @@ export const MainContentSection = (): JSX.Element => {
 
         {/* Bottom Section - Social Media (left) + Payment Methods (right) */}
         <motion.div 
-          className="flex items-center justify-between pt-6 border-t border-[#ffffff15]"
+          className="flex items-center justify-between pt-6"
           variants={itemVariants}
         >
           {/* Social Media Icons (Left) */}
           <div className="flex space-x-3">
-            {socialMediaIcons.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <motion.a
-                  key={index}
-                  href={item.href}
-                  className="w-8 h-8 bg-[#1a2f1e] rounded-full flex items-center justify-center text-[#9ca3af] hover:bg-[#00ff88] hover:text-black transition-colors cursor-pointer"
-                  whileHover={buttonHover}
-                  whileTap={{ scale: 0.9 }}
-                  title={item.name}
-                >
-                  <IconComponent size={16} />
-                </motion.a>
-              );
-            })}
+            {socialMediaIcons.map((item, index) => (
+              <motion.a
+                key={index}
+                href={item.href}
+                className="  flex items-center justify-center transition-colors cursor-pointer"
+                whileHover={buttonHover}
+                whileTap={{ scale: 0.9 }}
+                title={item.name}
+              >
+                <img
+                  src={item.image}
+                  alt={`${item.name} icon`}
+                  className="w-12 h-12 object-contain"
+                />
+              </motion.a>
+            ))}
           </div>
 
           {/* Payment Methods (Right) */}
@@ -271,7 +266,6 @@ export const MainContentSection = (): JSX.Element => {
                 <motion.div
                   key={index}
                   className="w-12 h-8 bg-white rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
-                 
                   whileHover={paymentHover}
                   whileTap={{ scale: 0.95 }}
                   title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
@@ -288,9 +282,9 @@ export const MainContentSection = (): JSX.Element => {
                     alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
                     className="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-200"
                     onError={(e) => {
-                      e.currentTarget.style.opacity = '0'; // Hide image on error
+                      e.currentTarget.style.opacity = '0';
                       if (e.currentTarget.previousSibling) {
-                        (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1'; // Show fallback icon
+                        (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1';
                       }
                     }}
                   />

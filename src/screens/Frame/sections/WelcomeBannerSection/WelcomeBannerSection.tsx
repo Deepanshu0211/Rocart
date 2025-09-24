@@ -296,7 +296,7 @@ export const WelcomeBannerSection = () => {
                       >
                         {game.name}
                       </p>
-                      <p className="text-[#FFFFFF] text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
+                      <p className="text-[#FFFFFF] font-bold text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
                         Tap to view Items
                       </p>
                     </CardContent>
@@ -309,7 +309,7 @@ export const WelcomeBannerSection = () => {
                 <img
                   src="/logo/rocart.png"
                   alt="Rocart logo"
-                  className="h-auto w-[40vw] sm:w-[50vw] lg:w-[40vw] object-contain"
+                  className="h-auto w-[90vw] sm:w-[50vw] lg:w-[90vw] object-contain"
                 />
               </div>
             </motion.div>

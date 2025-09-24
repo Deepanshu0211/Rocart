@@ -47,8 +47,8 @@ export const FAQSection = () => {
   ];
 
   return (
-    <section className="w-full py-16 md:py-20 lg:py-24 bg-[#06100A] min-h-screen ">
-      <div className="absolute inset-0 bg-[url('/bg/pattern.png')] bg-repeat opacity-20 pointer-events-none" />
+   <section className="w-full bg-[url('/bg/mesh.png')] bg-contain bg-center opacity-100 pointer-events-none z-0 py-16 md:py-20 lg:py-24 bg-[#06100A] min-h-screen">
+
       
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         {/* Header */}
