@@ -9,23 +9,14 @@ const socialMediaIcons = [
   { name: "Discord", href: "#", image: "/link/dc.png" },
 ];
 
-const supportLinks = [
-  { name: "Contact Us", href: "#" },
-  { name: "FAQ", href: "#" },
-  { name: "Trust Pilot", href: "#" },
+const aboutUsLinks = [
+  { name: "How we work", href: "#" },
+  { name: "why us", href: "#" },
+  { name: "frequently Asked", href: "#" },
 ];
 
-const resourceLinks = [
-  { name: "Blogs", href: "#" },
-  { name: "Affiliates", href: "#" },
-  { name: "Claim Order", href: "#" },
-  { name: "Tutorial", href: "#" },
-];
-
-const legalLinks = [
-  { name: "Terms Of Service", href: "#" },
-  { name: "Privacy Policy", href: "#" },
-  { name: "Refund Policy", href: "#" },
+const platformLinks = [
+  { name: "Support", href: "#" },
 ];
 
 const paymentMethods = [
@@ -109,12 +100,12 @@ export const MainContentSection = (): JSX.Element => {
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+     <div className="max-w-7xl mx-auto ">
+        <div className="flex flex-col lg:flex-row justify-between gap-20 mb-8">
           
           {/* Left Section - Logo and Info */}
           <motion.div 
-            className="flex flex-col space-y-4"
+            className="flex flex-col space-y-4 flex-grow"
             variants={itemVariants}
           >
             <motion.div 
@@ -148,7 +139,7 @@ export const MainContentSection = (): JSX.Element => {
 
           {/* Right Section - Links */}
           <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:ml-auto"
             variants={itemVariants}
           >
             {/* Social Media Column */}
@@ -171,13 +162,13 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* Support Column */}
+            {/* About Us Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Support
+                About Us
               </h4>
               <nav className="flex flex-col space-y-2">
-                {supportLinks.map((link, index) => (
+                {aboutUsLinks.map((link, index) => (
                   <motion.a
                     key={index}
                     href={link.href}
@@ -191,33 +182,13 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* Resources Column */}
+            {/* Platform Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Resources
+                Platform
               </h4>
               <nav className="flex flex-col space-y-2">
-                {resourceLinks.map((link, index) => (
-                  <motion.a
-                    key={index}
-                    href={link.href}
-                    className="[font-family:'Inter',Helvetica] font-normal text-[#999999] text-sm cursor-pointer"
-                    whileHover={linkHover}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {link.name}
-                  </motion.a>
-                ))}
-              </nav>
-            </div>
-
-            {/* Legal Column */}
-            <div className="flex flex-col space-y-3">
-              <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Legal
-              </h4>
-              <nav className="flex flex-col space-y-2">
-                {legalLinks.map((link, index) => (
+                {platformLinks.map((link, index) => (
                   <motion.a
                     key={index}
                     href={link.href}
@@ -265,7 +236,7 @@ export const MainContentSection = (): JSX.Element => {
               return (
                 <motion.div
                   key={index}
-                  className="w-12 h-8 bg-white rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
+                  className="w-12 h-8  rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
                   whileHover={paymentHover}
                   whileTap={{ scale: 0.95 }}
                   title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
@@ -280,7 +251,7 @@ export const MainContentSection = (): JSX.Element => {
                   <img
                     src={method.image}
                     alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
-                    className="absolute inset-0 w-full h-full object-contain opacity-100 transition-opacity duration-200"
+                    className="absolute inset-0 w-full h-auto object-contain opacity-100 transition-opacity duration-200"
                     onError={(e) => {
                       e.currentTarget.style.opacity = '0';
                       if (e.currentTarget.previousSibling) {
@@ -296,4 +267,4 @@ export const MainContentSection = (): JSX.Element => {
       </div>
     </motion.footer>
   );
-};
+}

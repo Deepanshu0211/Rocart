@@ -342,7 +342,7 @@ export const TrendingItemsSection = () => {
                   >
                     <Button
                       className="mt-[4vh] w-[8vw] h-[4vh] z-100 rounded-[0.8vw] group-hover:scale-105 transition-transform duration-300"
-                      style={{ backgroundImage: `url(${game.buttonImage})`, backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundColor: '#000000', opacity: 1, border: 'none' }}
+                      style={{ backgroundImage: `url(${game.buttonImage})`, backgroundSize: '100% 100%', backgroundPosition: 'center',  opacity: 1, border: 'none' }}
                     >
                       <motion.span
                         className="font-medium text-white text-[0.9vw] sm:text-[0.8vw] lg:text-[0.7vw] opacity-100 tracking-tight leading-none pointer-events-none"

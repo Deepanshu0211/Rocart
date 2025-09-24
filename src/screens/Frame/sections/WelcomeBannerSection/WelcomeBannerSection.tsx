@@ -259,7 +259,7 @@ export const WelcomeBannerSection = () => {
             >
               {/* Header */}
               <div className="flex justify-center relative mb-[1.5vh]">
-                <h2 className="text-[3vw] sm:text-[2.5vw] lg:text-[2vw] font-bold tracking-tight bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                <h2 className="text-[3vw] sm:text-[2.5vw] lg:text-[2vw] font-extrabold tracking-tight text-[#FFFFFF] ">
                   CHOOSE A GAME
                 </h2>
 
@@ -296,7 +296,7 @@ export const WelcomeBannerSection = () => {
                       >
                         {game.name}
                       </p>
-                      <p className="text-[#FFFFFF] font-bold text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
+                      <p className="text-[#FFFFFF] font-extrabold text-[1.5vw] sm:text-[1.2vw] lg:text-[0.9vw] mt-[0.3vh]">
                         Tap to view Items
                       </p>
                     </CardContent>
