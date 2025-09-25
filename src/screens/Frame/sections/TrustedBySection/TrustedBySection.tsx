@@ -9,24 +9,56 @@ export const TrustedBySection = (): JSX.Element => {
       name: "Melony J.",
       testimonial: "Best process! Super smooth, got my items fast for cheap!",
       verified: true,
+      avatar: "/avatars/melony.png",
     },
     {
       id: 2,
       name: "Sarah K.",
       testimonial: "Amazing service! Super smooth, got my items fast for cheap!",
       verified: true,
+      avatar: "/avatars/sarah.png",
     },
     {
       id: 3,
       name: "David M.",
       testimonial: "Best process! Super smooth, got my items fast for cheap!",
       verified: true,
+      avatar: "/avatars/david.png",
     },
     {
       id: 4,
       name: "Alex R.",
       testimonial: "Best process! Super smooth, got my items fast for cheap!",
       verified: false,
+      avatar: "/avatars/alex.png",
+    },
+    {
+      id: 5,
+      name: "Jessica L.",
+      testimonial: "Incredible selection and lightning-fast delivery! Exactly what I needed for my gaming setup.",
+      verified: true,
+      avatar: "/avatars/jessica.png",
+    },
+    {
+      id: 6,
+      name: "Michael B.",
+      testimonial: "Top-tier customer support and quality items. Been using Rocart for months now!",
+      verified: true,
+      avatar: "/avatars/michael.png",
+    },
+    {
+      id: 7,
+      name: "Emma T.",
+      testimonial: "Never had any issues, always reliable. Great prices and authentic items every time.",
+      verified: true,
+      avatar: "/avatars/emma.png",
+    },
+    {
+      id: 8,
+      name: "Ryan C.",
+      testimonial: "Game-changing service! Quick transactions and fair pricing. Highly recommend to everyone.",
+      verified: false,
+      avatar: "/avatars/ryan.png",
     },
   ];
 
@@ -100,10 +132,18 @@ export const TrustedBySection = (): JSX.Element => {
             {/* Scrolling Row */}
             <motion.div
               className="flex gap-6"
-              animate={{ x: ["0%", "-100%"] }}
-              transition={{ repeat: Infinity, duration: 30, ease: "linear" }}
+              animate={{ 
+                x: [0, -((testimonials.length * (280 + 24)))] 
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 30, 
+                ease: "linear",
+                repeatType: "loop"
+              }}
+              style={{ willChange: "transform" }}
             >
-              {[...testimonials, ...testimonials].map((testimonial, index) => (
+              {[...testimonials, ...testimonials, ...testimonials].map((testimonial, index) => (
                 <Card
                   key={index}
                   className="bg-[#0A1A0F] border-[#2A2A2A] rounded-2xl min-w-[280px] hover:border-[#3DFF87]/30 transition-colors duration-300"
@@ -123,9 +163,17 @@ export const TrustedBySection = (): JSX.Element => {
                       )}
                     </div>
 
-                    <h3 className="text-white font-semibold text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      {testimonial.name}
-                    </h3>
+                    <div className="flex items-center gap-3 mb-3">
+                      <img 
+                        src={testimonial.avatar} 
+                        alt={testimonial.name}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-[#3DFF87]/20"
+                      />
+                      <h3 className="text-white font-semibold text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        {testimonial.name}
+                      </h3>
+                    </div>
+                    
                     <p className="text-[#CCCCCC] text-sm leading-relaxed" style={{ fontFamily: 'Poppins, sans-serif' }}>
                       {testimonial.testimonial}
                     </p>
