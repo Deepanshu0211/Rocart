@@ -77,7 +77,7 @@ export const BenefitsSection = (): JSX.Element => {
   };
 
   return (
-    <section className="w-full py-16">
+    <section className="w-full  py-16">
       <div
         className="absolute inset-0 bg-[url('/bg/mesh.png')]  bg-no-repeat bg-center opacity-100 pointer-events-none"
         style={{ backgroundSize: "120em auto", top: "20%" }}

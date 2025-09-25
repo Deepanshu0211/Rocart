@@ -9,7 +9,7 @@ const gameItems = [
     image: "/homeico/1.png",
  
   
-    top: "5%",
+    top: "10%",
     left: "0%",
     rotation: "rotate-[-55deg]",
   },
@@ -18,7 +18,7 @@ const gameItems = [
     image: "/homeico/3.png",
   
    
-    top: "-38%",
+    top: "-25%",
     left: "65%",
     rotation: "rotate-[45.57deg]",
   },
@@ -28,7 +28,7 @@ const gameItems = [
       "/homeico/2.png",
    
  
-    top: "-48%",
+    top: "-35%",
     left: "20%",
     rotation: "rotate-[-30.90deg]",
   },
@@ -127,7 +127,7 @@ export const WelcomeBannerSection = () => {
       />
 
       {/* Main Content */}
-      <div className="relative flex flex-col lg:flex-row items-center justify-between gap-[2vh] px-[2vw] py-[4vh] max-w-[95vw] mx-auto">
+      <div className="relative flex flex-col lg:flex-row items-center justify-between gap-[2vh] px-[2vw] py-[4vh] max-w-[95vw] mx-auto ">
         {/* Left Content */}
         <div className="flex-1 w-full">
           <div className="mb-[2vh]">
@@ -185,7 +185,7 @@ export const WelcomeBannerSection = () => {
         <div className="flex-1 relative aspect-[4/3] w-full max-w-[95vw] sm:max-w-[50vw] lg:max-w-[40vw] mx-auto">
           {/* Main Character */}
           <img
-            className="absolute top-[13vh] left-[30%] w-[50%] h-auto object-contain"
+            className="absolute top-[25vh] left-[30%] w-[50%] h-auto object-contain"
             alt="Character"
             src="/logo/char.png"
           />

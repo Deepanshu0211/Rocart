@@ -57,17 +57,17 @@ const gameData = [
     buttonImage: "/buttonbg/3.png",
     items: [
       {
-        name: "Los Tralaleritos",
+        name: "Medussi",
         price: "$15",
-        image: "/pets/los.png",
-        priceColor: "text-[#31a6ff]",
+        image: "/pets/Medussi.png",
+        priceColor: "text-[#821BF0]",
         backgroundImage: "/trendingbg/10.png",
       },
       {
-        name: "Las Tralaleritas",
+        name: "Combinasion",
         price: "$10",
-        image: "/undefined---imgur-1.png",
-        priceColor: "text-[#ff38f1]",
+        image: "/pets/Combinasion.png",
+        priceColor: "text-[#31a6ff]",
         backgroundImage: "/trendingbg/6.png",
       },
     ],
@@ -175,7 +175,7 @@ const lineVariants = {
 
 export const TrendingItemsSection = () => {
   return (
-    <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] overflow-hidden">
+    <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] scrollbar-none">
       <div
         className="absolute inset-0 bg-[url('/bg/mesh.png')] bg-repeat opacity-90 pointer-events-none from-[#06100A] via-transparent to-[#2A2A2A]"
         style={{

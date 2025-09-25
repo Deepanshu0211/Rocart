@@ -194,20 +194,17 @@ export const FAQSection = () => {
                     </div>
 
                     {/* Answer Text */}
-                    <div className="px-8 pb-8 pt-6">
+               <div className="px-8 pb-8 pt-6">
                       <p
                         className={`
-                          text-[#cccccc] font-normal text-base md:text-lg font-['Poppins',sans-serif] leading-relaxed transition-all duration-700 ease-out
-                          ${
-                            isOpen
-                              ? "translate-y-0 opacity-100 delay-200"
-                              : "translate-y-4 opacity-0"
-                          }
+                          text-[#cccccc] font-normal text-sm md:text-base font-['Poppins',sans-serif] leading-relaxed transition-all duration-700 ease-out
+                          ${isOpen ? "translate-y-0 opacity-100 delay-200" : "translate-y-4 opacity-0"}
                         `}
                       >
                         {faq.answer}
                       </p>
                     </div>
+
                   </div>
                 </div>
               </div>

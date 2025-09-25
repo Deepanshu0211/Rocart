@@ -257,7 +257,7 @@ const games = [
   };
 
   return (
-    <header className="w-full h-[10vh] flex items-center justify-between px-[2vw] bg-[#0C1610] relative">
+    <header className="w-full h-[10vh] flex items-center justify-between px-[2vw] bg-[#0C1610] relative ">
       {/* Left: Logo + Dropdown */}
       <div className="flex items-center gap-[2vw] relative" ref={dropdownRef}>
         <img
