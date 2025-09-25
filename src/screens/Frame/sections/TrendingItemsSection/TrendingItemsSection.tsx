@@ -11,18 +11,18 @@ const gameData = [
     buttonImage: "/buttonbg/1.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Raccoon",
         price: "$15",
         image: "/img-5467--1--1.png",
         priceColor: "text-[#3dff87]",
         backgroundImage: "/trendingbg/1.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Kitsune",
         price: "$10",
-        image: "/img-5478-1.png",
-        priceColor: "text-[#ffd801]",
-        backgroundImage: "/trendingbg/2.png",
+        image: "/pets/kitsume.png",
+        priceColor: "text-[#861C1C]",
+        backgroundImage: "/trendingbg/9.png",
       },
     ],
   },
@@ -34,16 +34,16 @@ const gameData = [
     buttonImage: "/buttonbg/2.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Gingerscope",
         price: "$15",
-        image: "/p11-1.png",
+        image: "/pets/Gingerscope.png",
         priceColor: "text-[#ff3c3c]",
         backgroundImage: "/trendingbg/3.png",
       },
       {
-        name: "GINGERSCOPE",
+        name: "Bat Knife",
         price: "$10",
-        image: "/65-1.png",
+        image: "/pets/bat.png",
         priceColor: "text-[#be8832]",
         backgroundImage: "/trendingbg/4.png",
       },
@@ -57,14 +57,14 @@ const gameData = [
     buttonImage: "/buttonbg/3.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Los Tralaleritos",
         price: "$15",
-        image: "/image-2-1.png",
-        priceColor: "text-[#dd00ff]",
-        backgroundImage: "/trendingbg/5.png",
+        image: "/pets/los.png",
+        priceColor: "text-[#31a6ff]",
+        backgroundImage: "/trendingbg/10.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Las Tralaleritas",
         price: "$10",
         image: "/undefined---imgur-1.png",
         priceColor: "text-[#ff38f1]",
@@ -80,14 +80,14 @@ const gameData = [
     buttonImage: "/buttonbg/4.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Elephant",
         price: "$15",
         image: "/elephant-17-9fcc194d-4ed1-475f-9992-6ede479175b9-1.png",
-        priceColor: "text-[#31a6ff]",
+        priceColor: "text-[#999999]",
         backgroundImage: "/trendingbg/7.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Cow ",
         price: "$10",
         image: "/cow-12-04a274cd-d0f3-448a-8729-45826f64f935-1.png",
         priceColor: "text-white",

@@ -54,7 +54,7 @@ export const TrustedBySection = (): JSX.Element => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              Trusted with by <span className="text-[#3DFF87]">5,000+</span> Happy Buyers
+              Trusted with by <span className="text-[#3DFF87]">1,500+</span> Happy Buyers
             </motion.h2>
             <motion.p 
               className="text-[#999999] text-sm max-w-2xl leading-relaxed"

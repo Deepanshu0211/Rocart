@@ -4,36 +4,36 @@ import { motion } from "framer-motion";
 export const BenefitsSection = (): JSX.Element => {
   const benefitCards = [
     {
-      bgColor: "bg-[#0e2514]",
-      borderColor: "border-[#3dff87]",
-      icon: "/buttonbg/tick.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#250e0e]",
+      borderColor: "border-[#ff3c3c]",
+      icon: "/why/4.png",
+      title: "Best Prices",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "RoCart has the best prices, keeping everything cheap and easy so you can get the items you want without stress.",
     },
     {
-      bgColor: "bg-[#0f1827]",
-      borderColor: "border-[#31a6ff]",
-      icon: "/buttonbg/tick2.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#0e2514]",
+      borderColor: "border-[#3dff87]",
+      icon: "/why/3.png",
+      title: "Security",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "Your Financial Security Is Our Top Priority. We Ensure Safe And Compliant Processing Of All Payments.",
     },
     {
       bgColor: "bg-[#1b1028]",
       borderColor: "border-[#cf25ff]",
-      icon: "/buttonbg/tick3.png",
-      title: "Fast & Reliable",
+      icon: "/why/2.png",
+      title: "Support",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "Our Dedicated Support Team Is Available To Assist You With Any Questions Or Concerns.",
     },
     {
-      bgColor: "bg-[#250e0e]",
-      borderColor: "border-[#ff3c3c]",
-      icon: "/buttonbg/tick4.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#0f1827]",
+      borderColor: "border-[#31a6ff]",
+      icon: "/why/1.png",
+      title: "Wide Collection",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "We offer a huge collection of Roblox items from MM2, Adopt Me, and many more.",
     },
   ];
 
