@@ -68,7 +68,7 @@ const gameData = [
         price: "$10",
         image: "/pets/Combinasion.png",
         priceColor: "text-[#31a6ff]",
-        backgroundImage: "/trendingbg/6.png",
+        backgroundImage: "/trendingbg/7.png",
       },
     ],
   },
