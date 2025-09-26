@@ -162,7 +162,9 @@ const AuthModal = ({
             onClick={onClose}
             className="absolute top-[1vw] right-[1vw] text-gray-400 hover:text-white text-[1vw] p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
           >
-            <X />
+            <X 
+            className="w-[1.5vw] h-[1.5vw]"
+            />
           </button>
 
           <div className="flex justify-center mb-4 mt-1 w-full max-w-[25vw]">
@@ -248,7 +250,7 @@ const AuthModal = ({
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={16} className="w-[1.5vw] h-[1.5vw]" /> : <Eye size={16} className="w-[1.5vw] h-[1.5vw]" />}
                 </button>
 
                 </div>
@@ -357,7 +359,7 @@ const AuthModal = ({
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-[1vw] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={16} className="w-[1.5vw] h-[1.5vw]" /> : <Eye size={16} className="w-[1.5vw] h-[1.5vw]" />}
                   </button>
                 </div>
               </div>
