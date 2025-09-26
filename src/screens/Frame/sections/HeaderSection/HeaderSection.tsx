@@ -313,7 +313,8 @@ const AuthModal = ({
                 onClick={handleGoogleAuth}
                 className="w-[15vw] bg-transparent border border-gray-600 hover:border-gray-500 rounded-lg py-[1.2vh] text-[1vw] font-semibold text-white transition-all duration-200 flex items-center justify-center gap-[0.5vw]"
               >
-                <span className="text-[1.2vw]">G</span>
+                {/* <span className="text-[1.2vw]">G</span> */}
+                  <img src="/loginbg/google.png" alt="Google" className="w-[1.5vw] h-[1.5vw]" />
                 Google
               </button>
             </div>

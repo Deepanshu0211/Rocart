@@ -154,7 +154,7 @@ html::-webkit-scrollbar {
 
 *::-webkit-scrollbar-track,
 html::-webkit-scrollbar-track {
-  background: rgb(0, 0, 0);
+  background: #102c1b;
 }
 
 *::-webkit-scrollbar-thumb,
