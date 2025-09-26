@@ -3,7 +3,8 @@ import { ChevronDownIcon, Eye, EyeOff } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactCountryFlag from "react-country-flag";
-import { X } from 'lucide-react'; // 
+import { X } from 'lucide-react';
+
 // =======================
 // Login/Register Modal
 // =======================
@@ -14,17 +15,18 @@ const AuthModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false); // Default to Register to match image
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form states
+  // Form states - updated to match image fields
   const [formData, setFormData] = useState({
+    username: '', // Changed from email first
     email: '',
-    username: '',
     password: '',
     confirmPassword: '',
+    referralCode: '', // Added referral code
     agreeToTerms: false
   });
 
@@ -45,10 +47,11 @@ const AuthModal = ({
     const payload = isLogin 
       ? { email: formData.email, password: formData.password }
       : {
-          email: formData.email,
           username: formData.username,
+          email: formData.email,
           password: formData.password,
-          confirmPassword: formData.confirmPassword
+          confirmPassword: formData.confirmPassword,
+          referralCode: formData.referralCode
         };
 
     try {
@@ -77,13 +80,19 @@ const AuthModal = ({
     }
   };
 
+  const handleGoogleAuth = () => {
+    // Implement Google authentication
+    console.log('Google authentication');
+  };
+
   const switchToRegister = () => {
     setIsLogin(false);
     setFormData({
-      email: '',
       username: '',
+      email: '',
       password: '',
       confirmPassword: '',
+      referralCode: '',
       agreeToTerms: false
     });
   };
@@ -91,10 +100,11 @@ const AuthModal = ({
   const switchToLogin = () => {
     setIsLogin(true);
     setFormData({
-      email: '',
       username: '',
+      email: '',
       password: '',
       confirmPassword: '',
+      referralCode: '',
       agreeToTerms: false
     });
   };
@@ -112,10 +122,10 @@ const AuthModal = ({
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-[#0C1610] rounded-xl w-[70vw] h-[85vh] shadow-xl text-white flex overflow-hidden"
+        className="bg-[#0C1610] rounded-xl w-[60vw] h-[85vh] shadow-xl text-white flex overflow-hidden relative"
       >
         {/* Left Side - Image/Branding Space */}
-        <div className="w-[45%] relative overflow-hidden flex flex-col justify-between bg-[url('/loginbg/logbg.png')] bg-cover bg-center">
+        <div className="w-[55%] relative overflow-hidden flex flex-col justify-between bg-[url('/loginbg/logbg.png')] bg-cover bg-center">
           {/* Background Pattern */}
           <div
             className="absolute inset-0 opacity-10"
@@ -137,7 +147,7 @@ const AuthModal = ({
 
           {/* Disclaimer at Bottom */}
           <div className="relative z-10 text-center px-[2vw] pb-[2vh]">
-            <span className="text-[0.9vw] text-gray-400">
+            <span className="text-[0.9vw] text-white leading-tight">
               By accessing the site, I attest that I am at least 18 years old and have
               read the Terms and Conditions
             </span>
@@ -145,122 +155,106 @@ const AuthModal = ({
         </div>
 
         {/* Right Side - Form */}
-        <div className="w-1/2 p-[2vw] flex flex-col">
-          {/* Header Tabs - Centered */}
-          <div className="flex justify-center mb-[2vh]">
-            <button
-              onClick={switchToLogin}
-              className={`px-[2vw] py-[1vh] text-[1.1vw] font-semibold border-b-2 transition-colors ${
-                isLogin 
-                  ? 'text-[#ffffff] border-[#ffffff]' 
-                  : 'text-gray-400 border-transparent hover:text-white'
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={switchToRegister}
-              className={`px-[2vw] py-[1vh] text-[1.1vw] font-semibold border-b-2 transition-colors ${
-                !isLogin 
-                  ? 'text-[#ffffff] border-[#3DFF88]' 
-                  : 'text-gray-400 border-transparent hover:text-white'
-              }`}
-            >
-              Register
-            </button>
-          </div>
+        <div className="w-[55%] p-[2vw] flex flex-col relative">
+          {/* Close Button - Icon only, positioned at top right */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-[1vw] right-[1vw] text-gray-400 hover:text-white text-[1.2vw] p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
+          >
+            <X size={20} />
+          </button>
+
+            <div className="flex justify-center mb-[4vh] mt-[1vh] w-full max-w-[500px]">
+              <button
+                onClick={switchToRegister}
+                className={`flex-1 text-center px-[3vw] py-[1vh] text-[1.5vw] font-semibold transition-colors border-b-2 ${
+                  !isLogin
+                    ? 'text-[#eff0ef] border-white border-b-4'
+                    : 'text-gray-400 border-gray-600 hover:text-white'
+                }`}
+              >
+                Register
+              </button>
+
+              <button
+                onClick={switchToLogin}
+                className={`flex-1 text-center px-[3vw] py-[1vh] text-[1.5vw] font-semibold transition-colors border-b-2 ${
+                  isLogin
+                    ? 'text-white border-white border-b-4'
+                    : 'text-gray-400 border-gray-600 hover:text-white'
+                }`}
+              >
+                Login
+              </button>
+            </div>
+
+
           
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            {/* Email Field */}
-            <div className="mb-[2vh]">
-              <label className="block text-[1vw] text-gray-300 mb-[0.5vh]">
-                Email or Username*
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full bg-[#1a1a1a] border border-gray-600 rounded-lg px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none transition-colors"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-            
-            {/* Username Field (Register only) */}
-            {!isLogin && (
-              <div className="mb-[2vh]">
-                <label className="block text-[1vw] text-gray-300 mb-[0.5vh]">
-                  Username
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col ">
+            {/* Register Form */}
+         {!isLogin && (
+            <div className="flex flex-col items-center space-y-[1.5vh]">
+              {/* Username Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Username*
                 </label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="w-full bg-[#1a1a1a] border border-gray-600 rounded-lg px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none transition-colors"
-                  placeholder="Choose a username"
+                  className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                  placeholder="Enter Username"
                   required
                 />
               </div>
-            )}
-            
-            {/* Password Field */}
-            <div className="mb-[2vh]">
-              <label className="block text-[1vw] text-gray-300 mb-[0.5vh]">
-                Password
-              </label>
-              <div className="relative">
+
+              {/* Email Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Email*
+                </label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full bg-[#1a1a1a] border border-gray-600 rounded-lg px-[1vw] py-[1vh] pr-[3vw] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none transition-colors"
-                  placeholder="Enter your password"
+                  className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                  placeholder="Enter Email"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-[1vw] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
               </div>
-            </div>
-            
-            {/* Confirm Password Field (Register only) */}
-            {!isLogin && (
-              <div className="mb-[2vh]">
-                <label className="block text-[1vw] text-gray-300 mb-[0.5vh]">
-                  Confirm Password
+
+              {/* Password Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Password*
                 </label>
                 <div className="relative">
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full bg-[#1a1a1a] border border-gray-600 rounded-lg px-[1vw] py-[1vh] pr-[3vw] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none transition-colors"
-                    placeholder="Confirm your password"
+                    className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                    placeholder="Enter Password"
                     required
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-[1vw] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                   >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
-            )}
-            
-            {/* Terms Checkbox (Register only) */}
-            {!isLogin && (
-              <div className="mb-[2vh]">
+
+              {/* Terms Checkbox */}
+              <div className="w-[25vw]">
                 <label className="flex items-start gap-[0.5vw] cursor-pointer">
                   <input
                     type="checkbox"
@@ -271,66 +265,138 @@ const AuthModal = ({
                     required
                   />
                   <span className="text-[0.9vw] text-gray-300 leading-relaxed">
-                    By registering you are agreeing to our{" "}
-                    <span className="text-[#3DFF88] hover:underline cursor-pointer">
-                      Terms of Service
+                    I agree to the{" "}
+                    <span className="text-[#ffffff] hover:underline cursor-pointer">
+                      Terms and Conditions
                     </span>{" "}
                     and{" "}
-                    <span className="text-[#3DFF88] hover:underline cursor-pointer">
+                    <span className="text-[#ffffff] hover:underline cursor-pointer">
                       Privacy Policy
-                    </span>
+                    </span>.
                   </span>
                 </label>
               </div>
-            )}
-            
-            {/* Forgot Password (Login only) */}
-            {isLogin && (
-              <div className="mb-[2vh]">
-                <button
-                  type="button"
-                  className="text-[#3DFF88] text-[0.9vw] hover:underline"
-                >
-                  Forgot your password?
-                </button>
+
+              {/* Referral Code Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Referral Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="referralCode"
+                  value={formData.referralCode}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                  placeholder="Enter Code"
+                />
               </div>
-            )}
-            
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading || (!isLogin && !formData.agreeToTerms)}
-              className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-[1.5vh] text-[1vw] font-semibold text-white transition-all duration-200"
-            >
-              {isLoading 
-                ? (isLogin ? 'Signing In...' : 'Creating Account...') 
-                : (isLogin ? 'Sign In' : 'Create Account')
-              }
-            </button>
-            
-            {/* Switch Mode Link */}
-            <div className="mt-[2vh] text-center">
-              <span className="text-gray-400 text-[0.9vw]">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={isLogin ? switchToRegister : switchToLogin}
-                  className="text-[#3DFF88] hover:underline font-semibold"
-                >
-                  {isLogin ? "Sign Up" : "Sign In"}
-                </button>
-              </span>
+
+              {/* Register Button */}
+              <button
+                type="submit"
+                disabled={isLoading || !formData.agreeToTerms}
+                className="w-[25vw] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-[1.5vh] text-[1vw] font-semibold text-white transition-all duration-200"
+              >
+                {isLoading ? "Creating Account..." : "Register"}
+              </button>
+
+              {/* Or Continue With */}
+              <span className="text-gray-400 text-[0.9vw]">or continue with</span>
+
+              {/* Google Button */}
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                className="w-[15vw] bg-transparent border border-gray-600 hover:border-gray-500 rounded-lg py-[1.2vh] text-[1vw] font-semibold text-white transition-all duration-200 flex items-center justify-center gap-[0.5vw]"
+              >
+                <span className="text-[1.2vw]">G</span>
+                Google
+              </button>
             </div>
+          )}
+
+
+            {/* login area */}
+         {isLogin && (
+            <div className="flex flex-col items-center space-y-[1.5vh]">
+              {/* Email Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Email or Username*
+                </label>
+                <input
+                  type="text"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                  placeholder="Enter your email or username"
+                  required
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="w-[25vw]">
+                <label className="block text-[0.9vw] text-white mb-[0.5vh]">
+                  Password*
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full bg-[#030804] border border-[#000000] rounded-[0.5vw] px-[1vw] py-[1vh] text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none transition-colors"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-[1vw] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <button
+                type="button"
+                className="text-[#3DFF88] text-[0.9vw] hover:underline"
+              >
+                Forgot your password?
+              </button>
+
+              {/* Login Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-[25vw] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-[1.5vh] text-[1vw] font-semibold text-white transition-all duration-200"
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
+              </button>
+
+              {/* Or Continue With */}
+              <span className="text-gray-400 text-[0.9vw]">or continue with</span>
+
+              {/* Google Button */}
+              <button
+                type="button"
+                onClick={handleGoogleAuth}
+                className="w-[15vw] bg-transparent border border-gray-600 hover:border-gray-500 rounded-lg py-[1.2vh] text-[1vw] font-semibold text-white transition-all duration-200 flex items-center justify-center gap-[0.5vw]"
+              >
+                <span className="text-[1.2vw]">G</span>
+                Google
+              </button>
+            </div>
+          )}
+
+            
+           
+         
           </form>
-          
-          {/* Close Button - Icon only, positioned at top right */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-[1vw] right-[1vw] text-gray-400 hover:text-white text-[1.2vw] p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors"
-          >
-            <X size={20} />
-          </button>
         </div>
       </motion.div>
     </motion.div>
