@@ -160,34 +160,34 @@ const AuthModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-[1vw] right-[1vw] text-gray-400 hover:text-white text-[1.2vw] p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
+            className="absolute top-[1vw] right-[1vw] text-gray-400 hover:text-white text-[1vw] p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
           >
-            <X size={20} />
+            <X />
           </button>
 
-            <div className="flex justify-center mb-[4vh] mt-[1vh] w-full max-w-[500px]">
-              <button
-                onClick={switchToRegister}
-                className={`flex-1 text-center px-[3vw] py-[1vh] text-[1.5vw] font-semibold transition-colors border-b-2 ${
-                  !isLogin
-                    ? 'text-[#eff0ef] border-white border-b-4'
-                    : 'text-gray-400 border-gray-600 hover:text-white'
-                }`}
-              >
-                Register
-              </button>
+          <div className="flex justify-center mb-4 mt-1 w-full max-w-[25vw]">
+            <button
+              onClick={switchToRegister}
+              className={`flex-1 text-center px-6 py-2 text-[1.5vw] font-semibold transition-colors border-b-[0.5vh] ${
+                !isLogin
+                  ? 'text-[#eff0ef] border-white border-b-4'
+                  : 'text-gray-400 border-gray-600 hover:text-white'
+              }`}
+            >
+              Register
+            </button>
 
-              <button
-                onClick={switchToLogin}
-                className={`flex-1 text-center px-[3vw] py-[1vh] text-[1.5vw] font-semibold transition-colors border-b-2 ${
-                  isLogin
-                    ? 'text-white border-white border-b-4'
-                    : 'text-gray-400 border-gray-600 hover:text-white'
-                }`}
-              >
-                Login
-              </button>
-            </div>
+            <button
+              onClick={switchToLogin}
+              className={`flex-1 text-center px-6 py-2 text-[1.5vw] font-semibold transition-colors border-b-[0.5vh] ${
+                isLogin
+                  ? 'text-white border-white border-b-4'
+                  : 'text-gray-400 border-gray-600 hover:text-white'
+              }`}
+            >
+              Login
+            </button>
+          </div>
 
 
           
@@ -243,13 +243,14 @@ const AuthModal = ({
                     placeholder="Enter Password"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-[1vw] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+               <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+
                 </div>
               </div>
 
