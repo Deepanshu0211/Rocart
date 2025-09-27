@@ -9,8 +9,8 @@ import { WelcomeBannerSection } from "./sections/WelcomeBannerSection/WelcomeBan
 
 export const Frame = (): JSX.Element => {
   return (
-    <div className=" bg-[#06100A] overflow-x-hidden relative">
-      <div className="mx-absolute ">
+    <div className="bg-[#06100A] overflow-x-hidden scrollbar-y relative">
+      <div className="mx-absolute overflow-y">
         <HeaderSection />
         <WelcomeBannerSection />
         <TrendingItemsSection />

@@ -8,28 +8,21 @@ const gameData = [
     title: "Grow A Garden",
     icon: "/gag-jqsy7lwj-1.png",
     maskGroup: "/mask-group-21.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(6,16,10,1)_0%,rgba(44,118,74,1)_100%)]",
+    buttonImage: "/buttonbg/1.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Raccoon",
         price: "$15",
         image: "/img-5467--1--1.png",
         priceColor: "text-[#3dff87]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,16,10,0.3)_0%,rgba(44,118,73,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(61,255,136,0.7)_0%,rgba(37,153,81,0)_100%)]",
+        backgroundImage: "/trendingbg/1.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Kitsune",
         price: "$10",
-        image: "/img-5478-1.png",
-        priceColor: "text-[#ffd801]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,16,10,0.3)_0%,rgba(118,113,44,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,236,61,0.7)_0%,rgba(153,130,37,0)_100%)]",
+        image: "/pets/kitsume.png",
+        priceColor: "text-[#861C1C]",
+        backgroundImage: "/trendingbg/9.png",
       },
     ],
   },
@@ -38,58 +31,44 @@ const gameData = [
     title: "MM2",
     icon: "/mm2-ddbykew2-2.png",
     maskGroup: "/mask-group-22.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(16,7,6,1)_0%,rgba(145,19,19,1)_100%)]",
+    buttonImage: "/buttonbg/2.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Gingerscope",
         price: "$15",
-        image: "/p11-1.png",
+        image: "/pets/Gingerscope.png",
         priceColor: "text-[#ff3c3c]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,6,6,0.3)_0%,rgba(151,41,41,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,61,0.7)_0%,rgba(153,37,37,0)_100%)]",
+        backgroundImage: "/trendingbg/3.png",
       },
       {
-        name: "GINGERSCOPE",
+        name: "Bat Knife",
         price: "$10",
-        image: "/65-1.png",
+        image: "/pets/bat.png",
         priceColor: "text-[#be8832]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,12,6,0.3)_0%,rgba(118,82,44,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,161,61,0.7)_0%,rgba(153,112,37,0)_100%)]",
+        backgroundImage: "/trendingbg/4.png",
       },
     ],
   },
   {
     id: 3,
     title: "Steal A brainrot",
-    icon: "/ttd-cljlmppy-2.png",
+    icon: "/logo/brain.png",
     maskGroup: "/mask-group-24.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(13,6,16,1)_0%,rgba(108,44,118,1)_100%)]",
+    buttonImage: "/buttonbg/3.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Medussi",
         price: "$15",
-        image: "/image-2-1.png",
-        priceColor: "text-[#dd00ff]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(12,6,16,0.3)_0%,rgba(116,44,118,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,242,0.7)_0%,rgba(149,37,153,0)_100%)]",
+        image: "/pets/Medussi.png",
+        priceColor: "text-[#821BF0]",
+        backgroundImage: "/trendingbg/10.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Combinasion",
         price: "$10",
-        image: "/undefined---imgur-1.png",
-        priceColor: "text-[#ff38f1]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(16,6,13,0.3)_0%,rgba(118,44,96,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,61,197,0.7)_0%,rgba(153,37,118,0)_100%)]",
+        image: "/pets/Combinasion.png",
+        priceColor: "text-[#31a6ff]",
+        backgroundImage: "/trendingbg/7.png",
       },
     ],
   },
@@ -98,28 +77,21 @@ const gameData = [
     title: "Adopt Me",
     icon: "/am-yek4mbfs-1.png",
     maskGroup: "/mask-group-26.png",
-    buttonGradient:
-      "bg-[linear-gradient(90deg,rgba(6,13,16,1)_0%,rgba(40,134,205,1)_100%)]",
+    buttonImage: "/buttonbg/4.png",
     items: [
       {
-        name: "RACCOON",
+        name: "Elephant",
         price: "$15",
         image: "/elephant-17-9fcc194d-4ed1-475f-9992-6ede479175b9-1.png",
-        priceColor: "text-[#31a6ff]",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(6,12,16,0.3)_0%,rgba(44,86,118,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(61,200,255,0.7)_0%,rgba(37,103,153,0)_100%)]",
+        priceColor: "text-[#999999]",
+        backgroundImage: "/trendingbg/7.png",
       },
       {
-        name: "QUEEN BEE",
+        name: "Cow ",
         price: "$10",
         image: "/cow-12-04a274cd-d0f3-448a-8729-45826f64f935-1.png",
         priceColor: "text-white",
-        cardGradient:
-          "bg-[linear-gradient(178deg,rgba(24,24,24,0.3)_0%,rgba(164,164,164,0)_100%)]",
-        borderGradient:
-          "before:[background:linear-gradient(180deg,rgba(255,255,255,0.7)_0%,rgba(210,210,210,0)_100%)]",
+        backgroundImage: "/trendingbg/8.png",
       },
     ],
   },
@@ -201,27 +173,28 @@ const lineVariants = {
   },
 };
 
-export const TrendingItemsSection = (): JSX.Element => {
+export const TrendingItemsSection = () => {
   return (
-    <section className="relative w-full min-h-screen bg-[#06100A] py-20 overflow-hidden">
+    <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] scrollbar-none">
       <div
         className="absolute inset-0 bg-[url('/bg/mesh.png')] bg-repeat opacity-90 pointer-events-none from-[#06100A] via-transparent to-[#2A2A2A]"
         style={{
-          backgroundSize: "90em 90em",
-          backgroundBlendMode: "overlay", // optional: blends gradient and image
+          backgroundSize: "800px 800px",
+          backgroundBlendMode: "overlay",
+          backgroundAttachment: "fixed",
         }}
       />
-      <div className="max-w-7xl mx-auto px-6 z-10">
+      <div className="max-w-[95vw] mx-auto px-[3vw] z-10">
         {/* Animated Lines */}
-        <div className="relative mb-16">
+        <div className="relative mb-[10vh]">
           <motion.div
-            className="absolute top-8 -left-[40px] w-[35%] h-0.5 rounded-[0px_30px_42px_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)] "
+            className="absolute top-[6vh] -left-[2vw] w-[35%] h-[0.2vh] rounded-[0px_2vw_3vw_0px] bg-[linear-gradient(90deg,rgba(49,49,49,0)_0%,rgba(255,255,255,1)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
           />
           <motion.div
-            className="absolute top-8 -right-[40px] w-[35%] h-0.5 rounded-[50px_0px_0px_50px] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)] "
+            className="absolute top-[6vh] -right-[2vw] w-[35%] h-[0.2vh] rounded-[3vw_0px_0px_3vw] bg-[linear-gradient(90deg,rgba(255,255,255,1)_0%,rgba(49,49,49,0)_100%)]"
             variants={lineVariants}
             initial="visible"
             viewport={{ once: true }}
@@ -230,20 +203,20 @@ export const TrendingItemsSection = (): JSX.Element => {
 
         {/* Title Section */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-[10vh]"
           variants={titleVariants}
           initial="visible"
           viewport={{ once: true }}
         >
           <motion.h2
-            className="bg-gradient-to-r from-white via-gray-200 z-10 h-20 to-gray-400 bg-clip-text text-transparent font-bold text-xl md:text-xl lg:text-6xl mb-0"
+            className="bg-gradient-to-r from-white via-gray-200 z-10 h-[12vh] to-gray-400 bg-clip-text text-transparent font-bold text-[6vw] sm:text-[5vw] lg:text-[4vw] mb-0"
             style={{ fontFamily: "Poppins, sans-serif" }}
             transition={{ type: "spring", stiffness: 200 }}
           >
             Trending Now
           </motion.h2>
           <motion.p
-            className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
+            className="text-gray-300 text-[2.5vw] sm:text-[2vw] lg:text-[1.5vw] max-w-[80vw] mx-auto leading-relaxed"
             style={{ fontFamily: "Poppins, sans-serif" }}
             initial={{ opacity: 1, y: 0 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -258,7 +231,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
         {/* Game Cards */}
         <motion.div
-          className="flex flex-wrap gap-2 justify-center items-end"
+          className="flex flex-wrap gap-[1.5vw] justify-center items-end"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -275,30 +248,24 @@ export const TrendingItemsSection = (): JSX.Element => {
               }}
               className="group"
             >
-              <AnimatedCard className="w-[300px] h-[360px] bg-[#030804] border border-[#2A2A2A] rounded-[35px] shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
+              <AnimatedCard className="w-[22vw] sm:w-[22vw] lg:w-[18vw] h-[52vh] sm:h-[48vh] lg:h-[43vh] bg-[#030804] border border-[#2A2A2A] rounded-[2.5vw] shadow-2xl flex flex-col items-center relative overflow-hidden group-hover:border-[#3DFF87]/30 transition-colors duration-300">
                 <CardContent className="flex flex-col items-center justify-start w-full h-full p-0 relative z-10">
                   {/* Game Header */}
                   <motion.div
-                    className="w-auto gap-2 flex flex-row items-center pt-8 pb-4"
+                    className="w-auto gap-[1vw] flex flex-row items-center pt-[3vh] pb-[2vh]"
                     initial={{ opacity: 1, y: 0 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: gameIndex * 0.1 + 0.4, duration: 0.5 }}
                     viewport={{ once: true }}
                   >
                     <motion.img
-                      className="w-6 h-6 rounded-lg object-cover mb-3 shadow-lg"
+                      className="w-[1.8vw] h-[1.8vw] rounded-[0.4vw] object-cover mb-[1.5vh] shadow-lg"
                       alt={game.title}
                       src={game.icon}
-                      // whileHover={{
-                      //   scale: 1.2,
-                      //   rotate: 360,
-                      //   transition: { duration: 0.6, type: "spring" }
-                      // }}
                     />
                     <motion.div
-                      className="w-full text-center font-bold text-xl bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2"
+                      className="w-full text-center font-bold text-[0.5vw] sm:text-[0.5vw] lg:text-[0.8vw] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-[1vh]"
                       style={{ fontFamily: "Poppins, sans-serif" }}
-                      // whileHover={{ scale: 1.1 }}
                       transition={{ type: "spring", stiffness: 200 }}
                     >
                       {game.title}
@@ -307,7 +274,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
                   {/* Items Grid */}
                   <motion.div
-                    className="flex gap-3 justify-center w-full mb-6"
+                    className="flex gap-[1.2vw] justify-center w-[20vw] mb-[4vh]"
                     variants={containerVariants}
                     initial="visible"
                     whileInView="visible"
@@ -317,7 +284,8 @@ export const TrendingItemsSection = (): JSX.Element => {
                       <motion.div
                         key={index}
                         variants={itemVariants}
-                        className={`relative w-[120px] h-[160px] rounded-xl flex flex-col items-center bg-opacity-60 ${item.cardGradient} backdrop-blur-sm border border-white/10 group/item`}
+                        className="relative w-[7vw] h-[22vh] sm:h-[20vh] lg:h-[18vh] rounded-[1.2vw] flex flex-col items-center backdrop-blur-sm border-none group/item"
+                        style={{ backgroundImage: `url(${item.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
                         whileHover={{
                           scale: 1.1,
                           y: -8,
@@ -329,10 +297,10 @@ export const TrendingItemsSection = (): JSX.Element => {
                           },
                         }}
                       >
-                        <motion.div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-300" />
+                        <motion.div className="absolute inset-0 rounded-[1.2vw] bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-300" />
                         <AnimatedImg
-                          className="mt-4 rounded-lg object-cover shadow-xl z-10"
-                          style={{ width: 70, height: 70 }}
+                          className="mt-[2vh] rounded-[0.8vw] object-cover shadow-xl z-10"
+                          style={{ width: "5vw", height: "5vw" }}
                           alt={item.name}
                           src={item.image}
                           whileHover={{
@@ -340,18 +308,9 @@ export const TrendingItemsSection = (): JSX.Element => {
                             rotate: -5,
                             transition: { type: "spring", stiffness: 300 },
                           }}
-                          // animate={{
-                          //   y: [0, -12, 0],
-                          //   transition: {
-                          //     duration: 3 + index * 0.5,
-                          //     repeat: Infinity,
-                          //     ease: "easeInOut",
-                          //     delay: index * 0.2
-                          //   }
-                          // }}
                         />
                         <motion.div
-                          className="w-full text-left  font-bold text-[15px] mt-5 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-2"
+                          className="w-full text-left font-bold text-[1.3vw] sm:text-[1.1vw] lg:text-[0.9vw] mt-[3vh] bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent px-[0.8vw]"
                           style={{ fontFamily: "Poppins, sans-serif" }}
                           initial={{ opacity: 1 }}
                           whileInView={{ opacity: 1 }}
@@ -360,9 +319,8 @@ export const TrendingItemsSection = (): JSX.Element => {
                           {item.name}
                         </motion.div>
                         <motion.div
-                          className={`w-full text-left font-bold text-sm mt-0 px-2 ${item.priceColor} drop-shadow-lg`}
+                          className={`w-full text-left font-bold text-[1.1vw] sm:text-[1vw] lg:text-[0.8vw] mt-0 px-[0.8vw] ${item.priceColor} drop-shadow-lg`}
                           style={{ fontFamily: "Poppins, sans-serif" }}
-                          // whileHover={{ scale: 1.1 }}
                           initial={{ opacity: 1, scale: 1 }}
                           whileInView={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.3, type: "spring" }}
@@ -377,24 +335,25 @@ export const TrendingItemsSection = (): JSX.Element => {
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 1, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: gameIndex * 0.1 + 0.6, duration: 0.5 }}
                     viewport={{ once: true }}
                   >
                     <Button
-                      className={`mt-8 w-[140px] h-[40px] rounded-xl border border-white ${game.buttonGradient} shadow-xl hover:shadow-2xl transition-shadow duration-300 group-hover:scale-105`}
+                      className="mt-[4vh] w-[8vw] h-[4vh] z-100 rounded-[0.8vw] group-hover:scale-105 transition-transform duration-300"
+                      style={{ backgroundImage: `url(${game.buttonImage})`, backgroundSize: '100% 100%', backgroundPosition: 'center',  opacity: 1, border: 'none' }}
                     >
                       <motion.span
-                        className="font-bold text-white text-sm tracking-wide leading-normal pointer-events-none"
+                        className="font-medium text-white text-[0.9vw] sm:text-[0.8vw] lg:text-[0.7vw] opacity-100 tracking-tight leading-none pointer-events-none"
                         style={{ fontFamily: "Poppins, sans-serif" }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        Visit Market{" "}
+                        Visit Market
                         <img
                           src="/icon/icon2.png"
                           alt="arrow right"
-                          className="inline w-3 h-3 ml-2 object-contain"
+                          className="inline w-[0.8vw] h-[0.8vw] ml-[0.3vw] object-contain"
                         />
                       </motion.span>
                     </Button>
@@ -402,8 +361,7 @@ export const TrendingItemsSection = (): JSX.Element => {
 
                   {/* Background Mask */}
                   <motion.img
-                    className="flex justify-center items-center  absolute bottom-0 left-0  w-[900px] h-[80px] 
-                      z-0 opacity-100 filter brightness-150"
+                    className="flex justify-center items-center absolute bottom-0 left-0 w-[70vw] h-[8vh] z-0 opacity-100 filter brightness-150"
                     alt="Mask group"
                     src={game.maskGroup}
                     initial={{ opacity: 1, scale: 1 }}
@@ -416,17 +374,6 @@ export const TrendingItemsSection = (): JSX.Element => {
             </motion.div>
           ))}
         </motion.div>
-
-        {/* Bottom Decorative Elements */}
-        {/* <motion.div 
-          className="mt-20 flex justify-center"
-          initial={{ opacity: 0, scale: 0 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1, duration: 0.8, type: "spring" }}
-          viewport={{ once: true }}
-        >
-        
-        </motion.div> */}
       </div>
     </section>
   );

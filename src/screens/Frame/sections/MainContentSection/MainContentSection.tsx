@@ -1,38 +1,55 @@
 import { motion } from "framer-motion";
-import { Twitter, Youtube, Music2, MessageCircle } from "lucide-react";
+import { CreditCard, ShoppingBag } from "lucide-react";
 
+// Social media, support, resource, and legal links (updated to use custom icon)
 const socialMediaIcons = [
-  { icon: Twitter, name: "Twitter", href: "#" },
-  { icon: Youtube, name: "YouTube", href: "#" },
-  { icon: Music2, name: "TikTok", href: "#" },
-  { icon: MessageCircle, name: "Discord", href: "#" },
+  { name: "Twitter", href: "#", image: "/link/x.png" },
+  { name: "YouTube", href: "#", image: "/link/yt.png" },
+  { name: "TikTok", href: "#", image: "/link/tiktok.png" },
+  { name: "Discord", href: "#", image: "/link/dc.png" },
 ];
 
-const supportLinks = [
-  { name: "Contact Us", href: "#" },
-  { name: "FAQ", href: "#" },
-  { name: "Trust Pilot", href: "#" },
+const aboutUsLinks = [
+  { name: "How we work", href: "#" },
+  { name: "why us", href: "#" },
+  { name: "frequently Asked", href: "#" },
 ];
 
-const resourceLinks = [
-  { name: "Blogs", href: "#" },
-  { name: "Affiliates", href: "#" },
-  { name: "Claim Order", href: "#" },
-  { name: "Tutorial", href: "#" },
-];
-
-const legalLinks = [
-  { name: "Terms Of Service", href: "#" },
-  { name: "Privacy Policy", href: "#" },
-  { name: "Refund Policy", href: "#" },
+const platformLinks = [
+  { name: "Support", href: "#" },
 ];
 
 const paymentMethods = [
-  { name: "visa" },
-  { name: "amex" },
-  { name: "mastercard" },
-  { name: "paypal" },
-  { name: "discover" },
+  { 
+    name: "visa", 
+    icon: CreditCard,
+    image: "/cards/visa.png"
+  },
+  { 
+    name: "amex", 
+    icon: CreditCard,
+    image: "/cards/amex.png"
+  },
+  { 
+    name: "mastercard", 
+    icon: CreditCard,
+    image: "/cards/mastermind.png"
+  },
+  { 
+    name: "Applepay", 
+    icon: CreditCard,
+    image: "/cards/apple.png"
+  },
+  { 
+    name: "paypal", 
+    icon: ShoppingBag,
+    image: "/cards/paypal.png"
+  },
+  { 
+    name: "discover", 
+    icon: CreditCard,
+    image: "/cards/discover.png"
+  },
 ];
 
 const containerVariants = {
@@ -83,12 +100,12 @@ export const MainContentSection = (): JSX.Element => {
       initial="hidden"
       animate="visible"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+     <div className="max-w-7xl mx-auto ">
+        <div className="flex flex-col lg:flex-row justify-between gap-20 mb-8">
           
           {/* Left Section - Logo and Info */}
           <motion.div 
-            className="flex flex-col space-y-4"
+            className="flex flex-col space-y-4 flex-grow"
             variants={itemVariants}
           >
             <motion.div 
@@ -122,10 +139,9 @@ export const MainContentSection = (): JSX.Element => {
 
           {/* Right Section - Links */}
           <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:ml-auto"
             variants={itemVariants}
           >
-            
             {/* Social Media Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
@@ -146,13 +162,13 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* Support Column */}
+            {/* About Us Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Support
+                About Us
               </h4>
               <nav className="flex flex-col space-y-2">
-                {supportLinks.map((link, index) => (
+                {aboutUsLinks.map((link, index) => (
                   <motion.a
                     key={index}
                     href={link.href}
@@ -166,33 +182,13 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* Resources Column */}
+            {/* Platform Column */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Resources
+                Platform
               </h4>
               <nav className="flex flex-col space-y-2">
-                {resourceLinks.map((link, index) => (
-                  <motion.a
-                    key={index}
-                    href={link.href}
-                    className="[font-family:'Inter',Helvetica] font-normal text-[#999999] text-sm cursor-pointer"
-                    whileHover={linkHover}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {link.name}
-                  </motion.a>
-                ))}
-              </nav>
-            </div>
-
-            {/* Legal Column */}
-            <div className="flex flex-col space-y-3">
-              <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
-                Legal
-              </h4>
-              <nav className="flex flex-col space-y-2">
-                {legalLinks.map((link, index) => (
+                {platformLinks.map((link, index) => (
                   <motion.a
                     key={index}
                     href={link.href}
@@ -210,47 +206,65 @@ export const MainContentSection = (): JSX.Element => {
 
         {/* Bottom Section - Social Media (left) + Payment Methods (right) */}
         <motion.div 
-          className="flex items-center justify-between pt-6 border-t border-[#ffffff15]"
+          className="flex items-center justify-between -mt-6"
           variants={itemVariants}
         >
           {/* Social Media Icons (Left) */}
           <div className="flex space-x-3">
-            {socialMediaIcons.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <motion.a
-                  key={index}
-                  href={item.href}
-                  className="w-8 h-8 bg-[#1a2f1e] rounded-full flex items-center justify-center text-[#9ca3af] hover:bg-[#00ff88] hover:text-black transition-colors cursor-pointer"
-                  whileHover={buttonHover}
-                  whileTap={{ scale: 0.9 }}
-                  title={item.name}
-                >
-                  <IconComponent size={16} />
-                </motion.a>
-              );
-            })}
+            {socialMediaIcons.map((item, index) => (
+              <motion.a
+                key={index}
+                href={item.href}
+                className="  flex items-center justify-center transition-colors cursor-pointer"
+                whileHover={buttonHover}
+                whileTap={{ scale: 0.9 }}
+                title={item.name}
+              >
+                <img
+                  src={item.image}
+                  alt={`${item.name} icon`}
+                  className="w-12 h-12 object-contain"
+                />
+              </motion.a>
+            ))}
           </div>
 
           {/* Payment Methods (Right) */}
           <div className="flex items-center gap-3">
-            {paymentMethods.map((method, index) => (
-              <motion.div
-                key={index}
-                className="w-12 h-8 flex items-center justify-center cursor-pointer"
-                whileHover={paymentHover}
-                whileTap={{ scale: 0.95 }}
-              >
-                <img
-                  src={`/cards/${method.name}.png`}
-                  alt={method.name}
-                  className="w-full h-full object-contain"
-                />
-              </motion.div>
-            ))}
+            {paymentMethods.map((method, index) => {
+              const IconComponent = method.icon;
+              return (
+                <motion.div
+                  key={index}
+                  className="w-12 h-8  rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
+                  whileHover={paymentHover}
+                  whileTap={{ scale: 0.95 }}
+                  title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
+                >
+                  {/* Fallback icon (hidden by default) */}
+                  <IconComponent 
+                    size={18} 
+                    className="text-gray-600 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200"
+                  />
+                  
+                  {/* Payment method image */}
+                  <img
+                    src={method.image}
+                    alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
+                    className="absolute inset-0 w-full h-auto object-contain opacity-100 transition-opacity duration-200"
+                    onError={(e) => {
+                      e.currentTarget.style.opacity = '0';
+                      if (e.currentTarget.previousSibling) {
+                        (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1';
+                      }
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
           </div>
         </motion.div>
       </div>
     </motion.footer>
   );
-};
+}

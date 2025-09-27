@@ -4,36 +4,36 @@ import { motion } from "framer-motion";
 export const BenefitsSection = (): JSX.Element => {
   const benefitCards = [
     {
-      bgColor: "bg-[#0e2514]",
-      borderColor: "border-[#3dff87]",
-      icon: "/mask-group-15.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#250e0e]",
+      borderColor: "border-[#ff3c3c]",
+      icon: "/why/4.png",
+      title: "Best Prices",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "RoCart has the best prices, keeping everything cheap and easy so you can get the items you want without stress.",
     },
     {
-      bgColor: "bg-[#0f1827]",
-      borderColor: "border-[#31a6ff]",
-      icon: "/mask-group-12.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#0e2514]",
+      borderColor: "border-[#3dff87]",
+      icon: "/why/3.png",
+      title: "Security",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "Your Financial Security Is Our Top Priority. We Ensure Safe And Compliant Processing Of All Payments.",
     },
     {
       bgColor: "bg-[#1b1028]",
       borderColor: "border-[#cf25ff]",
-      icon: "/mask-group-13.png",
-      title: "Fast & Reliable",
+      icon: "/why/2.png",
+      title: "Support",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "Our Dedicated Support Team Is Available To Assist You With Any Questions Or Concerns.",
     },
     {
-      bgColor: "bg-[#250e0e]",
-      borderColor: "border-[#ff3c3c]",
-      icon: "/mask-group-14.png",
-      title: "Fast & Reliable",
+      bgColor: "bg-[#0f1827]",
+      borderColor: "border-[#31a6ff]",
+      icon: "/why/1.png",
+      title: "Wide Collection",
       description:
-        "Choose a game to get started \npopular options include MM2, Toilet Tower Defence, Adopt Me....",
+        "We offer a huge collection of Roblox items from MM2, Adopt Me, and many more.",
     },
   ];
 
@@ -77,7 +77,7 @@ export const BenefitsSection = (): JSX.Element => {
   };
 
   return (
-    <section className="w-full py-16">
+    <section className="w-full  py-16">
       <div
         className="absolute inset-0 bg-[url('/bg/mesh.png')]  bg-no-repeat bg-center opacity-100 pointer-events-none"
         style={{ backgroundSize: "120em auto", top: "20%" }}

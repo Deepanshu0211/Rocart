@@ -7,7 +7,7 @@ export const HowItWorksSection = (): JSX.Element => {
       id: 1,
       title: "Choose Your Game",
       description:
-        "Begin by selecting the game you're interested in such as\nMurder Mystery 2",
+        "Begin by selecting the game you're interested in, such as Murder Mystery 2, Grow a Garden, steal a brainrot or bladeball.",
       bgColor: "bg-[#1b1028]",
       borderColor: "border-[#d13bff]",
       icon: "/benefit/game.png", // replace with your path
@@ -16,7 +16,7 @@ export const HowItWorksSection = (): JSX.Element => {
       id: 2,
       title: "Follow the Tutorial",
       description:
-        "Follow our quick guide to get started in seconds.",
+        "Choose a product you like, add it to your cart, and proceed to checkout. After completing your purchase, send us your Roblox username. Our staff will message you shortly and deliver your items in-game.",
       bgColor: "bg-[#0f1827]",
       borderColor: "border-[#31a6ff]",
       icon: "/benefit/1.png",
@@ -25,7 +25,7 @@ export const HowItWorksSection = (): JSX.Element => {
       id: 3,
       title: "Instant Delivery",
       description:
-        "Get your items delivered instantly after purchase.",
+        "Every order is handled with priority and care, ensuring your items reach your account swiftly. A short wait, and you’ll be ready to enjoy them.",
       bgColor: "bg-[#0e2514]",
       borderColor: "border-[#3dff87]",
       icon: "/benefit/instant.png",
@@ -34,7 +34,7 @@ export const HowItWorksSection = (): JSX.Element => {
       id: 4,
       title: "24/7 Support",
       description:
-        "Our team is here to help you anytime, day or night.",
+        "If you have any questions or encounter any issues, our friendly support team is available around the clock to assist you.",
       bgColor: "bg-[#250e0e]",
       borderColor: "border-[#ff3c3c]",
       icon: "/benefit/sup.png",
@@ -165,7 +165,7 @@ export const HowItWorksSection = (): JSX.Element => {
                     {/* Content */}
                     <div className="flex flex-col justify-center flex-grow">
                       <motion.h3
-                        className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[15px] tracking-[0] leading-[normal] mb-2 group-hover:text-opacity-90 transition-all duration-300"
+                        className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[15px] tracking-[0] leading-[normal] mb-1 group-hover:text-opacity-90 transition-all duration-300"
                         initial={{ opacity: 0, y: -10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
