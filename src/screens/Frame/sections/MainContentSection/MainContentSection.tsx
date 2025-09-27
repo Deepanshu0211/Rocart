@@ -19,6 +19,12 @@ const platformLinks = [
   { name: "Support", href: "#" },
 ];
 
+// const legalLinks = [
+//   { name: "Terms of Service", href: "#" },
+//   { name: "Privacy Policy", href: "#" },
+//   { name: "Cookie Policy", href: "#" },
+// ];
+
 const paymentMethods = [
   { 
     name: "visa", 
@@ -137,12 +143,14 @@ export const MainContentSection = (): JSX.Element => {
             </div>
           </motion.div>
 
+     
+      
           {/* Right Section - Links */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:ml-auto"
+            className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:ml-auto"
             variants={itemVariants}
           >
-            {/* Social Media Column */}
+            {/* Social Media */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
                 Social Media
@@ -162,7 +170,7 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* About Us Column */}
+            {/* About Us */}
             <div className="flex flex-col space-y-3">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
                 About Us
@@ -182,8 +190,8 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
 
-            {/* Platform Column */}
-            <div className="flex flex-col space-y-3">
+            {/* Platform */}
+            <div className="flex flex-col space-y-3 col-span-2 md:col-span-1">
               <h4 className="[font-family:'Inter',Helvetica] font-semibold text-white text-sm">
                 Platform
               </h4>
@@ -202,68 +210,73 @@ export const MainContentSection = (): JSX.Element => {
               </nav>
             </div>
           </motion.div>
+
+
         </div>
 
         {/* Bottom Section - Social Media (left) + Payment Methods (right) */}
-        <motion.div 
-          className="flex items-center justify-between -mt-6"
-          variants={itemVariants}
-        >
-          {/* Social Media Icons (Left) */}
-          <div className="flex space-x-3">
-            {socialMediaIcons.map((item, index) => (
-              <motion.a
-                key={index}
-                href={item.href}
-                className="  flex items-center justify-center transition-colors cursor-pointer"
-                whileHover={buttonHover}
-                whileTap={{ scale: 0.9 }}
-                title={item.name}
-              >
-                <img
-                  src={item.image}
-                  alt={`${item.name} icon`}
-                  className="w-12 h-12 object-contain"
-                />
-              </motion.a>
-            ))}
-          </div>
+     
+      <motion.div 
+        className="flex flex-col md:flex-row items-center justify-between gap-6 mt-8"
 
-          {/* Payment Methods (Right) */}
-          <div className="flex items-center gap-3">
-            {paymentMethods.map((method, index) => {
-              const IconComponent = method.icon;
-              return (
-                <motion.div
-                  key={index}
-                  className="w-12 h-8  rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
-                  whileHover={paymentHover}
-                  whileTap={{ scale: 0.95 }}
-                  title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
-                >
-                  {/* Fallback icon (hidden by default) */}
-                  <IconComponent 
-                    size={18} 
-                    className="text-gray-600 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200"
-                  />
-                  
-                  {/* Payment method image */}
-                  <img
-                    src={method.image}
-                    alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
-                    className="absolute inset-0 w-full h-auto object-contain opacity-100 transition-opacity duration-200"
-                    onError={(e) => {
-                      e.currentTarget.style.opacity = '0';
-                      if (e.currentTarget.previousSibling) {
-                        (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1';
-                      }
-                    }}
-                  />
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
+        variants={itemVariants}
+      >
+        {/* Social Media Icons */}
+        <div className="flex space-x-3 justify-center md:justify-start w-full md:w-auto">
+          {socialMediaIcons.map((item, index) => (
+            <motion.a
+              key={index}
+              href={item.href}
+              className="flex items-center justify-center cursor-pointer"
+              whileHover={buttonHover}
+              whileTap={{ scale: 0.9 }}
+              title={item.name}
+            >
+              <img
+                src={item.image}
+                alt={`${item.name} icon`}
+                className="w-12 h-12 object-contain"
+              />
+            </motion.a>
+          ))}
+        </div>
+
+        {/* Payment Methods */}
+        <div className="flex flex-wrap justify-center md:justify-end gap-3 w-full md:w-auto">
+          {paymentMethods.map((method, index) => {
+            const IconComponent = method.icon;
+            return (
+              <motion.div
+                key={index}
+                className="w-12 h-8 rounded-md flex items-center justify-center shadow-sm cursor-pointer relative overflow-hidden"
+                whileHover={paymentHover}
+                whileTap={{ scale: 0.95 }}
+                title={method.name.charAt(0).toUpperCase() + method.name.slice(1)}
+              >
+                {/* Fallback Icon */}
+                <IconComponent 
+                  size={18} 
+                  className="text-gray-600 absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200"
+                />
+
+                {/* Payment Image */}
+                <img
+                  src={method.image}
+                  alt={`${method.name.charAt(0).toUpperCase() + method.name.slice(1)} logo`}
+                  className="absolute inset-0 w-full h-auto object-contain opacity-100 transition-opacity duration-200"
+                  onError={(e) => {
+                    e.currentTarget.style.opacity = '0';
+                    if (e.currentTarget.previousSibling) {
+                      (e.currentTarget.previousSibling as HTMLElement).style.opacity = '1';
+                    }
+                  }}
+                />
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
       </div>
     </motion.footer>
   );

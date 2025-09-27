@@ -108,27 +108,23 @@ export const HowItWorksSection = (): JSX.Element => {
           </motion.p>
         </motion.div>
 
-        {/* Steps Grid */}
+                {/* Steps Grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <motion.div
               key={step.id}
               variants={cardVariants}
-              whileHover={{
-                scale: 1.02,
-                y: -8,
-                transition: { duration: 0.3 },
-              }}
+              whileHover={{ scale: 1.02, y: -8, transition: { duration: 0.3 } }}
               className="relative"
             >
               <Card
-                className={`${step.bgColor} ${step.borderColor} border border-solid rounded-[26px] h-[140px] overflow-hidden group`}
+                className={`${step.bgColor} ${step.borderColor} border border-solid rounded-[26px] h-full group`}
                 style={{
                   boxShadow: `0 0 20px ${
                     step.borderColor.includes("3dff87")
@@ -141,53 +137,25 @@ export const HowItWorksSection = (): JSX.Element => {
                   }`,
                 }}
               >
-                <CardContent className="p-6 h-">
-                  <div className="flex items-start gap-4 h-full">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-start gap-4 flex-grow">
                     {/* Icon */}
-                    <motion.div
-                      className="flex-shrink-0 p-3 rounded-xl bg-white/10 group-hover:bg-white/20 transition-all duration-300"
-                      whileHover={{ rotate: 15, scale: 1.1 }}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{
-                        delay: index * 0.2 + 0.4,
-                        duration: 0.4,
-                      }}
-                    >
+                    <motion.div className="flex-shrink-0 p-3 rounded-xl bg-white/10 group-hover:bg-white/20 transition-all duration-300">
                       <motion.img
                         src={step.icon}
                         alt={step.title}
-                        className="w-6 h-6 object-contain group-hover:scale-110 transition-transform duration-300"
+                        className="w-6 h-6 object-contain"
                       />
                     </motion.div>
 
                     {/* Content */}
                     <div className="flex flex-col justify-center flex-grow">
-                      <motion.h3
-                        className="[font-family:'Poppins',Helvetica] font-semibold text-white text-[15px] tracking-[0] leading-[normal] mb-1 group-hover:text-opacity-90 transition-all duration-300"
-                        initial={{ opacity: 0, y: -10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{
-                          delay: index * 0.2 + 0.5,
-                          duration: 0.3,
-                        }}
-                      >
+                      <h3 className="font-semibold text-white text-sm sm:text-base lg:text-[15px] mb-1 break-words">
                         {step.title}
-                      </motion.h3>
-                      <motion.p
-                        className="[font-family:'Poppins',Helvetica] font-medium text-[#d9d9d9] text-[12px] tracking-[0] leading-relaxed whitespace-pre-line group-hover:text-white/90 transition-all duration-300"
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{
-                          delay: index * 0.2 + 0.6,
-                          duration: 0.3,
-                        }}
-                      >
+                      </h3>
+                      <p className="text-[#d9d9d9] text-xs sm:text-sm lg:text-[12px] leading-relaxed whitespace-normal break-words">
                         {step.description}
-                      </motion.p>
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -195,6 +163,7 @@ export const HowItWorksSection = (): JSX.Element => {
             </motion.div>
           ))}
         </motion.div>
+
       </div>
     </section>
   );

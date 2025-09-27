@@ -76,7 +76,7 @@ export const TrustedBySection = (): JSX.Element => {
     <section className="relative w-full bg-[#030804] bg-[url('/bg/pattern.png')] bg-repeat py-16 scrollbar-none">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
-        <div className="flex items-start justify-between mb-12">
+        <div className="text-center md:text-left md:flex md:items-start md:justify-between mb-12">
           <div>
             <motion.h2 
               className="text-white text-4xl font-bold mb-4"
@@ -89,7 +89,7 @@ export const TrustedBySection = (): JSX.Element => {
               Trusted with by <span className="text-[#3DFF87]">1,500+</span> Happy Buyers
             </motion.h2>
             <motion.p 
-              className="text-[#999999] text-sm max-w-2xl leading-relaxed"
+              className="text-[#999999] text-sm max-w-2xl leading-relaxed text-center md:text-left"
               style={{ fontFamily: 'Poppins, sans-serif' }}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -103,16 +103,16 @@ export const TrustedBySection = (): JSX.Element => {
 
           {/* Rating Card */}
           <motion.div
-            className="bg-[#0A1A0F] rounded-2xl px-6 py-4 border border-[#2A2A2A] min-w-[200px]"
+            className="bg-[#0A1A0F] rounded-2xl px-6 py-4 border border-[#2A2A2A] inline-block md:min-w-[200px]"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <div className="flex gap-1 mb-2">
+            <div className="flex gap-1 mb-2 justify-center md:justify-start">
                <img src="/icon/fourstart.png" alt="star" className=" h-4 object-contain" />
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 justify-center md:justify-start">
               <span className="text-[#3DFF87] font-semibold text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 Amazing 4.5
               </span>
