@@ -653,7 +653,7 @@ const MobileMenu = ({
 // =======================
 // Main Header Section (Updated with Mobile Login Button)
 // =======================
-export const HeaderSection = (): JSX.Element => {
+const HeaderSection = (): JSX.Element => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -901,3 +901,6 @@ export const HeaderSection = (): JSX.Element => {
     </>
   );
 };
+
+// Default export
+export default HeaderSection;

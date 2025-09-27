@@ -1,6 +1,6 @@
 import { BenefitsSection } from "./sections/BenefitsSection/BenefitsSection";
 import { FAQSection } from "./sections/FAQSection/FAQSection";
-import { HeaderSection } from "./sections/HeaderSection/HeaderSection";
+import  HeaderSection  from "./sections/HeaderSection/HeaderSection";
 import { HowItWorksSection } from "./sections/HowItWorksSection/HowItWorksSection";
 import { MainContentSection } from "./sections/MainContentSection/MainContentSection";
 import { TrendingItemsSection } from "./sections/TrendingItemsSection/TrendingItemsSection";
