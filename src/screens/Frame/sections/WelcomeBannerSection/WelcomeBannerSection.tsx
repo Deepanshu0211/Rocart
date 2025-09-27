@@ -232,17 +232,18 @@ export const WelcomeBannerSection = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div
-              className="relative rounded-[3vw] p-[4vw] sm:p-[2vw] 
-                        w-[90vw] sm:w-[80vw] lg:w-[70vw] 
-                        max-h-[85vh] overflow-y-auto 
-                        bg-[url('/bg/modalbg.png')] bg-cover bg-center bg-no-repeat
-                        scrollbar-thin scrollbar-thumb-[#3dff87]/70 scrollbar-track-transparent scrollbar-thumb-rounded-full"
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
+        <motion.div
+            className="relative rounded-[3vw] p-[4vw] sm:p-[2vw] 
+                      w-[90vw] sm:w-[80vw] lg:w-[70vw] 
+                      max-h-[85vh] overflow-y-auto sm:overflow-y-visible
+                      bg-[url('/bg/modalbg.png')] bg-cover bg-center bg-no-repeat
+                      scrollbar-thin sm:scrollbar-none
+                      scrollbar-thumb-[#3dff87]/70 scrollbar-track-transparent scrollbar-thumb-rounded-full"
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.7, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
 
               {/* Header */}
               <div className="flex justify-center relative mb-[3vh] sm:mb-[1.5vh]">
