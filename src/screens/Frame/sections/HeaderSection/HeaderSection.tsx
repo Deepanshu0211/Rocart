@@ -534,7 +534,7 @@ const LanguageModal = ({
 };
 
 // =======================
-// Mobile Menu Component
+// Mobile Menu Component (Updated - Login removed)
 // =======================
 const MobileMenu = ({
   isOpen,
@@ -543,7 +543,6 @@ const MobileMenu = ({
   selectedGame,
   onGameSelect,
   onLanguageClick,
-  onAuthClick,
   country,
   currency,
 }: {
@@ -553,7 +552,6 @@ const MobileMenu = ({
   selectedGame: any;
   onGameSelect: (game: any) => void;
   onLanguageClick: () => void;
-  onAuthClick: () => void;
   country: string;
   currency: string;
 }) => {
@@ -597,7 +595,7 @@ const MobileMenu = ({
                     className={`flex items-center gap-3 w-full p-3 rounded-lg transition-colors ${
                       selectedGame.name === game.name
                         ? 'bg-[#3DFF88]/20 border border-[#3DFF88]'
-                        : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'
+                        : 'bg-[#142b16] hover:bg-[#2a2a2a]'
                     }`}
                   >
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
@@ -639,18 +637,6 @@ const MobileMenu = ({
                 <ChevronDownIcon className="w-5 h-5 text-gray-400" />
               </button>
             </div>
-
-            {/* Login Button */}
-            <button
-              onClick={() => {
-                onAuthClick();
-                onClose();
-              }}
-              className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg py-4 text-white font-semibold text-lg flex items-center justify-center gap-3"
-            >
-              <div className="w-6 h-6 bg-[url(/icon/person.png)] bg-cover bg-center" />
-              Log in
-            </button>
           </motion.div>
 
           {/* Overlay to close menu */}
@@ -665,7 +651,7 @@ const MobileMenu = ({
 };
 
 // =======================
-// Main Header Section (Updated with Mobile Responsiveness)
+// Main Header Section (Updated with Mobile Login Button)
 // =======================
 export const HeaderSection = (): JSX.Element => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -735,11 +721,11 @@ export const HeaderSection = (): JSX.Element => {
     <>
       <header className="w-full h-16 md:h-[10vh] flex items-center justify-between px-4 md:px-[2vw] bg-[#0C1610] relative">
         {/* Mobile Layout */}
-        <div className="md:hidden flex items-center justify-center w-full">
+        <div className="md:hidden flex items-center justify-between w-full">
           {/* Hamburger Menu */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="absolute left-4 text-[#3DFF87] p-2 bg-[url('/icon/header.png')] bg-cover bg-center hover:bg-gray-800 rounded-lg transition-colors"
+            className="text-[#3DFF87] p-2 bg-[url('/icon/header.png')] bg-cover bg-center hover:bg-gray-800 rounded-lg transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -750,6 +736,17 @@ export const HeaderSection = (): JSX.Element => {
             alt="Ro CART"
             src="/ro-cart-33-2.png"
           />
+
+          {/* Login Button */}
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2"
+          >
+            <div className="w-5 h-5 bg-[url(/icon/person.png)] bg-cover bg-center" />
+            {/* <span className="font-poppins font-semibold text-white text-sm">
+              Log in
+            </span> */}
+          </button>
         </div>
 
         {/* Desktop Layout */}
@@ -884,7 +881,6 @@ export const HeaderSection = (): JSX.Element => {
         selectedGame={selectedGame}
         onGameSelect={handleGameSelect}
         onLanguageClick={() => setIsLangModalOpen(true)}
-        onAuthClick={() => setIsAuthModalOpen(true)}
         country={country}
         currency={currency}
       />
