@@ -255,7 +255,7 @@ export const TrendingItemsSection = () => {
           </motion.p>
         </motion.div>
 
-        {/* Game Cards */}
+        {/* Game Cards - Mobile shows only first 2 cards */}
         <motion.div
           className="flex flex-wrap gap-[4vw] sm:gap-[1.5vw] justify-center items-end"
           variants={containerVariants}
@@ -272,11 +272,14 @@ export const TrendingItemsSection = () => {
                 rotate: gameIndex % 2 === 0 ? 2 : -2,
                 transition: { type: "spring", stiffness: 300, damping: 20 },
               }}
-              className="group"
+              className={`group ${
+                // Hide cards 3 and 4 on mobile (screens smaller than 640px)
+                gameIndex >= 2 ? 'hidden sm:block' : ''
+              }`}
             >
-              <AnimatedCard className="w-[85vw] sm:w-[22vw] lg:w-[18vw] h-[50vh] sm:h-[52vh] lg:h-[43vh] 
+              <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[50vh] sm:h-[52vh] lg:h-[43vh] 
                 bg-[#030804] border border-[#2A2A2A] 
-                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[1.5vw] 
+                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[1vw] 
                 shadow-2xl flex flex-col items-center relative overflow-hidden 
                 group-hover:border-[#3DFF87]/30 transition-colors duration-300">
 
@@ -334,7 +337,7 @@ export const TrendingItemsSection = () => {
                           },
                         }}
                         // Mobile and desktop tap/click
-                        whileTap={window.innerWidth <= 768 ? mobileItemTap : {
+                        whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? mobileItemTap : {
                           scale: 0.98,
                           y: 1,
                           transition: { duration: 0.1 }
@@ -342,7 +345,7 @@ export const TrendingItemsSection = () => {
                         // Add onClick handler for mobile interaction
                         onClick={() => {
                           // Add haptic feedback for supported devices
-                          if (window.navigator && window.navigator.vibrate) {
+                          if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
                             window.navigator.vibrate(50);
                           }
                           console.log(`Clicked on ${item.name}`);
@@ -365,7 +368,7 @@ export const TrendingItemsSection = () => {
                             transition: { type: "spring", stiffness: 300 },
                           }}
                           // Mobile tap animation
-                          whileTap={window.innerWidth <= 768 ? mobileImageTap : {
+                          whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? mobileImageTap : {
                             scale: 1.1,
                             rotate: -3,
                             transition: { type: "spring", stiffness: 500, duration: 0.15 }
@@ -400,7 +403,7 @@ export const TrendingItemsSection = () => {
                           whileInView={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.3, type: "spring" }}
                           // Pulse animation on mobile tap
-                          whileTap={window.innerWidth <= 768 ? {
+                          whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? {
                             scale: 1.05,
                             transition: { duration: 0.1 }
                           } : {}}
@@ -412,7 +415,7 @@ export const TrendingItemsSection = () => {
                         <motion.div
                           className="absolute inset-0 rounded-[3vw] sm:rounded-[1.2vw] border-2 border-[#3DFF87] opacity-0 pointer-events-none"
                           animate={{ opacity: 0 }}
-                          whileTap={window.innerWidth <= 768 ? {
+                          whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? {
                             opacity: [0, 0.6, 0],
                             scale: [1, 1.02, 1],
                             transition: { duration: 0.3 }
@@ -432,7 +435,7 @@ export const TrendingItemsSection = () => {
                     viewport={{ once: true }}
                   >
                     <Button
-                      className="mt-[6.5vh] sm:mt-[3vh] 
+                      className="mt-[5vh] sm:mt-[5vh] 
                                 w-[32vw] sm:w-[12vw] lg:w-[8vw] 
                                 h-[6vh] sm:h-[4.5vh] lg:h-[4vh] 
                                 z-100 rounded-[3vw] sm:rounded-[1.2vw] lg:rounded-[0.8vw] 
@@ -463,20 +466,43 @@ export const TrendingItemsSection = () => {
                         />
                       </motion.span>
                     </Button>
+
                   </motion.div>
 
-                  {/* Background Mask */}
+                
+            
+                  {/* Desktop Mask Group Image */}
                   <motion.img
-                    className="flex justify-center items-center absolute -bottom-2 left-0 
-                              w-[90vw] sm:w-[70vw] h-[11vh] 
-                              z-0 opacity-100 item-contain"
-                    alt="Mask group"
+                    className="hidden lg:block absolute bottom-0 
+                              left-[10vw] 
+                              w-[55vw] 
+                              h-auto max-h-[20vh] 
+                              z-0 opacity-100 object-contain"
+                    alt="Mask group desktop"
                     src={game.maskGroup}
-                    initial={{ opacity: 1, scale: 1 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0, y: 20, scale: 1 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
                     viewport={{ once: true }}
                   />
+                  {/* Mobile Mask Group Image */}
+                  <motion.img
+                  className="block lg:hidden absolute bottom-0 
+                            left-[0vw] 
+                            w-[80vw] 
+                            h-auto max-h-[20vh] 
+                            z-0 opacity-100 object-contain"
+                  alt="Mask group mobile"
+                  src={game.maskGroup} // 
+                  initial={{ opacity: 0, y: 20, scale: 1 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
+                  viewport={{ once: true }}
+                />
+
+
+
+
                 </CardContent>
               </AnimatedCard>
             </motion.div>
