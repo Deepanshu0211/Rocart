@@ -684,14 +684,14 @@ const HeaderSection = (): JSX.Element => {
   const games = [
     { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png" },
     { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png" },
-    { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/game/brainrot.png" },
-    { id: 4, name: "Adopt Me!", subtitle: "🏠", icon: "/game/adopt.png" },
-    { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/game/blade.png" },
-    { id: 6, name: "Blox Fruits", subtitle: "🏁", icon: "/game/blox.png", useIcon: true },
-    { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/game/99.png" },
-    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/game/anime.png" },
-    { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/game/dress.png" },
-    { id: 10, name: "Garden Tower Defense", subtitle: "🛡️", icon: "/game/tower.png" },
+    { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png" },
+    { id: 4, name: "Adopt Me!", subtitle: "🏠", icon: "/logo/adopt.png" },
+    { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/logo/blade.png" },
+    { id: 6, name: "Blox Fruits", subtitle: "🏁", icon: "/logo/blox.png", useIcon: true },
+    { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/logo/99.png" },
+    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/logo/anime.png" },
+    { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png" },
+    { id: 10, name: "Garden Tower Defense", subtitle: "🛡️", icon: "/logo/tower.png" },
   ];
 
   const handleGameSelect = (game: any) => {
