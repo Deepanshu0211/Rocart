@@ -202,14 +202,22 @@ const mobileImageTap = {
 export const TrendingItemsSection = () => {
   return (
     <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] scrollbar-none">
-      <div
-        className="absolute inset-0 bg-[url('/bg/mesh.png')] bg-repeat opacity-90 pointer-events-none from-[#06100A] via-transparent to-[#2A2A2A]"
+    <div
+        className="
+          absolute inset-0 
+          bg-[url('/bg/mesh.png')] 
+          bg-no-repeat bg-center 
+          sm:bg-repeat
+          opacity-90 pointer-events-none 
+          from-[#06100A] via-transparent to-[#2A2A2A]
+        "
         style={{
-          backgroundSize: "800px 800px",
+          backgroundSize: "200vw 200vh",
           backgroundBlendMode: "overlay",
           backgroundAttachment: "fixed",
         }}
       />
+
       <div className="max-w-[95vw] mx-auto px-[3vw] z-10">
         {/* Animated Lines */}
         <div className="relative mb-[10vh] hidden sm:block">
@@ -279,7 +287,7 @@ export const TrendingItemsSection = () => {
             >
               <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[50vh] sm:h-[52vh] lg:h-[43vh] 
                 bg-[#030804] border border-[#2A2A2A] 
-                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[1vw] 
+                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[0vw] 
                 shadow-2xl flex flex-col items-center relative overflow-hidden 
                 group-hover:border-[#3DFF87]/30 transition-colors duration-300">
 
@@ -308,7 +316,7 @@ export const TrendingItemsSection = () => {
 
                   {/* Items Grid with Enhanced Mobile Click Animation */}
                   <motion.div
-                    className="flex gap-[6vw] sm:gap-[1.2vw] justify-center w-[75vw] sm:w-[20vw] mb-[4vh]"
+                    className="flex gap-[3vw] sm:gap-[1.2vw] justify-center w-[75vw] sm:w-[20vw] mb-[4vh]"
                     variants={containerVariants}
                     initial="visible"
                     whileInView="visible"
@@ -425,56 +433,100 @@ export const TrendingItemsSection = () => {
                     ))}
                   </motion.div>
 
-                  {/* Visit Market Button */}
-                  <motion.div
+             {/* Visit Market Button - Mobile */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 1, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: gameIndex * 0.1 + 0.6, duration: 0.5 }}
+                viewport={{ once: true }}
+                className="block sm:hidden"
+              >
+                <Button
+                  className="mt-[8vh] 
+                            w-[30vw] 
+                            h-[4.5vh] 
+                            z-100 rounded-[3vw] 
+                            group-hover:scale-105 transition-transform duration-300"
+                  style={{ 
+                    backgroundImage: `url(${game.buttonImage})`,
+                    backgroundSize: '100% 100%',
+                    backgroundPosition: 'center',
+                    opacity: 1,
+                    border: 'none'
+                  }}
+                >
+                  <motion.span
+                    className="font-medium text-white 
+                              text-[3vw] 
+                              opacity-100 tracking-tight leading-none pointer-events-none"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
                     whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 1, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: gameIndex * 0.1 + 0.6, duration: 0.5 }}
-                    viewport={{ once: true }}
                   >
-                    <Button
-                      className="mt-[5vh] sm:mt-[5vh] 
-                                w-[32vw] sm:w-[12vw] lg:w-[8vw] 
-                                h-[6vh] sm:h-[4.5vh] lg:h-[4vh] 
-                                z-100 rounded-[3vw] sm:rounded-[1.2vw] lg:rounded-[0.8vw] 
-                                group-hover:scale-105 transition-transform duration-300"
-                      style={{ 
-                        backgroundImage: `url(${game.buttonImage})`,
-                        backgroundSize: '100% 100%',
-                        backgroundPosition: 'center',
-                        opacity: 1,
-                        border: 'none'
-                      }}
-                    >
-                      <motion.span
-                        className="font-medium text-white 
-                                  text-[3vw] sm:text-[1vw] lg:text-[0.7vw] 
-                                  opacity-100 tracking-tight leading-none pointer-events-none"
-                        style={{ fontFamily: "Poppins, sans-serif" }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        Visit Market
-                        <img
-                          src="/icon/icon2.png"
-                          alt="arrow right"
-                          className="inline 
-                                    w-[2.2vw] sm:w-[1vw] lg:w-[0.8vw] 
-                                    h-[2.2vw] sm:h-[1vw] lg:h-[0.8vw] 
-                                    ml-[0.8vw] sm:ml-[0.3vw] object-contain"
-                        />
-                      </motion.span>
-                    </Button>
+                    Visit Market
+                    <img
+                      src="/icon/icon2.png"
+                      alt="arrow right"
+                      className="inline 
+                                w-[2.2vw] h-[2.2vw] 
+                                ml-[0.8vw] object-contain"
+                    />
+                  </motion.span>
+                </Button>
+              </motion.div>
 
-                  </motion.div>
+              {/* Visit Market Button - Desktop */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 1, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: gameIndex * 0.1 + 0.6, duration: 0.5 }}
+                viewport={{ once: true }}
+                className="hidden sm:block"
+              >
+                <Button
+                  className="mt-[6vh] 
+                            sm:mt-[4vh] 
+                            w-[12vw] lg:w-[8vw] 
+                            h-[4.5vh] lg:h-[4vh] 
+                            z-100 rounded-[1.2vw] lg:rounded-[0.8vw] 
+                            group-hover:scale-105 transition-transform duration-300"
+                  style={{ 
+                    backgroundImage: `url(${game.buttonImage})`,
+                    backgroundSize: '100% 100%',
+                    backgroundPosition: 'center',
+                    opacity: 1,
+                    border: 'none'
+                  }}
+                >
+                  <motion.span
+                    className="font-medium text-white 
+                              text-[1vw] lg:text-[0.7vw] 
+                              opacity-100 tracking-tight leading-none pointer-events-none"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    Visit Market
+                    <img
+                      src="/icon/icon2.png"
+                      alt="arrow right"
+                      className="inline 
+                                w-[1vw] lg:w-[0.8vw] 
+                                h-[1vw] lg:h-[0.8vw] 
+                                ml-[0.3vw] object-contain"
+                    />
+                  </motion.span>
+                </Button>
+              </motion.div>
 
                 
             
                   {/* Desktop Mask Group Image */}
                   <motion.img
                     className="hidden lg:block absolute bottom-0 
-                              left-[10vw] 
+                              left-[0vw] 
                               w-[55vw] 
                               h-auto max-h-[20vh] 
                               z-0 opacity-100 object-contain"
@@ -490,8 +542,8 @@ export const TrendingItemsSection = () => {
                   className="block lg:hidden absolute bottom-0 
                             left-[0vw] 
                             w-[80vw] 
-                            h-auto max-h-[20vh] 
-                            z-0 opacity-100 object-contain"
+                            h-1vh max-h-[20vh] 
+                            z-0 opacity-100 "
                   alt="Mask group mobile"
                   src={game.maskGroup} // 
                   initial={{ opacity: 0, y: 20, scale: 1 }}
