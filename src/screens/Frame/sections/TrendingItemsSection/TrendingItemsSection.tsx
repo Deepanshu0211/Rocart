@@ -29,7 +29,7 @@ const gameData = [
   {
     id: 2,
     title: "MM2",
-    icon: "/mm2-ddbykew2-2.png",
+    icon: "/icon/mm2.png",
     maskGroup: "/bgs/image2.png",
     buttonImage: "/buttonbg/2.png",
     items: [
@@ -285,7 +285,7 @@ export const TrendingItemsSection = () => {
                 gameIndex >= 2 ? 'hidden sm:block' : ''
               }`}
             >
-              <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[44vh] sm:h-[4vh] lg:h-[3vh] 
+              <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[44vh] sm:h-[43vh] lg:h-[45vh] 
                 bg-[#030804] border border-[#2A2A2A] 
                 rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[2vw] 
                 shadow-2xl flex flex-col items-center relative overflow-hidden 
@@ -497,8 +497,8 @@ export const TrendingItemsSection = () => {
                 className="hidden sm:block"
               >
                 <Button
-                  className="mt-[6vh] 
-                            sm:mt-[4vh] 
+                  className="mt-[5vh] 
+                            sm:mt-[6vh] 
                             w-[12vw] lg:w-[8vw] 
                             h-[4.5vh] lg:h-[4vh] 
                             z-100 rounded-[1.2vw] lg:rounded-[0.8vw] 
