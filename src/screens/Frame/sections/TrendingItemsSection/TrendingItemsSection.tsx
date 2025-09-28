@@ -7,7 +7,7 @@ const gameData = [
     id: 1,
     title: "Grow A Garden",
     icon: "/gag-jqsy7lwj-1.png",
-    maskGroup: "/mask-group-21.png",
+    maskGroup: "/bgs/image4.png",
     buttonImage: "/buttonbg/1.png",
     items: [
       {
@@ -30,7 +30,7 @@ const gameData = [
     id: 2,
     title: "MM2",
     icon: "/mm2-ddbykew2-2.png",
-    maskGroup: "/mask-group-22.png",
+    maskGroup: "/bgs/image2.png",
     buttonImage: "/buttonbg/2.png",
     items: [
       {
@@ -53,7 +53,7 @@ const gameData = [
     id: 3,
     title: "Steal A brainrot",
     icon: "/logo/brain.png",
-    maskGroup: "/mask-group-24.png",
+    maskGroup: "/bgs/image1.png",
     buttonImage: "/buttonbg/3.png",
     items: [
       {
@@ -76,7 +76,7 @@ const gameData = [
     id: 4,
     title: "Adopt Me",
     icon: "/am-yek4mbfs-1.png",
-    maskGroup: "/mask-group-26.png",
+    maskGroup: "/bgs/image3.png",
     buttonImage: "/buttonbg/4.png",
     items: [
       {
@@ -348,16 +348,43 @@ export const TrendingItemsSection = () => {
                         whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? mobileItemTap : {
                           scale: 0.98,
                           y: 1,
-                          transition: { duration: 0.1 }
+                          transition: { duration: 2 }
                         }}
                         // Add onClick handler for mobile interaction
                         onClick={() => {
-                          // Add haptic feedback for supported devices
-                          if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-                            window.navigator.vibrate(50);
+                          if (
+                            typeof window !== "undefined" &&
+                            window.navigator &&
+                            window.navigator.vibrate
+                          ) {
+                            // Intense vibration pattern: buzz-pause-buzz
+                        window.navigator.vibrate([
+                          // Intro Verse – "Sometimes all I think about is you"
+                          100,
+                          // 150, 100, 150, 200,
+
+                          // // Build – "Late nights in the middle of June"
+                          // 200, 100, 150, 100, 300, 200, 400,
+
+                          // // Chorus Start – "Heat waves been fakin’ me out"
+                          // 300, 100, 300, 100, 400, 150, 500,
+
+                          // // Chorus Verse – "Can't make you happier now"
+                          // 200, 100, 200, 100, 300, 200, 400,
+
+                          // // Hook – "Sometimes all I think about is you"
+                          // 200, 100, 200, 100, 200, 300, 
+                          // 150, 100, 150, 200,
+
+                          // // Outro – lingering like the song end
+                          // 400, 200, 600, 300
+                        ]);
+
+
                           }
                           console.log(`Clicked on ${item.name}`);
                         }}
+
                       >
                         {/* Overlay effect on interaction */}
                         <motion.div 
@@ -523,31 +550,28 @@ export const TrendingItemsSection = () => {
 
                 
             
-                  {/* Desktop Mask Group Image */}
-                  <motion.img
-                    className="hidden lg:block absolute bottom-0 
-                              left-[0vw] 
-                              w-[55vw] 
-                              h-auto max-h-[20vh] 
-                              z-0 opacity-100 object-contain"
-                    alt="Mask group desktop"
-                    src={game.maskGroup}
-                    initial={{ opacity: 0, y: 20, scale: 1 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
-                    viewport={{ once: true }}
-                  />
-                  {/* Mobile Mask Group Image */}
-                  <motion.img
-                  className="block lg:hidden absolute bottom-0 
-                            left-[0vw] 
-                            w-[78vw] 
-                            h-1vh max-h-[10vh] 
-                            z-0 opacity-100 "
-                  alt="Mask group mobile"
-                  src={game.maskGroup} // 
+                {/* Desktop Mask Group Image */}
+                <motion.img
+                  className="hidden lg:block absolute bottom-0 left-0 
+                            w-[55vw] h-auto max-h-[20vh] 
+                            z-[-1] opacity-50 object-contain"
+                  alt="Mask group desktop"
+                  src={game.maskGroup}
                   initial={{ opacity: 0, y: 20, scale: 1 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  whileInView={{ opacity: 0.5, y: 0, scale: 1 }}
+                  transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
+                  viewport={{ once: true }}
+                />
+
+                {/* Mobile Mask Group Image */}
+                <motion.img
+                  className="block lg:hidden absolute bottom-0 left-0 
+                            w-[78vw] h-auto max-h-[10vh] 
+                            z-[-1] opacity-50 object-contain"
+                  alt="Mask group mobile"
+                  src={game.maskGroup}
+                  initial={{ opacity: 0, y: 20, scale: 1 }}
+                  whileInView={{ opacity: 0.5, y: 0, scale: 1 }}
                   transition={{ delay: gameIndex * 0.1 + 0.8, duration: 0.8 }}
                   viewport={{ once: true }}
                 />
