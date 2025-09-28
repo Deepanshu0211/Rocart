@@ -146,13 +146,13 @@ const AuthModal = ({
 
         {/* Right Side - Form */}
         <div className="w-full md:w-[55%] p-4 md:p-[2vw] flex flex-col relative">
-          {/* Close Button */}
+          {/* Close Button - Increased size for mobile */}
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 md:top-[1vw] md:right-[1vw] text-gray-400 hover:text-white text-lg md:text-[1vw] p-2 md:p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
+            className="absolute top-4 right-4 md:top-[1vw] md:right-[1vw] text-gray-400 hover:text-white text-2xl md:text-[1vw] p-3 md:p-[0.5vw] rounded-full hover:bg-gray-800 transition-colors z-10"
           >
-            <X className="w-6 h-6 md:w-[1.5vw] md:h-[1.5vw]" />
+            <X className="w-8 h-8 md:w-[1.5vw] md:h-[1.5vw]" />
           </button>
 
           {/* Mobile Logo - Only visible on mobile */}
@@ -189,7 +189,12 @@ const AuthModal = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-y-auto">
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-y-auto scrollbar-hide" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+            <style>{`
+              form::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
             {/* Register Form */}
          {!isLogin && (
             <div className="flex flex-col items-center space-y-4 md:space-y-[1.5vh]">
@@ -378,12 +383,12 @@ const AuthModal = ({
               <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
 
               {/* Google Button */}
-              <button
+             <button
                 type="button"
                 onClick={handleGoogleAuth}
                 className="w-full max-w-xs md:w-[15vw] bg-transparent border border-gray-600 hover:border-gray-500 rounded-lg py-3 md:py-[1.2vh] text-base md:text-[1vw] font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 md:gap-[0.5vw]"
               >
-                <span className="text-lg md:text-[1.2vw]">G</span>
+                <img src="/loginbg/google.png" alt="Google" className="w-5 h-5 md:w-[1.5vw] md:h-[1.5vw]" />
                 Google
               </button>
             </div>
