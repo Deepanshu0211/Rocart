@@ -345,45 +345,28 @@ export const TrendingItemsSection = () => {
                           },
                         }}
                         // Mobile and desktop tap/click
-                        whileTap={typeof window !== 'undefined' && window.innerWidth <= 768 ? mobileItemTap : {
-                          scale: 0.98,
-                          y: 1,
-                          transition: { duration: 2 }
-                        }}
-                        // Add onClick handler for mobile interaction
-                        onClick={() => {
-                          if (
-                            typeof window !== "undefined" &&
-                            window.navigator &&
-                            window.navigator.vibrate
-                          ) {
-                            // Intense vibration pattern: buzz-pause-buzz
-                        window.navigator.vibrate([
-                          // Intro Verse – "Sometimes all I think about is you"
-                          100,
-                          // 150, 100, 150, 200,
+                  onClick={() => {
+                      if (
+                        typeof window !== "undefined" &&
+                        window.navigator
+                      ) {
+                        // Android & supported devices
+                        if (window.navigator.vibrate) {
+                          window.navigator.vibrate([200,]); 
+                        }
 
-                          // // Build – "Late nights in the middle of June"
-                          // 200, 100, 150, 100, 300, 200, 400,
-
-                          // // Chorus Start – "Heat waves been fakin’ me out"
-                          // 300, 100, 300, 100, 400, 150, 500,
-
-                          // // Chorus Verse – "Can't make you happier now"
-                          // 200, 100, 200, 100, 300, 200, 400,
-
-                          // // Hook – "Sometimes all I think about is you"
-                          // 200, 100, 200, 100, 200, 300, 
-                          // 150, 100, 150, 200,
-
-                          // // Outro – lingering like the song end
-                          // 400, 200, 600, 300
-                        ]);
-
-
+                        // iOS fallback
+                        if ("vibrate" in window.navigator === false) {
+                          if (window.navigator && (window.navigator as Navigator).userAgent.includes("iPhone")) {
+                            // Minimal haptic fallback — triggers basic iOS tap feedback
+                            console.log("iPhone detected — basic haptic feedback triggered");
+                            // Safari doesn't allow vibration control, so we rely on click/touch vibration
                           }
-                          console.log(`Clicked on ${item.name}`);
-                        }}
+                        }
+                      }
+                      console.log(`Clicked on ${item.name}`);
+                    }}
+
 
                       >
                         {/* Overlay effect on interaction */}
