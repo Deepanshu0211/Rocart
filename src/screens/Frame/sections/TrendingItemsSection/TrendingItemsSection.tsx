@@ -285,9 +285,9 @@ export const TrendingItemsSection = () => {
                 gameIndex >= 2 ? 'hidden sm:block' : ''
               }`}
             >
-              <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[50vh] sm:h-[52vh] lg:h-[43vh] 
+              <AnimatedCard className="w-[70vw] sm:w-[2vw] lg:w-[18vw] h-[40vh] sm:h-[35vh] lg:h-[43vh] 
                 bg-[#030804] border border-[#2A2A2A] 
-                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[0vw] 
+                rounded-[10vw] sm:rounded-[2.5vw] lg:rounded-[2vw] 
                 shadow-2xl flex flex-col items-center relative overflow-hidden 
                 group-hover:border-[#3DFF87]/30 transition-colors duration-300">
 
@@ -444,7 +444,7 @@ export const TrendingItemsSection = () => {
                 className="block sm:hidden"
               >
                 <Button
-                  className="mt-[8vh] 
+                  className="mt-[-3vh] 
                             w-[30vw] 
                             h-[4.5vh] 
                             z-100 rounded-[3vw] 
@@ -541,8 +541,8 @@ export const TrendingItemsSection = () => {
                   <motion.img
                   className="block lg:hidden absolute bottom-0 
                             left-[0vw] 
-                            w-[80vw] 
-                            h-1vh max-h-[20vh] 
+                            w-[78vw] 
+                            h-1vh max-h-[10vh] 
                             z-0 opacity-100 "
                   alt="Mask group mobile"
                   src={game.maskGroup} // 
