@@ -497,10 +497,10 @@ export const TrendingItemsSection = () => {
                 className="hidden sm:block"
               >
                 <Button
-                  className="mt-[5vh] 
-                            sm:mt-[6vh] 
+                  className="mt-[6vh] 
+                            sm:mt-[5vh] 
                             w-[12vw] lg:w-[8vw] 
-                            h-[4.5vh] lg:h-[4vh] 
+                            h-[5vh] lg:h-[5vh] 
                             z-100 rounded-[1.2vw] lg:rounded-[0.8vw] 
                             group-hover:scale-105 transition-transform duration-300"
                   style={{ 
