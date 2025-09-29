@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { AnimatePresence, motion } from "framer-motion";
@@ -92,6 +93,10 @@ const games = [
 
 export const WelcomeBannerSection = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleNavigate = () => {
+    window.location.href = '/catalog';
+  };
 
   return (
     <section className="relative w-full h-[75vh] overflow-hidden">
@@ -268,6 +273,7 @@ export const WelcomeBannerSection = () => {
                 {games.map((game, i) => (
                   <Card
                     key={i}
+                    onClick={handleNavigate}
                     className="relative rounded-[25px] w-full h-[25vh] sm:h-[20vh] overflow-hidden hover:scale-[1.03] transition-transform duration-300 cursor-pointer bg-transparent shadow-none border-none"
                     style={{
                       backgroundImage: `url(${game.bgImage})`,

@@ -281,3 +281,5 @@ export const MainContentSection = (): JSX.Element => {
     </motion.footer>
   );
 }
+
+export default MainContentSection;
