@@ -758,11 +758,14 @@ const HeaderSection = (): JSX.Element => {
         <div className="hidden md:flex items-center justify-between w-full">
           {/* Left: Logo + Dropdown */}
           <div className="flex items-center gap-[2vw] relative" ref={dropdownRef}>
-            <img
-              className="w-auto h-[5vh] object-cover"
-              alt="Ro CART"
-              src="/ro-cart-33-2.png"
-            />
+            <a href="/">
+              <img
+                className="w-auto h-[5vh] object-cover cursor-pointer"
+                alt="Ro CART"
+                src="/ro-cart-33-2.png"
+              />
+            </a>
+
 
             <div className="relative">
               <button
