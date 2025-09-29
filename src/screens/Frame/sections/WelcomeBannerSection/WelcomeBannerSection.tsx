@@ -4,6 +4,7 @@ import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { AnimatePresence, motion } from "framer-motion";
 
+
 const gameItems = [
   {
     name: "Chroma Evergun",
@@ -72,12 +73,6 @@ const games = [
     gradient: "linear-gradient(90deg, #FF8132, #E9E9E9)",
   },
   {
-    name: "Garden Tower Defense",
-    icon: "/logo/tower.png",
-    bgImage: "/logo/towermain.png",
-    gradient: "linear-gradient(90deg, #F7A35D, #E9E9E9)",
-  },
-  {
     name: "Dress To Impress",
     icon: "/logo/impress.png",
     bgImage: "/logo/impressmain.png",
@@ -93,9 +88,13 @@ const games = [
 
 export const WelcomeBannerSection = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const handleNavigate = () => {
-    window.location.href = '/catalog';
+  const handleGameSelect = (game: typeof games[0]) => {
+    // Store the selected game in sessionStorage
+    sessionStorage.setItem('selectedGame', JSON.stringify(game));
+    // Navigate to catalog
+    navigate('/catalog');
   };
 
   return (
@@ -250,22 +249,19 @@ export const WelcomeBannerSection = () => {
               exit={{ scale: 0.7, opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-
-
               {/* Header */}
               <div className="flex justify-center relative mb-[3vh] sm:mb-[1.5vh]">
                 <h2 className="text-[5vw] sm:text-[3vw] lg:text-[2vw] font-extrabold tracking-tight text-[#FFFFFF]">
                   CHOOSE A GAME
                 </h2>
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="absolute right-0 -top-2.5  text-white hover:text-[#3dff87] 
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="absolute right-0 -top-2.5  text-white hover:text-[#3dff87] 
                           text-[8vw] sm:text-[2.5vw] lg:text-[1.8vw]"
-              >
-                ✕
-              </button>
-
+                >
+                  ✕
+                </button>
               </div>
 
               {/* Grid of Games - Responsive grid */}
@@ -273,7 +269,7 @@ export const WelcomeBannerSection = () => {
                 {games.map((game, i) => (
                   <Card
                     key={i}
-                    onClick={handleNavigate}
+                    onClick={() => handleGameSelect(game)}
                     className="relative rounded-[25px] w-full h-[25vh] sm:h-[20vh] overflow-hidden hover:scale-[1.03] transition-transform duration-300 cursor-pointer bg-transparent shadow-none border-none"
                     style={{
                       backgroundImage: `url(${game.bgImage})`,
@@ -316,4 +312,4 @@ export const WelcomeBannerSection = () => {
       </AnimatePresence>
     </section>
   );
-};
+}
