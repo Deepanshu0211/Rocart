@@ -4,7 +4,6 @@ import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { AnimatePresence, motion } from "framer-motion";
 
-
 const gameItems = [
   {
     name: "Chroma Evergun",
@@ -91,10 +90,25 @@ export const WelcomeBannerSection = () => {
   const navigate = useNavigate();
 
   const handleGameSelect = (game: typeof games[0]) => {
-    // Store the selected game in sessionStorage
-    sessionStorage.setItem('selectedGame', JSON.stringify(game));
-    // Navigate to catalog
-    navigate('/catalog');
+    // Convert game name to camelCase for route matching
+    let gameRoute = game.name
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .map((word, index) => 
+        index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join('')
+      .replace(/[^a-zA-Z]/g, ''); // Remove special characters and numbers
+
+    // Special case for "99 nights in the forest" to match NinetyNineNights.tsx
+    if (game.name === "99 nights in the forest") {
+      gameRoute = "NinetyNineNights";
+    }
+
+    // Navigate to the game-specific route (e.g., /BloxFruits)
+    navigate(`/${gameRoute}`);
   };
 
   return (
@@ -312,4 +326,4 @@ export const WelcomeBannerSection = () => {
       </AnimatePresence>
     </section>
   );
-}
+};
