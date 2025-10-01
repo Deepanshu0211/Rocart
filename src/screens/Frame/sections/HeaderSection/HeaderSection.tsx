@@ -428,7 +428,7 @@ const AuthModal = ({ isOpen, onClose, setUser }: { isOpen: boolean; onClose: () 
                 ) : (
                   <div className="flex flex-col items-center space-y-4 md:space-y-[1.5vh]">
                     <div className="w-full max-w-sm md:w-[25vw]">
-                      <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Email or Username*</label>
+                      <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Email*</label>
                       <input type="text" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[#030804] border border-[#000000] rounded-lg md:rounded-[0.5vw] px-4 py-3 md:px-[1vw] md:py-[1vh] text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#000000] focus:outline-none" placeholder="Enter your email or username" required />
                     </div>
                     <div className="w-full max-w-sm md:w-[25vw]">
