@@ -8,7 +8,7 @@ const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
 const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
 
 const games = [
-  { name: "Dress to Impress", icon: "/logo/dress.png" },
+  { name: "Dress to Impress", icon: "/logo/impress.png" },
 ];
 
 const categories = [
@@ -34,7 +34,7 @@ const currencyMap = {
   GB: "GBP", DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR",
   NL: "EUR", BE: "EUR", AT: "EUR", PT: "EUR", IE: "EUR",
   GR: "EUR", FI: "EUR", EU: "EUR", SE: "SEK", DK: "DKK",
-  NO: "NOK", CH: "CHF", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON",
+  NO: "NOK", CH: "CHF", PL: "PLN", CZK: "CZK", HU: "HUF", RO: "RON",
   IN: "INR", JP: "JPY", CN: "CNY", KR: "KRW", SG: "SGD",
   HK: "HKD", TW: "TWD", TH: "THB", MY: "MYR", ID: "IDR",
   PH: "PHP", VN: "VND", PK: "PKR", BD: "BDT",
@@ -45,32 +45,36 @@ const currencyMap = {
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
 
-async function fetchProducts() {
+async function fetchProducts(category: string = "All", searchTerm: string = "") {
   const query = `
     {
-      products(first: 10) {
-        edges {
-          node {
-            id
-            title
-            description
-            images(first: 1) {
-              edges {
-                node {
-                  url
-                }
-              }
-            }
-            variants(first: 1) {
-              edges {
-                node {
-                  id
-                  price {
-                    amount
-                    currencyCode
+      collection(id: "gid://shopify/Collection/647388234013") {
+        id
+        products(first: 10) {
+          edges {
+            node {
+              id
+              title
+              description
+              images(first: 1) {
+                edges {
+                  node {
+                    url
                   }
                 }
               }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price {
+                      amount
+                      currencyCode
+                    }
+                  }
+                }
+              }
+              tags
             }
           }
         }
@@ -92,12 +96,37 @@ async function fetchProducts() {
   }
 
   const data = await res.json();
-  
+
   if (data.errors) {
     throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
   }
-  
-  return data.data.products.edges;
+
+  let filteredProducts = data.data.collection?.products.edges || [];
+
+  // Client-side filtering for categories
+  if (category !== "All") {
+    const categoryTag = category.toLowerCase().replace(/\s+/g, '-');
+    filteredProducts = filteredProducts.filter((product: Product) =>
+      product.node.tags.some((tag: string) =>
+        tag.toLowerCase() === categoryTag ||
+        tag.toLowerCase().includes(category.toLowerCase())
+      )
+    );
+  }
+
+  // Client-side search filtering
+  if (searchTerm.trim()) {
+    filteredProducts = filteredProducts.filter((product: Product) =>
+      product.node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.node.description && product.node.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }
+
+  if (filteredProducts.length === 0) {
+    console.warn(`No products found for category: ${category}${searchTerm ? ` and search: ${searchTerm}` : ''}`);
+  }
+
+  return filteredProducts;
 }
 
 async function fetchExchangeRates(baseCurrency = "USD") {
@@ -153,10 +182,11 @@ type ProductNode = {
   description?: string;
   images: { edges: { node: { url: string } }[] };
   variants: { edges: { node: { id: string; price: { amount: string; currencyCode: string } } }[] };
+  tags: string[];
 };
 type Product = { node: ProductNode };
 
-export const BloxFruits = () => {
+export const DressToImpress = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,16 +195,44 @@ export const BloxFruits = () => {
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
-  
-  // Cart state management with localStorage persistence
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [currentIndices, setCurrentIndices] = useState<{ [key: string]: number }>({
+    hotItems: 0,
+    bestSellers: 0,
+    summerSpecials: 0,
+    knives: 0,
+    guns: 0,
+    bundles: 0,
+  });
+
+  // Cart state management with unified localStorage persistence
+  const CART_VERSION = "1.0.0";
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
-      const savedCart = localStorage.getItem('bloxFruitsCart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      return [];
+      const storedCartData = localStorage.getItem('cart');
+      if (storedCartData) {
+        const parsedData = JSON.parse(storedCartData);
+        if (parsedData.version === CART_VERSION && Array.isArray(parsedData.items)) {
+          // Validate each item in the cart
+          const validItems = parsedData.items.filter((item: any) => 
+            item.id && 
+            item.title && 
+            typeof item.price === 'number' && 
+            item.currency && 
+            typeof item.quantity === 'number' && 
+            item.quantity > 0
+          );
+          return validItems;
+        } else {
+          localStorage.removeItem('cart');
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing stored cart:', e);
+      localStorage.removeItem('cart');
     }
+    return [];
   });
 
   useEffect(() => {
@@ -241,7 +299,9 @@ export const BloxFruits = () => {
         const rates = await fetchExchangeRates();
         setExchangeRates(rates);
         
-        const productsData = await fetchProducts();
+        setLoading(true);
+        setError(null);
+        const productsData = await fetchProducts(activeCategory, searchTerm);
         setProducts(productsData);
         setLoading(false);
       } catch (error) {
@@ -256,20 +316,30 @@ export const BloxFruits = () => {
     };
 
     initializeData();
-
-    const handleCurrencyChange = (event: any) => {
-      const { country, currency } = event.detail;
-      console.log(`✓ Currency changed from Header: ${currency} (${country})`);
-      setDetectedCountry(country);
-      setUserCurrency(currency);
-    };
-
-    window.addEventListener('currencyChanged', handleCurrencyChange);
-
-    return () => {
-      window.removeEventListener('currencyChanged', handleCurrencyChange);
-    };
   }, []);
+
+  // Separate effect for category and search changes
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const productsData = await fetchProducts(activeCategory, searchTerm);
+        setProducts(productsData);
+      } catch (error) {
+        console.error("Error loading products:", error);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError(String(error));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, [activeCategory, searchTerm]);
 
   useEffect(() => {
     if (userCurrency && Object.keys(exchangeRates).length === 0) {
@@ -279,11 +349,11 @@ export const BloxFruits = () => {
 
   // Persist cart to localStorage whenever it changes
   useEffect(() => {
+    // Save cart to localStorage with version
     try {
-      localStorage.setItem('bloxFruitsCart', JSON.stringify(cart));
-      console.log(`✓ Cart saved to localStorage (${cart.length} items)`);
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+      localStorage.setItem('cart', JSON.stringify({ version: CART_VERSION, items: cart }));
+    } catch (e) {
+      console.error('Error saving cart to localStorage:', e);
     }
   }, [cart]);
 
@@ -295,7 +365,10 @@ export const BloxFruits = () => {
     rates: Record<string, number>
   ): number {
     if (originalCurrency === targetCurrency) return amount;
-    if (!rates[originalCurrency] || !rates[targetCurrency]) return amount;
+    if (!rates[originalCurrency] || !rates[targetCurrency]) {
+      console.warn(`Exchange rate not found for ${originalCurrency} to ${targetCurrency}`);
+      return amount;
+    }
     const amountInUSD = originalCurrency === "USD" ? amount : amount / rates[originalCurrency];
     return amountInUSD * rates[targetCurrency];
   }
@@ -324,20 +397,18 @@ export const BloxFruits = () => {
     }
   };
 
-  // Add to cart function - adds real Shopify product data
+  // Add to cart function
   const addToCart = (product: Product) => {
     const variant = product.node.variants.edges[0].node;
     const existingItem = cart.find((item) => item.id === variant.id);
     
     if (existingItem) {
-      // If item already exists, increase quantity
       setCart(cart.map((item) =>
         item.id === variant.id
           ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
     } else {
-      // Add new item to cart
       const newItem: CartItem = {
         id: variant.id,
         title: product.node.title,
@@ -366,6 +437,117 @@ export const BloxFruits = () => {
   // Remove item from cart
   const removeFromCart = (itemId: string) => {
     setCart(cart.filter((item) => item.id !== itemId));
+  };
+
+  // Navigation handlers for carousel
+  const handlePrev = (section: string) => {
+    setCurrentIndices((prev) => ({
+      ...prev,
+      [section]: prev[section] === 0 ? Math.max(products.length - 4, 0) : prev[section] - 1,
+    }));
+  };
+
+  const handleNext = (section: string) => {
+    setCurrentIndices((prev) => ({
+      ...prev,
+      [section]: prev[section] >= Math.max(products.length - 4, 0) ? 0 : prev[section] + 1,
+    }));
+  };
+
+  // Render section with carousel functionality
+  const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
+    const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 4);
+
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`text-xl ${sectionId === 'hotItems' ? 'text-red-500' : sectionId === 'bestSellers' ? 'text-yellow-500' : sectionId === 'summerSpecials' ? 'text-blue-500' : sectionId === 'knives' ? 'text-purple-500' : sectionId === 'guns' ? 'text-green-500' : 'text-pink-500'}`}>
+              <img src={icon} alt={title} className="w-6 h-6 inline-block" />
+            </span>
+            <h2 className="text-white text-xl font-bold">{title}</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handlePrev(sectionId)}
+              className="text-gray-400 hover:text-white transition-colors"
+              disabled={currentIndices[sectionId] === 0}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => handleNext(sectionId)}
+              className="text-gray-400 hover:text-white transition-colors"
+              disabled={currentIndices[sectionId] >= Math.max(productsToShow.length - 4, 0)}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setActiveSection(sectionId)}
+              className="text-[#3dff87] text-sm hover:underline"
+            >
+              <img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
+            {visibleProducts.length > 0 ? (
+              visibleProducts.map((product, idx) => (
+                <div
+                  key={`${sectionId}-${idx}`}
+                  className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                >
+                  <div className="relative aspect-square bg-black">
+                    {product.node.images.edges[0] ? (
+                      <img
+                        src={product.node.images.edges[0].node.url}
+                        alt={product.node.title}
+                        className="w-full h-full object-contain p-2"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3">
+                    <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
+                      {product.node.title}
+                    </h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[#3dff87] font-bold text-sm">
+                        {formatPrice(product)}
+                      </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="hover:bg-[#2dd66e00] transition-all"
+                      >
+                        <img
+                          src="/icon/cart.png"
+                          alt="Add"
+                          className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="w-full text-center py-8 text-gray-400">
+                No products found in this category.
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
   };
 
   return (
@@ -419,8 +601,19 @@ export const BloxFruits = () => {
         </div>
       </div>
 
-      
       <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {activeSection && (
+          <button
+            onClick={() => setActiveSection(null)}
+            className="mb-6 text-sm text-gray-300 hover:underline flex items-center"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to all
+          </button>
+        )}
+
         {loading && (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
@@ -432,220 +625,105 @@ export const BloxFruits = () => {
           <div className="text-center py-20">
             <div className="text-red-500 text-xl mb-4">⚠️ Error loading products</div>
             <p className="text-gray-400">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
+            >
+              Retry
+            </button>
           </div>
         )}
 
         {!loading && !error && products.length > 0 && (
           <>
-            {/* Hot Items Section */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-red-500 text-xl">🔥</span>
-                  <h2 className="text-white text-xl font-bold">Hot Items</h2>
+            {(!activeSection || activeSection === "hotItems") && (
+              renderSection("hotItems", "Hot Items", "/icon/best.png", products)
+            )}
+            {(!activeSection || activeSection === "search") && (
+              <section className="space-y-6">
+                <div className="relative bg-[url('/icon/searchbg.png')] bg-cover bg-left bg-no-repeat w-[50vw] max-w-md p-2 rounded-lg">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full pl-5 pr-12 py-2 rounded-lg bg-[#1a2621]/80 text-white border border-[#3dff87]/20 focus:outline-none focus:border-[#3dff87] transition-all duration-300 ease-in-out"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[#3dff87] transition-colors duration-300 ease-in-out">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  </span>
                 </div>
-                <button className="text-[#3dff87] text-sm hover:underline"><img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" /></button>
-              </div>
-              
-              <div className="relative">
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-                  {products.slice(0, 8).map((product) => (
-                    <div
-                      key={product.node.id}
-                      className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden  transition-all cursor-pointer group"
-                    >
-                      <div className="relative aspect-square bg-black">
-                        {product.node.images.edges[0] ? (
-                          <img
-                            src={product.node.images.edges[0].node.url}
-                            alt={product.node.title}
-                            className="w-full h-full  object-contain p-2"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+
+                {searchTerm.trim() !== "" && (
+                  <div className="flex gap-4 flex-wrap pt-4 animate-fadeIn">
+                    {products.length > 0 ? (
+                      products.map((product) => (
+                        <div
+                          key={product.node.id}
+                          className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden cursor-pointer group transition-transform duration-300 ease-in-out hover:scale-[1.05] hover:shadow-[0_0_15px_#3dff87] animate-fadeIn"
+                        >
+                          <div className="relative aspect-square bg-black">
+                            {product.node.images.edges[0] ? (
+                              <img
+                                src={product.node.images.edges[0].node.url}
+                                alt={product.node.title}
+                                className="w-full h-full object-contain p-2 transition-transform duration-300 ease-in-out group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-3">
-                        <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
-                          {product.node.title}
-                        </h3>
-                        
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[#3dff87] font-bold text-sm">
-                            {formatPrice(product)}
-                          </span>
-                          <button
-                            onClick={() => addToCart(product)}
-                            className=" hover:bg-[#2dd66e00]  transition-all"
-                          >
-                           <img
-                            src="/icon/cart.png"
-                            alt="Add"
-                            className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                          />
-
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* <div className="h-1 bg-[#1a2621] rounded-full overflow-hidden">
-                  <div className="h-full w-1/3 bg-[#3dff87] rounded-full"></div>
-                </div> */}
-              </div>
-            </section>
-
-            {/* Best Sellers Section */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-yellow-500 text-xl">👑</span>
-                  <h2 className="text-white text-xl font-bold">Best Sellers</h2>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                   <button className="text-[#3dff87] text-sm hover:underline"><img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" /></button>
-                </div>
-              </div>
-              
-              <div className="relative">
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-                  {[...products, ...products.slice(0, 2)].slice(0, 10).map((product, idx) => (
-                    <div
-                      key={`best-${idx}`}
-                     className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden  transition-all cursor-pointer group"
-                    >
-                      <div className="relative aspect-square bg-black">
-                        {product.node.images.edges[0] ? (
-                          <img
-                            src={product.node.images.edges[0].node.url}
-                            alt={product.node.title}
-                            className="w-full h-full object-contain p-2"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                          <div className="p-3">
+                            <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
+                              {product.node.title}
+                            </h3>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[#3dff87] font-bold text-sm">
+                                {formatPrice(product)}
+                              </span>
+                              <button
+                                onClick={() => addToCart(product)}
+                                className="p-1 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95"
+                              >
+                                <img
+                                  src="/icon/cart.png"
+                                  alt="Add"
+                                  className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125 active:scale-95"
+                                />
+                              </button>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-3">
-                        <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
-                          {product.node.title}
-                        </h3>
-                        
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[#3dff87] font-bold text-sm">
-                            {formatPrice(product)}
-                          </span>
-                            <button
-                            onClick={() => addToCart(product)}
-                            className=" hover:bg-[#2dd66e00]  transition-all"
-                          >
-                           <img
-                            src="/icon/cart.png"
-                            alt="Add"
-                            className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                          />
-
-                          </button>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-400 text-center w-full py-8 animate-fadeIn">
+                        No products found.
                       </div>
-                    </div>
-                  ))}
-                </div>
-                {/* <div className="h-1 bg-[#1a2621] rounded-full overflow-hidden">
-                  <div className="h-full w-1/4 bg-[#3dff87] rounded-full"></div>
-                </div> */}
-              </div>
-            </section>
-
-            {/* Permanent Fruits Section */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-purple-500 text-xl">🎲</span>
-                  <h2 className="text-white text-xl font-bold">Permanent Fruits</h2>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                  <button className="text-[#3dff87] text-sm hover:underline"><img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" /></button>
-                </div>
-              </div>
-              
-              <div className="relative">
-                <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-                  {[...products, ...products.slice(0, 3)].slice(0, 10).map((product, idx) => (
-                    <div
-                      key={`perm-${idx}`}
-                      className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden  transition-all cursor-pointer group"
-                    >
-                      <div className="relative aspect-square bg-black">
-                        {product.node.images.edges[0] ? (
-                          <img
-                            src={product.node.images.edges[0].node.url}
-                            alt={product.node.title}
-                            className="w-full h-full object-contain p-2"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <div className="text-[#3dff87]/30 text-4xl">🎮</div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-3">
-                        <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
-                          {product.node.title}
-                        </h3>
-                        
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[#3dff87] font-bold text-sm">
-                            {formatPrice(product)}
-                          </span>
-                           <button
-                            onClick={() => addToCart(product)}
-                            className=" hover:bg-[#2dd66e00]  transition-all"
-                          >
-                           <img
-                            src="/icon/cart.png"
-                            alt="Add"
-                            className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                          />
-
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* <div className="h-1 bg-[#1a2621] rounded-full overflow-hidden">
-                  <div className="h-full w-1/5 bg-[#3dff87] rounded-full"></div>
-                </div> */}
-              </div>
-            </section>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+            {(!activeSection || activeSection === "bestSellers") && (
+              renderSection("bestSellers", "Best Sellers", "/icon/crown.png", products)
+            )}
+            {(!activeSection || activeSection === "summerSpecials") && (
+              renderSection("summerSpecials", "Summer Specials", "/icon/summer.png", products)
+            )}
+            {(!activeSection || activeSection === "knives") && (
+              renderSection("knives", "Knives", "/icon/knive.png", products)
+            )}
+            {(!activeSection || activeSection === "guns") && (
+              renderSection("guns", "Guns", "/icon/gun.png", products)
+            )}
+            {(!activeSection || activeSection === "bundles") && (
+              renderSection("bundles", "Bundles", "/icon/bundle.png", products)
+            )}
           </>
         )}
 
@@ -653,7 +731,9 @@ export const BloxFruits = () => {
           <div className="text-center py-20">
             <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🎮</div>
             <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">No products found</h3>
-            <p className="text-gray-400 text-sm sm:text-base">Check back later for new items!</p>
+            <p className="text-gray-400 text-sm sm:text-base">
+              {activeCategory !== "All" ? `No products found in "${activeCategory}".` : "Check back later for new items!"}
+            </p>
           </div>
         )}
       </div>
@@ -678,4 +758,4 @@ export const BloxFruits = () => {
   );
 };
 
-export default BloxFruits;
+export default DressToImpress;

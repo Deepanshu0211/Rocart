@@ -19,17 +19,115 @@ const currencyMap: Record<string, string> = {
   EU: "EUR",
   JP: "JPY",
 };
-// const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
-// const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
+
 // Shopify Configuration
 const SHOPIFY_DOMAIN: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
 const STOREFRONT_TOKEN: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
 const GOOGLE_CLIENT_ID: string = (import.meta as any).env.VITE_GOOGLE_CLIENT_ID;
 
 // =======================
-// Login/Register Modal with Shopify Integration
+// AUTHENTICATION COMPONENT
 // =======================
-const AuthModal = ({ isOpen, onClose, setUser }: { isOpen: boolean; onClose: () => void; setUser: (user: any) => void }) => {
+export const AuthenticationManager = ({ 
+  onUserChange 
+}: { 
+  onUserChange: (user: any) => void 
+}) => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleSetUser = (userData: any) => {
+    setUser(userData);
+    onUserChange(userData);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const token = sessionStorage.getItem('shopifyCustomerToken');
+      if (token) {
+        const revokeTokenMutation = `
+          mutation customerAccessTokenDelete($customerAccessToken: String!) {
+            customerAccessTokenDelete(customerAccessToken: $customerAccessToken) {
+              deletedAccessToken
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `;
+
+        await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+          },
+          body: JSON.stringify({
+            query: revokeTokenMutation,
+            variables: {
+              customerAccessToken: token,
+            },
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      sessionStorage.removeItem('shopifyCustomerToken');
+      sessionStorage.removeItem('shopifyTokenExpiry');
+      sessionStorage.removeItem('customerData');
+      setUser(null);
+      onUserChange(null);
+      setIsUserMenuOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const storedCustomerData = sessionStorage.getItem('customerData');
+    if (storedCustomerData) {
+      const userData = JSON.parse(storedCustomerData);
+      setUser(userData);
+      onUserChange(userData);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return {
+    user,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+    userMenuRef,
+    handleLogout,
+    handleSetUser,
+  };
+};
+
+// =======================
+// AUTH MODAL COMPONENT
+// =======================
+export const AuthModal = ({ 
+  isOpen, 
+  onClose, 
+  setUser 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  setUser: (user: any) => void 
+}) => {
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +143,46 @@ const AuthModal = ({ isOpen, onClose, setUser }: { isOpen: boolean; onClose: () 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const fetchCustomerData = async (token: string) => {
+    const customerQuery = `
+      query getCustomer($customerAccessToken: String!) {
+        customer(customerAccessToken: $customerAccessToken) {
+          id
+          firstName
+          lastName
+          email
+          phone
+        }
+      }
+    `;
+
+    try {
+      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        },
+        body: JSON.stringify({
+          query: customerQuery,
+          variables: {
+            customerAccessToken: token,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (data.data?.customer) {
+        sessionStorage.setItem('customerData', JSON.stringify(data.data.customer));
+        return data.data.customer;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching customer data:', error);
+      return null;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,189 +313,22 @@ const AuthModal = ({ isOpen, onClose, setUser }: { isOpen: boolean; onClose: () 
     }
   };
 
-  const handleGoogleAuth = async (credential: string) => {
-    setIsLoading(true);
-    try {
-      // Verify Google token
-      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${credential}` }
-      });
-      const userData = await response.json();
-
-      // Attempt Shopify registration
-      const registerMutation = `
-        mutation customerCreate($input: CustomerCreateInput!) {
-          customerCreate(input: $input) {
-            customer {
-              id
-              email
-              firstName
-            }
-            customerUserErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const registerResponse = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: registerMutation,
-          variables: {
-            input: {
-              email: userData.email,
-              firstName: userData.given_name,
-              lastName: userData.family_name,
-              acceptsMarketing: false,
-            },
-          },
-        }),
-      });
-
-      const registerData = await registerResponse.json();
-      if (registerData.data?.customerCreate?.customer) {
-        // Registration successful, proceed to login
-        await handleGoogleLogin(userData.email);
-      } else {
-        const errors = registerData.data?.customerCreate?.customerUserErrors || [];
-        if (errors.some((err: any) => err.code === 'TAKEN')) {
-          await handleGoogleLogin(userData.email);
-        } else {
-          alert(errors[0]?.message || 'Google registration failed.');
-        }
-      }
-    } catch (error) {
-      console.error('Google auth error:', error);
-      alert('Google authentication failed.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async (email: string) => {
-    try {
-      // Note: Shopify doesn't store Google passwords, so we need a multipass or temporary token approach
-      // This is a simplified version assuming a backend handles the multipass
-      const loginMutation = `
-        mutation customerAccessTokenCreateWithMultipass($multipassToken: String!) {
-          customerAccessTokenCreateWithMultipass(multipassToken: $multipassToken) {
-            customerAccessToken {
-              accessToken
-              expiresAt
-            }
-            customerUserErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      // This requires a backend to generate a multipass token
-      const multipassResponse = await fetch('/api/multipass', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const { multipassToken } = await multipassResponse.json();
-
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: loginMutation,
-          variables: { multipassToken },
-        }),
-      });
-
-      const data = await response.json();
-      if (data.data?.customerAccessTokenCreateWithMultipass?.customerAccessToken) {
-        const token = data.data.customerAccessTokenCreateWithMultipass.customerAccessToken.accessToken;
-        const expiresAt = data.data.customerAccessTokenCreateWithMultipass.customerAccessToken.expiresAt;
-        
-        sessionStorage.setItem('shopifyCustomerToken', token);
-        sessionStorage.setItem('shopifyTokenExpiry', expiresAt);
-        
-        const customerData = await fetchCustomerData(token);
-        if (customerData) {
-          setUser(customerData);
-        }
-        
-        onClose();
-      } else {
-        alert('Google login failed. Please try manual login.');
-      }
-    } catch (error) {
-      console.error('Google login error:', error);
-      alert('Google login failed.');
-    }
-  };
-
-  const fetchCustomerData = async (token: string) => {
-    const customerQuery = `
-      query getCustomer($customerAccessToken: String!) {
-        customer(customerAccessToken: $customerAccessToken) {
-          id
-          firstName
-          lastName
-          email
-          phone
-        }
-      }
-    `;
-
-    try {
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: customerQuery,
-          variables: {
-            customerAccessToken: token,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      if (data.data?.customer) {
-        sessionStorage.setItem('customerData', JSON.stringify(data.data.customer));
-        return data.data.customer;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching customer data:', error);
-      return null;
-    }
-  };
-
   useEffect(() => {
-    // Initialize Google Sign-In
-    if (window.google) {
+    if (window.google && isOpen) {
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: (response: any) => handleGoogleAuth(response.credential),
+        callback: (response: any) => console.log('Google auth:', response),
       });
 
-      window.google.accounts.id.renderButton(
-        document.getElementById('googleSignInButton'),
-        { theme: 'outline', size: 'large', width: 300 }
-      );
+      const buttonDiv = document.getElementById('googleSignInButton');
+      if (buttonDiv) {
+        window.google.accounts.id.renderButton(
+          buttonDiv,
+          { theme: 'outline', size: 'large', width: 300 }
+        );
+      }
     }
-  }, []);
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -459,9 +430,136 @@ const AuthModal = ({ isOpen, onClose, setUser }: { isOpen: boolean; onClose: () 
 };
 
 // =======================
-// Language & Currency Modal 
+// GAME SELECTOR COMPONENT
 // =======================
-const LanguageModal = ({
+export const GameSelector = ({
+  onGameSelect
+}: {
+  onGameSelect?: (game: any) => void
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<{
+    subtitle?: string;
+    name: string;
+    bgImage?: string;
+    bgColor?: string;
+    useIcon?: boolean;
+  }>({
+    name: "Select Game",
+    subtitle: "🎮",
+    useIcon: true,
+  });
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const games = [
+    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/murderMystery" },
+    { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
+    { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
+    { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png", route: "/AdoptMe" },
+    { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/logo/blade.png", route: "/BladeBall" },
+    { id: 6, name: "Blox Fruits", subtitle: "🍍", icon: "/logo/blox.png", useIcon: true, route: "/BloxFruits" },
+    { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/logo/99.png", route: "/NinetyNineNights" },
+    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+    { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png", route: "/DressToImpress" },
+  ];
+
+  const handleGameSelect = (game: any) => {
+    setSelectedGame(game);
+    setIsDropdownOpen(false);
+    if (onGameSelect) {
+      onGameSelect(game);
+    }
+    // Redirect to the game's page
+    if (game.route) {
+      window.location.href = game.route;
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    show: { opacity: 1, y: 0 },
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button 
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
+        className={`w-auto h-[6vh] rounded-[0.7vw] flex items-center relative overflow-hidden bg-center transition-colors`} 
+        style={{ 
+          backgroundImage: selectedGame.bgImage ? `url(${selectedGame.bgImage})` : undefined, 
+          backgroundSize: selectedGame.bgImage ? "contain" : undefined, 
+          backgroundRepeat: selectedGame.bgImage ? "no-repeat" : undefined 
+        }}
+      >
+        {!selectedGame.bgImage && <div className="absolute inset-0 bg-[#0f0f0f]" />}
+        {selectedGame.bgImage && <div className="absolute inset-0 bg-black/40" />}
+        <div className="ml-[1vw] w-[1.5vw] h-[1.5vw] flex items-center justify-center relative z-10">
+          {selectedGame.useIcon ? 
+            <img src="/icon/gamepad.png" alt="Gamepad" className="w-[4vw] h-[2vw] object-contain" /> : 
+            selectedGame.subtitle || "🎮"
+          }
+        </div>
+        <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
+          <span className="font-poppins font-bold text-white text-[1vw] leading-tight">{selectedGame.name}</span>
+          <ChevronDownIcon className={`w-[1vw] h-[1vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-0" : ""}`} />
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {isDropdownOpen && (
+          <motion.div 
+            initial="hidden" 
+            animate="show" 
+            exit="hidden" 
+            variants={containerVariants} 
+            className="absolute top-[6vh] left-0 w-[16vw] rounded-xl shadow-lg z-50 bg-[#0C1610] p-[0.5vw] h-auto overflow-y-auto"
+          >
+            <div className="flex flex-col">
+              {games.map((game) => (
+                <motion.button 
+                  key={game.id} 
+                  onClick={() => handleGameSelect(game)} 
+                  variants={itemVariants} 
+                  whileHover={{ scale: 1.02 }} 
+                  className="relative flex items-center gap-[0.8vw] w-full px-[0.8vw] py-[3vh] h-[3vh] text-left bg-cover bg-center rounded-lg"
+                >
+                  <div className="absolute inset-0 rounded-lg" />
+                  <div className="w-[2vw] h-[2vw] rounded-md overflow-hidden flex-shrink-0 relative z-10">
+                    <img src={game.icon} alt={game.name} className="w-full h-full object-cover rounded-md" />
+                  </div>
+                  <span className="flex flex-col text-white font-medium text-[0.9vw] relative z-10 leading-tight">
+                    <span className="truncate">{game.name}</span>
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// =======================
+// LANGUAGE & CURRENCY MODAL
+// =======================
+export const LanguageModal = ({
   isOpen,
   onClose,
   country,
@@ -518,9 +616,9 @@ const LanguageModal = ({
 };
 
 // =======================
-// Mobile Menu Component
+// MOBILE MENU COMPONENT
 // =======================
-const MobileMenu = ({
+export const MobileMenu = ({
   isOpen,
   onClose,
   games,
@@ -601,98 +699,37 @@ const MobileMenu = ({
 };
 
 // =======================
-// Main Header Section with Auto-Detection & Persistence
+// MAIN HEADER COMPONENT (Integrating All Components)
 // =======================
 const HeaderSection = (): JSX.Element => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [country, setCountry] = useState("US");
   const [currency, setCurrency] = useState("USD");
-  const [user, setUser] = useState<any>(null);
-
-  const [selectedGame, setSelectedGame] = useState<{
-    subtitle?: string;
-    name: string;
-    bgImage?: string;
-    bgColor?: string;
-    useIcon?: boolean;
-  }>({
-    name: "Select Game",
-    subtitle: "🎮",
-    useIcon: true,
-  });
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const [selectedGame, setSelectedGame] = useState<any>({ name: "Select Game", subtitle: "🎮", useIcon: true });
 
   const games = [
-    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png" },
-    { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png" },
-    { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png" },
-    { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png" },
-    { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/logo/blade.png" },
-    { id: 6, name: "Blox Fruits", subtitle: "🍍", icon: "/logo/blox.png", useIcon: true },
-    { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/logo/99.png" },
-    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/logo/anime.png" },
-    { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png" },
-    { id: 10, name: "Garden Tower Defense", subtitle: "🛡️", icon: "/logo/tower.png" },
+    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/MurderMystery2" },
+    { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
+    { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
+    { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png", route: "/AdoptMe" },
+    { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/logo/blade.png", route: "/BladeBall" },
+    { id: 6, name: "Blox Fruits", subtitle: "🍍", icon: "/logo/blox.png", useIcon: true, route: "/BloxFruits" },
+    { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/logo/99.png", route: "/NinetyNineNights" },
+    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+    { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png", route: "/DressToImpress" },
   ];
 
-  const handleGameSelect = (game: any) => {
+  const authManager = AuthenticationManager({ onUserChange: (user) => console.log('User changed:', user) });
+
+  const handleGameSelectWithRedirect = (game: any) => {
     setSelectedGame(game);
-    setIsDropdownOpen(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      const token = sessionStorage.getItem('shopifyCustomerToken');
-      if (token) {
-        const revokeTokenMutation = `
-          mutation customerAccessTokenDelete($customerAccessToken: String!) {
-            customerAccessTokenDelete(customerAccessToken: $customerAccessToken) {
-              deletedAccessToken
-              userErrors {
-                field
-                message
-              }
-            }
-          }
-        `;
-
-        await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-          },
-          body: JSON.stringify({
-            query: revokeTokenMutation,
-            variables: {
-              customerAccessToken: token,
-            },
-          }),
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      sessionStorage.removeItem('shopifyCustomerToken');
-      sessionStorage.removeItem('shopifyTokenExpiry');
-      sessionStorage.removeItem('customerData');
-      setUser(null);
-      setIsUserMenuOpen(false);
+    if (game.route) {
+      window.location.href = game.route;
     }
   };
 
   useEffect(() => {
-    const storedCustomerData = sessionStorage.getItem('customerData');
-    if (storedCustomerData) {
-      setUser(JSON.parse(storedCustomerData));
-    }
-
     const detectAndSetCurrency = async () => {
       const storedCountry = sessionStorage.getItem('userCountry');
       const storedCurrency = sessionStorage.getItem('userCurrency');
@@ -741,48 +778,26 @@ const HeaderSection = (): JSX.Element => {
     detectAndSetCurrency();
   }, []);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: -10 },
-    show: { opacity: 1, y: 0 },
-  };
-
   return (
     <>
-      <header className="w-full h-16 md:h-[10vh] flex items-center justify-between px-4 md:px-[2vw] bg-[#0C1610] relative">
+      <header className="w-full h-16 md:h-[10vh] flex items-center justify-between px-4 md:px-[2vw] bg-[#060606] relative">
+        {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between w-full">
           <button onClick={() => setIsMobileMenuOpen(true)} className="text-[#3DFF87] p-2 bg-[url('/icon/header.png')] bg-cover bg-center hover:bg-gray-800 rounded-lg transition-colors">
             <Menu className="w-6 h-6" />
           </button>
           <img className="h-10 object-cover" alt="Ro CART" src="/ro-cart-33-2.png" />
-          <div className="relative" ref={userMenuRef}>
-            {user ? (
+          <div className="relative" ref={authManager.userMenuRef}>
+            {authManager.user ? (
               <>
-                <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2">
+                <button onClick={() => authManager.setIsUserMenuOpen(!authManager.isUserMenuOpen)} className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2">
                   <div className="w-5 h-5 bg-[url(/icon/person.png)] bg-cover bg-center" />
-                  <span className="text-white font-semibold">{user.firstName}</span>
+                  <span className="text-white font-semibold">{authManager.user.firstName}</span>
                 </button>
                 <AnimatePresence>
-                  {isUserMenuOpen && (
+                  {authManager.isUserMenuOpen && (
                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute right-0 mt-2 w-40 bg-[#0C1610] rounded-lg shadow-lg p-2 z-50">
-                      <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-white hover:bg-[#2a2a2a] rounded flex items-center gap-2">
+                      <button onClick={authManager.handleLogout} className="w-full text-left px-4 py-2 text-white hover:bg-[#2a2a2a] rounded flex items-center gap-2">
                         <LogOut className="w-5 h-5" />
                         Logout
                       </button>
@@ -791,52 +806,20 @@ const HeaderSection = (): JSX.Element => {
                 </AnimatePresence>
               </>
             ) : (
-              <button onClick={() => setIsAuthModalOpen(true)} className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2">
+              <button onClick={() => authManager.setIsAuthModalOpen(true)} className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2">
                 <div className="w-5 h-5 bg-[url(/icon/person.png)] bg-cover bg-center" />
               </button>
             )}
           </div>
         </div>
 
+        {/* Desktop Header */}
         <div className="hidden md:flex items-center justify-between w-full">
-          <div className="flex items-center gap-[2vw] relative" ref={dropdownRef}>
+          <div className="flex items-center gap-[2vw]">
             <a href="/">
               <img className="w-auto h-[5vh] object-cover cursor-pointer" alt="Ro CART" src="/ro-cart-33-2.png" />
             </a>
-
-            <div className="relative">
-              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className={`w-auto h-[6vh] rounded-[0.7vw] flex items-center relative overflow-hidden bg-center transition-colors`} style={{ backgroundImage: selectedGame.bgImage ? `url(${selectedGame.bgImage})` : undefined, backgroundSize: selectedGame.bgImage ? "contain" : undefined, backgroundRepeat: selectedGame.bgImage ? "no-repeat" : undefined }}>
-                {!selectedGame.bgImage && <div className="absolute inset-0 bg-[#0f0f0f]" />}
-                {selectedGame.bgImage && <div className="absolute inset-0 bg-black/40" />}
-                <div className="ml-[1vw] w-[1.5vw] h-[1.5vw] flex items-center justify-center relative z-10">
-                  {selectedGame.useIcon ? <img src="/icon/gamepad.png" alt="Gamepad" className="w-[4vw] h-[2vw] object-contain" /> : selectedGame.subtitle || "🎮"}
-                </div>
-                <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
-                  <span className="font-poppins font-bold text-white text-[1vw] leading-tight">{selectedGame.name}</span>
-                  <ChevronDownIcon className={`w-[1vw] h-[1vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-0" : ""}`} />
-                </div>
-              </button>
-
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <motion.div initial="hidden" animate="show" exit="hidden" variants={containerVariants} className="absolute top-[6vh] left-0 w-[16vw] rounded-xl shadow-lg z-50 bg-[#0C1610] p-[0.5vw] h-auto overflow-y-auto">
-                    <div className="flex flex-col">
-                      {games.map((game) => (
-                        <motion.button key={game.id} onClick={() => handleGameSelect(game)} variants={itemVariants} whileHover={{ scale: 1.02 }} className="relative flex items-center gap-[0.8vw] w-full px-[0.8vw] py-[3vh] h-[3vh] text-left bg-cover bg-center rounded-lg">
-                          <div className="absolute inset-0 rounded-lg" />
-                          <div className="w-[2vw] h-[2vw] rounded-md overflow-hidden flex-shrink-0 relative z-10">
-                            <img src={game.icon} alt={game.name} className="w-full h-full object-cover rounded-md" />
-                          </div>
-                          <span className="flex flex-col text-white font-medium text-[0.9vw] relative z-10 leading-tight">
-                            <span className="truncate">{game.name}</span>
-                          </span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <GameSelector onGameSelect={handleGameSelectWithRedirect} />
           </div>
 
           <div className="flex items-center gap-[1.5vw]">
@@ -848,17 +831,17 @@ const HeaderSection = (): JSX.Element => {
               </div>
             </div>
 
-            <div className="relative" ref={userMenuRef}>
-              {user ? (
+            <div className="relative" ref={authManager.userMenuRef}>
+              {authManager.user ? (
                 <>
-                  <Button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="w-[8vw] h-[5vh] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[0.7vw] border-0 p-0 flex items-center justify-center gap-[0.5vw]">
+                  <Button onClick={() => authManager.setIsUserMenuOpen(!authManager.isUserMenuOpen)} className="w-[8vw] h-[5vh] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[0.7vw] border-0 p-0 flex items-center justify-center gap-[0.5vw]">
                     <div className="w-[1.2vw] h-[1.2vw] bg-[url(/icon/person.png)] bg-cover" />
-                    <span className="font-poppins font-semibold text-white text-[0.9vw] leading-tight whitespace-nowrap">{user.firstName}</span>
+                    <span className="font-poppins font-semibold text-white text-[0.9vw] leading-tight whitespace-nowrap">{authManager.user.firstName}</span>
                   </Button>
                   <AnimatePresence>
-                    {isUserMenuOpen && (
+                    {authManager.isUserMenuOpen && (
                       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute right-0 mt-2 w-40 bg-[#0C1610] rounded-lg shadow-lg p-2 z-50">
-                        <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-white hover:bg-[#2a2a2a] rounded flex items-center gap-2">
+                        <button onClick={authManager.handleLogout} className="w-full text-left px-4 py-2 text-white hover:bg-[#2a2a2a] rounded flex items-center gap-2">
                           <LogOut className="w-5 h-5" />
                           Logout
                         </button>
@@ -867,7 +850,7 @@ const HeaderSection = (): JSX.Element => {
                   </AnimatePresence>
                 </>
               ) : (
-                <Button onClick={() => setIsAuthModalOpen(true)} className="w-[6vw] h-[5vh] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[0.7vw] border-0 p-0 flex items-center justify-center gap-[0.5vw]">
+                <Button onClick={() => authManager.setIsAuthModalOpen(true)} className="w-[6vw] h-[5vh] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-[0.7vw] border-0 p-0 flex items-center justify-center gap-[0.5vw]">
                   <div className="w-[1.2vw] h-[1.2vw] bg-[url(/icon/person.png)] bg-cover" />
                   <span className="font-poppins font-semibold text-white text-[0.9vw] leading-tight whitespace-nowrap">Log in</span>
                 </Button>
@@ -877,17 +860,18 @@ const HeaderSection = (): JSX.Element => {
         </div>
       </header>
 
+      {/* Modals */}
       <MobileMenu 
         isOpen={isMobileMenuOpen} 
         onClose={() => setIsMobileMenuOpen(false)} 
         games={games} 
         selectedGame={selectedGame} 
-        onGameSelect={handleGameSelect} 
+        onGameSelect={handleGameSelectWithRedirect} 
         onLanguageClick={() => setIsLangModalOpen(true)} 
         country={country} 
         currency={currency} 
-        user={user}
-        handleLogout={handleLogout}
+        user={authManager.user}
+        handleLogout={authManager.handleLogout}
       />
       <LanguageModal 
         isOpen={isLangModalOpen} 
@@ -898,9 +882,9 @@ const HeaderSection = (): JSX.Element => {
         setCurrency={setCurrency} 
       />
       <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        setUser={setUser}
+        isOpen={authManager.isAuthModalOpen} 
+        onClose={() => authManager.setIsAuthModalOpen(false)} 
+        setUser={authManager.handleSetUser}
       />
     </>
   );
