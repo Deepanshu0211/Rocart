@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Types
 type CartItem = {
@@ -20,27 +20,191 @@ const currencySymbols = {
   ZAR: "R", TRY: "₺", ARS: "$", CLP: "$", CZK: "Kč",
 };
 
-export const Cart = ({ 
-  cart,
-  userCurrency, 
+export const Cart = ({
+  cart: initialCart,
+  userCurrency,
   exchangeRates,
   onUpdateQuantity,
   onRemoveItem,
-}: { 
+  onRequireAuth,
+  checkoutId,
+  useShopifyCheckout = true,
+}: {
   cart: CartItem[];
-  userCurrency: string; 
+  userCurrency: string;
   exchangeRates: Record<string, number>;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
-
-  
+  onRequireAuth?: () => void;
+  checkoutId?: string;
+  useShopifyCheckout?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hasProcessed, setHasProcessed] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
+  const [cart, setCart] = useState<CartItem[]>(initialCart);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const SHOPIFY_DOMAIN: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
+  const STOREFRONT_TOKEN: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
+
+  // Validate environment variables
+  if (useShopifyCheckout && (!SHOPIFY_DOMAIN || !STOREFRONT_TOKEN)) {
+    console.error('Missing Shopify environment variables.');
+    setFetchError('Store configuration error. Please check Shopify settings.');
+  }
+
+  // Helper to extract numeric ID
+  const getShortId = (id: string) => {
+    const match = id.match(/\/([^/]+)$/);
+    return match ? match[1] : 'N/A';
+  };
+
+  // Fetch cart details
+  const fetchCartDetails = async (cartId: string): Promise<CartItem[]> => {
+    const cartQuery = `
+      query getCart($id: ID!) {
+        cart(id: $id) {
+          id
+          lines(first: 100) {
+            edges {
+              node {
+                id
+                quantity
+                merchandise {
+                  ... on ProductVariant {
+                    id
+                    title
+                    priceV2 {
+                      amount
+                      currencyCode
+                    }
+                    image {
+                      url
+                    }
+                    product {
+                      title
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        },
+        body: JSON.stringify({
+          query: cartQuery,
+          variables: { id: `gid://shopify/Cart/${cartId}` },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Cart fetch response:', JSON.stringify(data, null, 2));
+
+      if (data.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+      }
+
+      if (!data.data?.cart) {
+        throw new Error('Cart not found or invalid.');
+      }
+
+      if (data.data.cart.lines?.edges?.length > 0) {
+        return data.data.cart.lines.edges.map(({ node }: any) => {
+          if (!node.merchandise?.id) {
+            console.warn('Invalid variant ID for line item:', node);
+            return null;
+          }
+          return {
+            id: node.merchandise.id,
+            title: node.merchandise.product?.title || node.merchandise.title || 'Unknown Product',
+            price: parseFloat(node.merchandise.priceV2?.amount || '0'),
+            currency: node.merchandise.priceV2?.currencyCode || userCurrency,
+            image: node.merchandise.image?.url || '/placeholder.png',
+            quantity: node.quantity || 1,
+          };
+        }).filter((item: CartItem | null) => item !== null) as CartItem[];
+      } else {
+        console.error('No line items found in cart:', data);
+        setFetchError('No items found in Shopify cart. It may be empty or expired.');
+        return [];
+      }
+    } catch (error: any) {
+      console.error('Error fetching cart details:', error.message);
+      setFetchError(`Failed to fetch cart: ${error.message}`);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    console.log('Initial cart:', initialCart);
+    // Filter valid items from initialCart
+    const validInitialCart = initialCart.filter(
+      item => item.id && item.id.match(/\/\d+$/) && item.title && item.price > 0
+    );
+    setCart(validInitialCart);
+
+    const loadCart = async () => {
+      let id = checkoutId;
+      if (!id) {
+        const url = 'https://zb1n1j-0r.myshopify.com/checkouts/cn/hWN3eZNglaHBHjmmie1jHr4D/en-ca';
+        const match = url.match(/checkouts\/cn\/([^/]+)/);
+        id = match ? match[1] : '';
+      }
+      if (id && useShopifyCheckout && SHOPIFY_DOMAIN && STOREFRONT_TOKEN) {
+        console.log('Fetching cart with ID:', id);
+        const fetchedCart = await fetchCartDetails(id);
+        console.log('Fetched cart:', fetchedCart);
+        if (fetchedCart.length > 0) {
+          // Merge fetched cart with existing cart to prevent overriding
+          setCart(prevCart => {
+            const mergedCart = [...prevCart];
+            fetchedCart.forEach(fetchedItem => {
+              const existingItemIndex = mergedCart.findIndex(item => item.id === fetchedItem.id);
+              if (existingItemIndex !== -1) {
+                // Update existing item (e.g., quantity, title, price)
+                mergedCart[existingItemIndex] = {
+                  ...mergedCart[existingItemIndex],
+                  quantity: fetchedItem.quantity,
+                  title: fetchedItem.title,
+                  price: fetchedItem.price,
+                  currency: fetchedItem.currency,
+                  image: fetchedItem.image,
+                };
+              } else {
+                // Add new item from Shopify
+                mergedCart.push(fetchedItem);
+              }
+            });
+            return mergedCart;
+          });
+          setFetchError(null);
+        }
+      }
+    };
+    loadCart();
+  }, [checkoutId, initialCart, useShopifyCheckout, SHOPIFY_DOMAIN, STOREFRONT_TOKEN]);
 
   const convertPrice = (amount: number, fromCurrency: string, toCurrency: string): number => {
     if (fromCurrency === toCurrency) return amount;
     if (!exchangeRates[fromCurrency] || !exchangeRates[toCurrency]) {
-      console.warn(`Missing exchange rate for ${fromCurrency} or ${toCurrency}`);
+      console.warn(`Missing exchange rate for ${fromCurrency} to ${toCurrency}`);
       return amount;
     }
     const amountInUSD = fromCurrency === "USD" ? amount : amount / exchangeRates[fromCurrency];
@@ -59,8 +223,180 @@ export const Cart = ({
     return total > 10 ? total * 0.9 : total;
   };
 
-  
-  
+  const getDiscountAmount = () => {
+    const total = getCartTotal();
+    return total > 10 ? total * 0.1 : 0;
+  };
+
+  const validateToken = async (token: string): Promise<boolean> => {
+    const customerQuery = `
+      query getCustomer($customerAccessToken: String!) {
+        customer(customerAccessToken: $customerAccessToken) {
+          id
+          email
+        }
+      }
+    `;
+    try {
+      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        },
+        body: JSON.stringify({
+          query: customerQuery,
+          variables: { customerAccessToken: token },
+        }),
+      });
+      const data = await response.json();
+      console.log('Token validation response:', data);
+      return !!data.data?.customer?.id;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      return false;
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      setCheckoutError("Your cart is empty.");
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    const invalidItems = cart.filter(item => !item.id || item.id === 'N/A');
+    if (invalidItems.length > 0) {
+      setCheckoutError(`Invalid product variants in cart: ${invalidItems.map(item => item.title).join(", ")}. Please remove them.`);
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    const token = sessionStorage.getItem('shopifyCustomerToken');
+    if (!token) {
+      setCheckoutError("Please log in to proceed with checkout.");
+      onRequireAuth?.();
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    const isTokenValid = await validateToken(token);
+    if (!isTokenValid) {
+      sessionStorage.removeItem('shopifyCustomerToken');
+      sessionStorage.removeItem('shopifyTokenExpiry');
+      setCheckoutError("Session expired. Please log in again.");
+      onRequireAuth?.();
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    const expiry = sessionStorage.getItem('shopifyTokenExpiry');
+    if (expiry && new Date(expiry) < new Date()) {
+      sessionStorage.removeItem('shopifyCustomerToken');
+      sessionStorage.removeItem('shopifyTokenExpiry');
+      setCheckoutError("Session expired. Please log in again.");
+      onRequireAuth?.();
+      setIsCheckoutOpen(true);
+      return;
+    }
+
+    setIsProcessing(true);
+    setCheckoutError(null);
+    setCheckoutSuccess(null);
+    setHasProcessed(true);
+
+    try {
+      const cartCreateMutation = `
+        mutation cartCreate($input: CartInput!) {
+          cartCreate(input: $input) {
+            cart {
+              id
+              checkoutUrl
+              totalQuantity
+              cost {
+                totalAmount {
+                  amount
+                  currencyCode
+                }
+              }
+            }
+            userErrors {
+              code
+              field
+              message
+            }
+          }
+        }
+      `;
+
+      const lineItems = cart.map(item => ({
+        merchandiseId: item.id,
+        quantity: item.quantity,
+      }));
+
+      const countryCode = userCurrency === "USD" ? "US" :
+                         userCurrency === "INR" ? "IN" :
+                         userCurrency === "GBP" ? "GB" :
+                         userCurrency === "EUR" ? "DE" :
+                         userCurrency === "CAD" ? "CA" :
+                         userCurrency === "AUD" ? "AU" : "US";
+
+      console.log('Creating cart with items:', lineItems);
+
+      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        },
+        body: JSON.stringify({
+          query: cartCreateMutation,
+          variables: {
+            input: {
+              lines: lineItems,
+              buyerIdentity: {
+                customerAccessToken: token,
+                countryCode: countryCode,
+              }
+            }
+          }
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Cart API response:', JSON.stringify(data, null, 2));
+
+      if (data.data?.cartCreate?.cart) {
+        const cartData = data.data.cartCreate.cart;
+        setCheckoutSuccess(`Order created! Redirecting to payment...`);
+        window.location.href = cartData.checkoutUrl;
+        setTimeout(() => {
+          setIsOpen(false);
+          setIsCheckoutOpen(false);
+        }, 1000);
+      } else {
+        const errors = data.data?.cartCreate?.userErrors || data.errors || [];
+        const errorMessage = errors[0]?.message || "Failed to create checkout. Please try again.";
+        setCheckoutError(errorMessage);
+        setIsCheckoutOpen(true);
+        console.error('Cart creation errors:', errors);
+      }
+    } catch (error: any) {
+      console.error("Checkout error:", error.message);
+      setCheckoutError(`Network error during checkout: ${error.message}`);
+      setIsCheckoutOpen(true);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCloseCheckout = () => {
+    setIsCheckoutOpen(false);
+    setCheckoutError(null);
+    setCheckoutSuccess(null);
+    setHasProcessed(false);
+  };
+
   return (
     <>
       <button
@@ -94,16 +430,21 @@ export const Cart = ({
               <img src="/icon/close.png" alt="Close" className="w-10 h-10 object-contain" />
             </button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent p-4 sm:p-5">
-            {cart.length === 0 ? (
+            {fetchError && (
+              <div className="text-center py-4 text-red-300 text-sm">
+                {fetchError}
+              </div>
+            )}
+            {cart.length === 0 && !fetchError ? (
               <div className="text-center py-8">
                 <p className="text-gray-400 text-sm sm:text-base">Your cart is empty</p>
               </div>
             ) : (
               cart.map(item => (
-               <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="flex items-center gap-3 py-2 sm:py-3 border-b border-[#3dff87]/10 last:border-b-0"
                 >
                   <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0a1612] bg-[url('/icon/cartbg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center flex-shrink-0">
@@ -115,81 +456,160 @@ export const Cart = ({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-white text-sm sm:text-base font-semibold line-clamp-1">{item.title}</h4>
+                    <p className="text-gray-400 text-xs sm:text-sm">ID: {getShortId(item.id)}</p>
                     <p className="text-gray-400 text-xs sm:text-sm">
                       {currencySymbols[userCurrency as keyof typeof currencySymbols]}
                       {convertPrice(item.price, item.currency, userCurrency).toFixed(2)}
                     </p>
                   </div>
-                <div className="flex items-center gap-1">
-                  {/* Decrease / Delete */}
-                  <button
-                    onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                    className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center"
-                  >
-                    <img
-                      src="/icon/delete.png"
-                      alt="Decrease"
-                      className="w-5 h-5 object-contain"
-                    />
-                  </button>
-
-                  {/* Quantity */}
-                  <span className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center text-white text-sm font-medium">
-                    {item.quantity}
-                  </span>
-
-                  {/* Increase */}
-                  <button
-                    onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                    className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center"
-                  >
-                    <img
-                      src="/icon/plus.png"
-                      alt="Increase"
-                      className="w-5 h-5 object-contain"
-                    />
-                  </button>
-                </div>
-
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                      className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center"
+                    >
+                      <img
+                        src="/icon/delete.png"
+                        alt="Decrease"
+                        className="w-5 h-5 object-contain"
+                      />
+                    </button>
+                    <span className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center text-white text-sm font-medium">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center bg-no-repeat rounded-lg flex items-center justify-center"
+                    >
+                      <img
+                        src="/icon/plus.png"
+                        alt="Increase"
+                        className="w-5 h-5 object-contain"
+                      />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
           </div>
-          
+
           {cart.length > 0 && (
             <div className="p-4 sm:p-5 rounded-2xl border-t border-[#3dff87]/10">
               <div className="text-sm border border-[#999999]/10 sm:text-base mb-4 px-4 py-2 rounded-lg">
                 <p className="text-white font-semibold">
-                  {currencySymbols[userCurrency as keyof typeof currencySymbols]}
+                  Subtotal: {currencySymbols[userCurrency as keyof typeof currencySymbols]}
                   {getCartTotal().toFixed(2)} {userCurrency}
                 </p>
-                {getCartTotal() > 10 && (
+                {getDiscountAmount() > 0 && (
                   <p className="text-[#21843B] text-xs sm:text-sm">
-                    Discounts applied: {currencySymbols[userCurrency as keyof typeof currencySymbols]}
-                    {((getCartTotal() - getDiscountedTotal())).toFixed(2)} at Checkout
+                    Discount: -{currencySymbols[userCurrency as keyof typeof currencySymbols]}
+                    {getDiscountAmount().toFixed(2)}
                   </p>
                 )}
+                <p className="text-white font-semibold mt-1">
+                  Total: {currencySymbols[userCurrency as keyof typeof currencySymbols]}
+                  {getDiscountedTotal().toFixed(2)} {userCurrency}
+                </p>
               </div>
               <button
-                className="w-full bg-[#00A241] text-white font-bold py-2 sm:py-3 rounded-[1em] hover:bg-[#259951] transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
-                onClick={() => setIsOpen(false)}
+                onClick={handleCheckout}
+                disabled={isProcessing}
+                className="w-full bg-[#00A241] text-white font-bold py-2 sm:py-3 rounded-[1em] hover:bg-[#259951] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base flex items-center justify-center gap-2"
               >
                 <img
                   className="w-6 h-6 object-contain"
-                  alt="Cart icon"
+                  alt="Checkout icon"
                   src="/icon/shop.png"
                 />
-                Checkout
+                {isProcessing ? "Processing..." : "Proceed to Checkout"}
               </button>
             </div>
           )}
         </div>
       </div>
-      
-      {isOpen && (
+
+      {isCheckoutOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2621] rounded-xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl border border-[#3dff87]/20">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-white font-bold text-xl">Checkout</h3>
+                <button
+                  onClick={handleCloseCheckout}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  <img src="/icon/close.png" alt="Close" className="w-8 h-8 object-contain" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3">Order Summary</h4>
+                <div className="space-y-2 text-sm">
+                  {cart.map(item => (
+                    <div key={item.id} className="flex flex-col text-gray-300">
+                      <div className="flex justify-between">
+                        <span>{item.title} (x{item.quantity})</span>
+                        <span>
+                          {currencySymbols[userCurrency as keyof typeof currencySymbols]}
+                          {(convertPrice(item.price, item.currency, userCurrency) * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-400">ID: {getShortId(item.id)}</span>
+                    </div>
+                  ))}
+                  {getDiscountAmount() > 0 && (
+                    <div className="flex justify-between text-[#21843B] font-semibold pt-2 border-t border-gray-600">
+                      <span>Discount</span>
+                      <span>-{currencySymbols[userCurrency as keyof typeof currencySymbols]}{getDiscountAmount().toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-white font-bold pt-2 border-t border-gray-600">
+                    <span>Total</span>
+                    <span>{currencySymbols[userCurrency as keyof typeof currencySymbols]}{getDiscountedTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {checkoutError && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-300 p-3 rounded-lg mb-4 text-sm">
+                  {checkoutError}
+                </div>
+              )}
+              {checkoutSuccess && (
+                <div className="bg-green-500/20 border border-green-500/50 text-green-300 p-3 rounded-lg mb-4 text-sm">
+                  {checkoutSuccess}
+                </div>
+              )}
+
+              {!checkoutSuccess && (
+                <button
+                  onClick={handleCheckout}
+                  disabled={isProcessing}
+                  className="w-full bg-[#3dff87] hover:bg-[#259951] text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {/* <img src="/icon/lock.png" alt="Secure" className="w-5 h-5" /> */}
+                  Try Checkout Again
+                </button>
+              )}
+
+              <div className="text-center mt-4 text-xs text-gray-400">
+                <p>🔒 Secure checkout • SSL encrypted • 256-bit encryption</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOpen && !isCheckoutOpen && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {isCheckoutOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={handleCloseCheckout}
         />
       )}
     </>

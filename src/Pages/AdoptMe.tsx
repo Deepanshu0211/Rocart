@@ -287,7 +287,7 @@ export const AdoptMe = () => {
     const initializeData = async () => {
       try {
         await detectCountryAndCurrency();
-        const rates = await fetchExchangeRates();
+        const rates = await fetchExchangeRates(userCurrency);
         setExchangeRates(rates);
         
         setLoading(true);
@@ -307,7 +307,28 @@ export const AdoptMe = () => {
     };
 
     initializeData();
-  }, []);
+
+    // Listen for currency change events from LanguageModal
+    const handleCurrencyChange = async (event: Event) => {
+      const { country, currency } = (event as CustomEvent).detail;
+      setDetectedCountry(country);
+      setUserCurrency(currency);
+      console.log(`✓ Currency changed to: ${currency} (${country})`);
+      // Fetch new exchange rates for the selected currency
+      try {
+        const rates = await fetchExchangeRates(currency);
+        setExchangeRates(rates);
+      } catch (error) {
+        console.error("Error fetching exchange rates after currency change:", error);
+      }
+    };
+
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    
+    return () => {
+      window.removeEventListener('currencyChanged', handleCurrencyChange);
+    };
+  }, [activeCategory, searchTerm]);
 
   // Separate effect for category and search changes
   useEffect(() => {
@@ -332,15 +353,8 @@ export const AdoptMe = () => {
     loadProducts();
   }, [activeCategory, searchTerm]);
 
-  useEffect(() => {
-    if (userCurrency && Object.keys(exchangeRates).length === 0) {
-      fetchExchangeRates().then(rates => setExchangeRates(rates));
-    }
-  }, [userCurrency]);
-
   // Persist cart to localStorage whenever it changes
   useEffect(() => {
-    // Save cart to localStorage with version
     try {
       localStorage.setItem('cart', JSON.stringify({ version: CART_VERSION, items: cart }));
     } catch (e) {

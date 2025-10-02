@@ -314,6 +314,28 @@ export const NinetyNineNights = () => {
     initializeData();
   }, []);
 
+
+  // Listen for currency change events from LanguageModal
+  useEffect(() => {
+    const handleCurrencyChange = async (event: Event) => {
+      const { country, currency } = (event as CustomEvent).detail;
+      setDetectedCountry(country);
+      setUserCurrency(currency);
+      console.log(`✓ Currency changed to: ${currency} (${country})`);
+      // Fetch new exchange rates for the selected currency
+      try {
+        const rates = await fetchExchangeRates(currency);
+        setExchangeRates(rates);
+      } catch (error) {
+        console.error("Error fetching exchange rates after currency change:", error);
+      }
+    };
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => {
+      window.removeEventListener('currencyChanged', handleCurrencyChange);
+    };
+  }, [activeCategory, searchTerm]);
+
   // Separate effect for category and search changes
   useEffect(() => {
     const loadProducts = async () => {
@@ -333,7 +355,6 @@ export const NinetyNineNights = () => {
         setLoading(false);
       }
     };
-
     loadProducts();
   }, [activeCategory, searchTerm]);
 
