@@ -5,6 +5,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReactCountryFlag from "react-country-flag";
 import { AuthenticationManager, AuthModal } from "../../../../components/auth";
 
+// Interfaces for type safety
+interface Game {
+  id: number;
+  name: string;
+  subtitle: string;
+  icon: string;
+  route: string;
+  useIcon?: boolean;
+  bgImage?: string;
+}
+
+interface User {
+  firstName: string;
+  email: string;
+  id: string;
+  lastName?: string;
+  phone?: string;
+  addresses?: { edges: { node: { address1: string; city: string; country: string; zip: string } }[] };
+}
+
 // Currency mapping
 const currencyMap: Record<string, string> = {
   US: "USD",
@@ -20,25 +40,22 @@ const currencyMap: Record<string, string> = {
 export const GameSelector = ({
   onGameSelect
 }: {
-  onGameSelect?: (game: any) => void
+  onGameSelect?: (game: Game) => void
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<{
-    subtitle?: string;
-    name: string;
-    bgImage?: string;
-    bgColor?: string;
-    useIcon?: boolean;
-  }>({
+  const [selectedGame, setSelectedGame] = useState<Game>({
     name: "Select Game",
     subtitle: "🎮",
     useIcon: true,
+    id: 0,
+    icon: "/icon/gamepad.png",
+    route: "/"
   });
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const games = [
-    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/murderMystery" },
+  const games: Game[] = [
+    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/MurderMystery2" },
     { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
     { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
     { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png", route: "/AdoptMe" },
@@ -49,13 +66,12 @@ export const GameSelector = ({
     { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png", route: "/DressToImpress" },
   ];
 
-  const handleGameSelect = (game: any) => {
+  const handleGameSelect = (game: Game) => {
     setSelectedGame(game);
     setIsDropdownOpen(false);
     if (onGameSelect) {
       onGameSelect(game);
     }
-    // Redirect to the game's page
     if (game.route) {
       window.location.href = game.route;
     }
@@ -96,8 +112,8 @@ export const GameSelector = ({
         {selectedGame.bgImage && <div className="absolute inset-0 bg-black/40" />}
         <div className="ml-[1vw] w-[1.5vw] h-[1.5vw] flex items-center justify-center relative z-10">
           {selectedGame.useIcon ? 
-            <img src="/icon/gamepad.png" alt="Gamepad" className="w-[4vw] h-[2vw] object-contain" /> : 
-            selectedGame.subtitle || "🎮"
+            <img src={selectedGame.icon} alt="Gamepad" className="w-[4vw] h-[2vw] object-contain" /> : 
+            selectedGame.subtitle
           }
         </div>
         <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
@@ -217,13 +233,13 @@ export const MobileMenu = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  games: any[];
-  selectedGame: any;
-  onGameSelect: (game: any) => void;
+  games: Game[];
+  selectedGame: Game;
+  onGameSelect: (game: Game) => void;
   onLanguageClick: () => void;
   country: string;
   currency: string;
-  user: any;
+  user: User | null;
   handleLogout: () => void;
 }) => {
   return (
@@ -241,9 +257,17 @@ export const MobileMenu = ({
               <h3 className="text-white text-lg font-medium mb-4">Select Game</h3>
               <div className="space-y-3">
                 {games.map((game) => (
-                  <button key={game.id} onClick={() => { onGameSelect(game); onClose(); }} className={`flex items-center gap-3 w-full p-3 rounded-lg transition-colors ${selectedGame.name === game.name ? 'bg-[#3DFF88]/20 border border-[#3DFF88]' : 'bg-[#142b16] hover:bg-[#2a2a2a]'}`}>
+                  <button 
+                    key={game.id} 
+                    onClick={() => { onGameSelect(game); onClose(); }} 
+                    className={`flex items-center gap-3 w-full p-3 rounded-lg transition-colors ${selectedGame.name === game.name ? 'bg-[#3DFF88]/20 border border-[#3DFF88]' : 'bg-[#142b16] hover:bg-[#2a2a2a]'}`}
+                  >
                     <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-                      <img src={game.icon} alt={game.name} className="w-full h-full object-cover" />
+                      {game.useIcon ? (
+                        <img src={game.icon} alt={game.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">{game.subtitle}</div>
+                      )}
                     </div>
                     <span className="text-white font-medium text-left">{game.name}</span>
                   </button>
@@ -289,11 +313,18 @@ export const MobileMenu = ({
 const HeaderSection = (): JSX.Element => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [country, setCountry] = useState("US");
-  const [currency, setCurrency] = useState("USD");
-  const [selectedGame, setSelectedGame] = useState<any>({ name: "Select Game", subtitle: "🎮", useIcon: true });
+  const [country, setCountry] = useState<string>("US");
+  const [currency, setCurrency] = useState<string>("USD");
+  const [selectedGame, setSelectedGame] = useState<Game>({
+    id: 0,
+    name: "Select Game",
+    subtitle: "🎮",
+    useIcon: true,
+    icon: "/icon/gamepad.png",
+    route: "/"
+  });
 
-  const games = [
+  const games: Game[] = [
     { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/MurderMystery2" },
     { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
     { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
@@ -305,9 +336,11 @@ const HeaderSection = (): JSX.Element => {
     { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png", route: "/DressToImpress" },
   ];
 
-  const authManager = AuthenticationManager({ onUserChange: (user) => console.log('User changed:', user) });
+  const authManager = AuthenticationManager({ 
+    onUserChange: (user: User | null) => console.log('User changed:', user) 
+  });
 
-  const handleGameSelectWithRedirect = (game: any) => {
+  const handleGameSelectWithRedirect = (game: Game) => {
     setSelectedGame(game);
     if (game.route) {
       window.location.href = game.route;
@@ -319,7 +352,7 @@ const HeaderSection = (): JSX.Element => {
       const storedCountry = sessionStorage.getItem('userCountry');
       const storedCurrency = sessionStorage.getItem('userCurrency');
 
-      if (storedCountry && storedCurrency) {
+      if (storedCountry && storedCurrency && currencyMap[storedCountry] === storedCurrency) {
         setCountry(storedCountry);
         setCurrency(storedCurrency);
         return;
@@ -327,6 +360,7 @@ const HeaderSection = (): JSX.Element => {
 
       try {
         const response = await fetch("https://ipapi.co/json/");
+        if (!response.ok) throw new Error('Failed to fetch IP data');
         const data = await response.json();
         const detectedCountry = (data.country_code || "").toUpperCase();
         
@@ -340,23 +374,19 @@ const HeaderSection = (): JSX.Element => {
             detail: { country: detectedCountry, currency: detectedCurrency } 
           }));
         } else {
-          const userLang = navigator.language || "en-US";
-          const fallbackCountry = userLang.split("-")[1]?.toUpperCase() || "US";
-          const fallbackCurrency = currencyMap[fallbackCountry] || "USD";
-          setCountry(fallbackCountry);
-          setCurrency(fallbackCurrency);
-          sessionStorage.setItem('userCountry', fallbackCountry);
-          sessionStorage.setItem('userCurrency', fallbackCurrency);
-          window.dispatchEvent(new CustomEvent('currencyChanged', { 
-            detail: { country: fallbackCountry, currency: fallbackCurrency } 
-          }));
+          throw new Error('Invalid country code');
         }
       } catch (error) {
         console.error("Error detecting location:", error);
-        setCountry("US");
-        setCurrency("USD");
-        sessionStorage.setItem('userCountry', "US");
-        sessionStorage.setItem('userCurrency', "USD");
+        const fallbackCountry = navigator.language.split("-")[1]?.toUpperCase() || "US";
+        const fallbackCurrency = currencyMap[fallbackCountry] || "USD";
+        setCountry(fallbackCountry);
+        setCurrency(fallbackCurrency);
+        sessionStorage.setItem('userCountry', fallbackCountry);
+        sessionStorage.setItem('userCurrency', fallbackCurrency);
+        window.dispatchEvent(new CustomEvent('currencyChanged', { 
+          detail: { country: fallbackCountry, currency: fallbackCurrency } 
+        }));
       }
     };
 
@@ -393,6 +423,7 @@ const HeaderSection = (): JSX.Element => {
             ) : (
               <button onClick={() => authManager.setIsAuthModalOpen(true)} className="bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg px-3 py-2 flex items-center gap-2">
                 <div className="w-5 h-5 bg-[url(/icon/person.png)] bg-cover bg-center" />
+                <span className="text-white font-semibold">Log in</span>
               </button>
             )}
           </div>
