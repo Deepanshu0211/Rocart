@@ -55,7 +55,7 @@ export const GameSelector = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const games: Game[] = [
-    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/MurderMystery2" },
+    { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/murderMystery" },
     { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
     { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
     { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png", route: "/AdoptMe" },
