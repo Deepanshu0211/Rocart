@@ -516,7 +516,7 @@ export const StealABrainrot = () => {
               visibleProducts.map((product, idx) => (
                 <div
                   key={`${sectionId}-${idx}`}
-                  className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                  className="flex-shrink-0 w-[auto] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
                 >
                   <div className="relative aspect-square bg-black">
                     {product.node.images.edges[0] ? (

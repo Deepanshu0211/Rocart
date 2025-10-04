@@ -118,7 +118,7 @@ export const GameSelector = ({
         </div>
         <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
           <span className="font-poppins font-bold text-white text-[1vw] leading-tight">{selectedGame.name}</span>
-          <ChevronDownIcon className={`w-[1vw] h-[1vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-0" : ""}`} />
+          <ChevronDownIcon className={`w-[2vw] h-[2vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
         </div>
       </button>
 

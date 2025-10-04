@@ -159,25 +159,23 @@ export const WelcomeBannerSection = () => {
               Fruits, Steal a Brainrot, Blade Ball.
             </p>
 
-            {/* Start Buying Button - Centered on mobile */}
-            <div className="flex justify-center lg:justify-start">
+
+            {/* Start Buying Button + Arrow */}
+            <div className="flex justify-center lg:justify-start items-center space-x-3 relative">
               <Button
                 onClick={() => setIsOpen(true)}
-                className="mt-[2vh] sm:mt-[4vh] lg:mt-[6vh] h-[8vh] sm:h-[7vh] w-[40vw] sm:w-[25vw] lg:w-[12vw]
+                className="relative mt-[2vh] sm:mt-[4vh] lg:mt-[6vh] h-[8vh] sm:h-[7vh] w-[40vw] sm:w-[25vw] lg:w-[12vw]
                   rounded-[15px] p-2 flex items-center justify-center
                   bg-gradient-to-r from-[#a9d692] via-[#3DFF88] to-[#259951]
                   hover:shadow-xl hover:shadow-[#259951]/30
                   transition-all duration-300 overflow-hidden"
               >
-                {/* Background overlay for hover effect */}
                 <motion.div
                   className="absolute inset-0 bg-white/10 pointer-events-none"
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 0.15 }}
                   transition={{ duration: 0.3 }}
                 />
-
-                {/* Icon + Text */}
                 <div className="relative z-10 flex items-center space-x-2">
                   <img
                     className="w-[4vw] sm:w-[3vw] lg:w-[2vw] h-[4vw] sm:h-[3vw] lg:h-[2.5vw] object-contain"
@@ -189,7 +187,18 @@ export const WelcomeBannerSection = () => {
                   </span>
                 </div>
               </Button>
+
+              {/* Arrow aligned with the center of the button */}
+              <img
+                src="/icon/arroww.png"
+                alt="Arrow"
+                className="hidden sm:block h-auto object-contain 
+                          w-[20vw] sm:w-[15vw] lg:w-[10vw]
+                          translate-y-[10%] lg:translate-y-[0%]" 
+              />
             </div>
+
+
           </div>
         </div>
 

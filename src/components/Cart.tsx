@@ -184,11 +184,22 @@ export const Cart = ({
     }
   };
 
-  // Load and merge cart data
+  // Load and merge cart data, and open cart strictly when a new item is added
   useEffect(() => {
     const validInitialCart = initialCart.filter(
       (item) => item.id && item.id.match(/\/\d+$/) && item.title && item.price > 0
     );
+
+    // Check for new items by comparing IDs
+    const prevCartIds = new Set(cart.map((item) => item.id));
+    const newCartIds = new Set(validInitialCart.map((item) => item.id));
+    const hasNewItem = [...newCartIds].some((id) => !prevCartIds.has(id));
+
+    // Open cart only if a new item is added
+    if (hasNewItem && validInitialCart.length > 0) {
+      setIsOpen(true);
+    }
+
     setCart((prevCart) => {
       const mergedCart = [...prevCart];
       validInitialCart.forEach((initialItem) => {
@@ -455,21 +466,21 @@ export const Cart = ({
 
   return (
     <>
-      <button
-        onClick={handleOpenCart}
-        className="fixed bottom-4 right-4 bg-[#3dff87] hover:bg-[#259951] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-md shadow-[#3dff87]/20 hover:shadow-[#3dff87]/40 transition-all duration-300 z-50"
-      >
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-          <path d="M3 6h18" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-        {cart.length > 0 && (
+      {cart.length > 0 && (
+        <button
+          onClick={handleOpenCart}
+          className="fixed bottom-4 right-4 bg-[#3dff87] hover:bg-[#259951] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-md shadow-[#3dff87]/20 hover:shadow-[#3dff87]/40 transition-all duration-300 z-50"
+        >
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <path d="M3 6h18" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
             {cart.length}
           </span>
-        )}
-      </button>
+        </button>
+      )}
 
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-96 md:w-[400px] bg-[#030904] shadow-2xl border-l border-[#3dff87]/20 transform transition-transform duration-300 ease-in-out z-50 ${
@@ -487,7 +498,7 @@ export const Cart = ({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-8 space-y-4">
+          <div className="flex-1 overflow-y-auto py-8 space-y-4 ">
             {fetchError && (
               <div className="bg-red-500/10 p-4 rounded-lg text-red-300 text-sm text-center">
                 {fetchError}
@@ -514,8 +525,7 @@ export const Cart = ({
               cart.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#06100A] p-4  rounded-lg w-full max-w-full"
-
+                  className="bg-[#06100A] p-4 rounded-lg w-full max-w-full"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-[url('/icon/cartbg.png')] bg-cover bg-center rounded-lg flex items-center justify-center">
@@ -564,31 +574,16 @@ export const Cart = ({
           </div>
 
           {cart.length > 0 && (
-            <div className="p-4 ">
-              <div className="bg-[#06100A] p-4 rounded-[2vw] border  border-[#999999] mb-4">
+            <div className="p-4">
+              <div className="bg-[#06100A] p-4 rounded-[2vw] border border-[#999999] mb-4">
                 <div className="flex justify-between font-bold text-white text-sm">
-                 
                   <span>
                     {currencySymbols[userCurrency] || "$"}
                     {getCartTotal().toFixed(2)}
                   </span>
-                  
                 </div>
-                {/* {getDiscountAmount() > 0 && (
-                  <div className="flex justify-between text-[#3dff87] text-sm mt-2">
-                  
-                    <span>
-                      -{currencySymbols[userCurrency] || "$"}
-                      {getDiscountAmount().toFixed(2)}
-                    </span>
-                  </div>
-                )} */}
-                <div className="flex justify-between text-[#21843B]  text-sm border-[#3dff87]/10">
+                <div className="flex justify-between text-[#21843B] text-sm border-[#3dff87]/10">
                   <span>Discount Applied at Checkout</span>
-                  {/* <span>
-                    {currencySymbols[userCurrency] || "$"}
-                    {getDiscountedTotal().toFixed(2)}
-                  </span> */}
                 </div>
               </div>
               <button
