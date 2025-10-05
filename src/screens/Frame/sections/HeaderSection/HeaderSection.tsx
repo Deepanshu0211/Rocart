@@ -358,7 +358,7 @@ const HeaderSection = (): JSX.Element => {
   };
 
   // Determine header background color
-  const headerBgClass = isGamePage() ? 'bg-black' : 'bg-[#0C160F]';
+  const headerBgClass = isGamePage() ? 'bg-[#06100A]' : 'bg-[#0C160F]';
 
   useEffect(() => {
     const detectAndSetCurrency = async () => {

@@ -570,9 +570,9 @@ export const GrowAGarden = () => {
                 initial="initial"
               >
                 {/* Save Badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
+                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
                   <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
-                  <span className="text-[11px]" style={{ letterSpacing: "0.12em" }}>
+                  <span className="text-[11px]">
                     Save $24
                   </span>
                 </div>
@@ -617,14 +617,14 @@ export const GrowAGarden = () => {
                 {/* Add to Cart Button - Appears on Hover */}
                 <motion.button
                   onClick={() => addToCart(product)}
-                  className="absolute bottom-4 right-11 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
+                  className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
                   variants={{
                     initial: { y: 20, opacity: 0 },
                     hovered: { y: 2, opacity: 1 },
                   }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
-                 + Add to Cart
+                 <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
                 </motion.button>
               </motion.div>
 
@@ -639,6 +639,16 @@ export const GrowAGarden = () => {
                         <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
                         <span className="text-white"> {formatPrice(product)?.price}</span>
                       </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
+                      >
+                        <img
+                          src="/icon/cart.png"
+                          alt="Add to Cart"
+                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                        />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -659,7 +669,7 @@ export const GrowAGarden = () => {
       <Header />
 
       <div
-        className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
+        className="bg-[#06100A]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
       >
         <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
@@ -679,20 +689,26 @@ export const GrowAGarden = () => {
             <div className="flex items-center gap-2">
               {categories.map((category) => (
                 <>
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`relative whitespace-nowrap px-4 sm:px-4 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+             <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1
+                    ${
                       activeCategory === category
-                        ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
+                        ? "text-white bg-gradient-to-b from-[#030904] to-[#09eb2e45] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
                         : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
                     }`}
-                  >
-                    {category === "Best Sellers" && (
-                      <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
-                    )}
-                    {category}
-                  </button>
+                >
+                  {category === "Best Sellers" && (
+                    <img
+                      src={categoryIcons["Best Sellers"]}
+                      alt="Best Sellers"
+                      className="w-5 h-5 inline-block"
+                    />
+                  )}
+                  {category}
+                </button>
+
                   {category === "Bundles" && (
                     <div
                       key="gradient-divider"
