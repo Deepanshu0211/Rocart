@@ -9,7 +9,7 @@ const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
 const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
 
 const games = [
-  { name: "Grow A Garden", icon: "/logo/grow.png" },
+  { name: "Grow A Garden", icon: "/kenjo/grow.png" },
 ];
 
 const categories = [
@@ -570,10 +570,17 @@ export const GrowAGarden = () => {
                   className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
                 >
                   <div className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden">
-                    <div className="absolute top-3 left-3 flex items-center gap-1 text-white text-xs font-bold px-2 py-1 rounded-md bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20">
-                      <img src="/icon/save.png" alt="save" className="h-[14px] w-auto" />
-                      <span>Save $24</span>
+                    <div className="absolute top-3 left-3 flex items-center gap-2 text-white text-[10px] font-bold px-2 py-1 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[7vw]">
+                      <img
+                        src="/icon/save.png"
+                        alt="save"
+                        className="h-[3vh] w-[auto]"
+                      />
+                     <span className="text-[9px]" style={{ letterSpacing: "0.1em" }}>Save $24</span>
                     </div>
+
+
+
 
                     <motion.div
                       className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
@@ -650,9 +657,9 @@ export const GrowAGarden = () => {
         style={{ backgroundImage: "url('/icon/navbg.png')" }}
       >
         <div className="max-w-[95vw] mx-auto px-4 py-1 flex items-center gap-4 flex-wrap sm:flex-nowrap">
-          <div className="border-l border-[#3dff87]/30 py-3" />
+          {/* <div className="border-l border-[#3dff87]/30 py-3" /> */}
 
-          <div className="flex items-center border bg-[#06100A] border-[#9999] rounded-lg px-3 py-1 gap-1 flex-shrink-0">
+          <div className="flex items-center border bg-[#06100A] border-[#9999] rounded-xl px-3 py-1 gap-1 flex-shrink-0">
             <div className="w-7 h-7 flex items-center justify-center">
               <img
                 src={selectedGame.icon}
@@ -675,7 +682,7 @@ export const GrowAGarden = () => {
                 }`}
               >
                 {category}
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[2px] bg-white rounded-xl"></span>
+                {/* <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[2px] bg-white rounded-xl"></span> */}
               </button>
             ))}
           </div>

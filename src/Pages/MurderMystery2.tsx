@@ -8,7 +8,7 @@ const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
 const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
 
 const games = [
-  { name: "Murder Mystery 2", icon: "/logo/murder.png" },
+  { name: "Murder Mystery 2", icon: "/kenjo/mur.png" },
 ];
 
 const categories = [
