@@ -1,3 +1,9 @@
+import { useEffect, useState, useRef } from "react";
+import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
+import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
+import { Cart } from "../components/Cart";
+import { motion } from "framer-motion"
+
 const categoryIcons: { [key: string]: string } = {
   "Best Sellers": "/icon/crown.png",
   "Summer Specials": "/icon/summer.png",
@@ -5,11 +11,6 @@ const categoryIcons: { [key: string]: string } = {
   Guns: "/icon/gun.png",
   Bundles: "/icon/bundle.png",
 };
-import { useEffect, useState, useRef } from "react";
-import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
-import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
-import { Cart } from "../components/Cart";
-import { motion } from "framer-motion"
 
 // Fix import.meta.env typing for Vite
 const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
@@ -195,8 +196,6 @@ export const GrowAGarden = () => {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  // removed unused currentIndices
-
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -515,7 +514,7 @@ export const GrowAGarden = () => {
                 onClick={() => handleNext(sectionId)}
                 className="text-[#3DFF88] hover:text-white transition-colors"
               >
-              <img src="/icon/rightarrow.png" alt="Next" className="w-8 h-8 inline-block" />
+                <img src="/icon/rightarrow.png" alt="Next" className="w-8 h-8 inline-block" />
               </button>
               <button
                 onClick={() => setActiveSection(sectionId)}
@@ -530,31 +529,30 @@ export const GrowAGarden = () => {
         <div className="relative">
           <div 
             ref={scrollRefs[sectionId]}
-           className={`${
+            className={`${
               isGridView
                 ? 'grid grid-cols-5 grid-rows-2 gap-3'
                 : 'flex gap-3 overflow-x-auto scrollbar-hide py-4 px-1 cursor-grab active:cursor-grabbing'
             }`}
-
             style={{ scrollBehavior: isGridView ? 'auto' : 'smooth' }}
             onMouseDown={(e) => {
               if (isGridView) return;
               const el = e.currentTarget;
               const startX = e.pageX - el.offsetLeft;
               const scrollLeft = el.scrollLeft;
-              
+
               const handleMouseMove = (e: MouseEvent) => {
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - startX) * 2;
                 el.scrollLeft = scrollLeft - walk;
               };
-              
+
               const handleMouseUp = () => {
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
                 el.style.cursor = 'grab';
               };
-              
+
               document.addEventListener('mousemove', handleMouseMove);
               document.addEventListener('mouseup', handleMouseUp);
               el.style.cursor = 'grabbing';
@@ -566,51 +564,71 @@ export const GrowAGarden = () => {
                   key={`${sectionId}-${idx}`}
                   className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
                 >
-                  <div className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden">
-                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
-                      <img
-                        src="/icon/save.png"
-                        alt="save"
-                        className="h-[3vh] w-auto"
-                      />
-                      <span className="text-[11px]" style={{ letterSpacing: "0.12em" }}>Save $24</span>
-                    </div>
+              <motion.div
+                className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
+                whileHover="hovered"
+                initial="initial"
+              >
+                {/* Save Badge */}
+                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
+                  <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
+                  <span className="text-[11px]" style={{ letterSpacing: "0.12em" }}>
+                    Save $24
+                  </span>
+                </div>
 
+                {/* Background */}
+                <motion.div
+                  className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                  variants={{
+                    initial: { scale: 1 },
+                    hovered: { scale: 1.15 },
+                  }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                />
 
-
-
-
-                    <motion.div
-                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
-                      whileHover={{ scale: 1.15 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
+                {/* Product Image */}
+                {product.node.images.edges[0] ? (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center"
+                    variants={{
+                      initial: { rotate: 0 },
+                      hovered: { rotate: [0, -3, 3, -2, 2, 0] },
+                    }}
+                    transition={{
+                      delay: 0.25,
+                      duration: 0.6,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <motion.img
+                      src={product.node.images.edges[0].node.url}
+                      alt={product.node.title}
+                      className="object-contain relative z-10"
+                      style={{ maxWidth: "150px", maxHeight: "120px" }}
                     />
-
-                    {product.node.images.edges[0] ? (
-                      <motion.div
-                        className="absolute inset-0 flex items-center justify-center"
-                        whileHover={{
-                          rotate: [0, -3, 3, -2, 2, 0],
-                          transition: {
-                            delay: 0.25,
-                            duration: 0.6,
-                            ease: "easeInOut",
-                          },
-                        }}
-                      >
-                        <motion.img
-                          src={product.node.images.edges[0].node.url}
-                          alt={product.node.title}
-                          className="object-contain relative z-10"
-                          style={{ maxWidth: "150px", maxHeight: "120px" }}
-                        />
-                      </motion.div>
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-[#3dff87]/30 text-4xl">🎮</div>
-                      </div>
-                    )}
+                  </motion.div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-[#3dff87]/30 text-4xl">🎮</div>
                   </div>
+                )}
+
+                {/* Add to Cart Button - Appears on Hover */}
+                <motion.button
+                  onClick={() => addToCart(product)}
+                  className="absolute bottom-4 right-11 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
+                  variants={{
+                    initial: { y: 20, opacity: 0 },
+                    hovered: { y: 2, opacity: 1 },
+                  }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                 + Add to Cart
+                </motion.button>
+              </motion.div>
+
+
 
                   <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
                     <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
@@ -621,16 +639,6 @@ export const GrowAGarden = () => {
                         <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
                         <span className="text-white"> {formatPrice(product)?.price}</span>
                       </span>
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="hover:bg-[#031C0D] transition-all"
-                      >
-                        <img
-                          src="/icon/cart.png"
-                          alt="Add"
-                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
-                        />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -652,58 +660,50 @@ export const GrowAGarden = () => {
 
       <div
         className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
-     
       >
         <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* <div className="border-l border-[#3dff87]/30 py-3" /> */}
-
-      {/* Game Selector on extreme left */}
-     <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
-        <div className="w-9 h-9 flex items-center justify-center">
-          <img
-            src={selectedGame.icon}
-            alt={selectedGame.name}
-            className="w-full h-full rounded-md object-contain"
-          />
-        </div>
-        <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3">
-          {selectedGame.name}
-        </h1>
-      </div>
-
-
-        <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
-          <div className="flex items-center gap-2">
-            {categories.map((category) => (
-              <>
-                <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
-                    activeCategory === category
-                      ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
-                      : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
-                  }`}
-                >
-                  {category === "Best Sellers" && (
-                    <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
-                  )}
-                  {category}
-                </button>
-                {/* Insert gradient line after Bundles */}
-                {category === "Bundles" && (
-                  <div
-                    key="gradient-divider"
-                    className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-6 rounded-full"
-                  />
-                )}
-              </>
-            ))}
+          <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
+            <div className="w-9 h-9 flex items-center justify-center">
+              <img
+                src={selectedGame.icon}
+                alt={selectedGame.name}
+                className="w-full h-full rounded-md object-contain"
+              />
+            </div>
+            <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3">
+              {selectedGame.name}
+            </h1>
           </div>
-        </div>
 
+          <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
+            <div className="flex items-center gap-2">
+              {categories.map((category) => (
+                <>
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`relative whitespace-nowrap px-4 sm:px-4 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+                      activeCategory === category
+                        ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
+                        : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
+                    }`}
+                  >
+                    {category === "Best Sellers" && (
+                      <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
+                    )}
+                    {category}
+                  </button>
+                  {category === "Bundles" && (
+                    <div
+                      key="gradient-divider"
+                      className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-6 rounded-full"
+                    />
+                  )}
+                </>
+              ))}
+            </div>
+          </div>
 
-          {/* Search Bar */}
           <div className="relative flex items-center flex-shrink-0">
             {!isSearchActive ? (
               <button
@@ -738,9 +738,6 @@ export const GrowAGarden = () => {
                     className="text-gray-400 hover:text-white transition-colors"
                     title="Clear search"
                   >
-                    {/* <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg> */}
                   </button>
                 )}
                 <button
