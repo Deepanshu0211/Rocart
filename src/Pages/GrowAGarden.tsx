@@ -567,14 +567,15 @@ export const GrowAGarden = () => {
                   className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
                 >
                   <div className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden">
-                    <div className="absolute top-3 left-3 flex items-center gap-2 text-white text-[10px] font-bold px-2 py-1 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[7vw]">
+                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-lg bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
                       <img
                         src="/icon/save.png"
                         alt="save"
-                        className="h-[3vh] w-[auto]"
+                        className="h-[3vh] w-auto"
                       />
-                     <span className="text-[9px]" style={{ letterSpacing: "0.1em" }}>Save $24</span>
+                      <span className="text-[11px]" style={{ letterSpacing: "0.12em" }}>Save $24</span>
                     </div>
+
 
 
 
@@ -653,19 +654,19 @@ export const GrowAGarden = () => {
         className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
      
       >
-        <div className="max-w-[95vw] mx-auto px-2 py-1 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* <div className="border-l border-[#3dff87]/30 py-3" /> */}
 
       {/* Game Selector on extreme left */}
-      <div className="flex ml-1 items-center  py-1 gap-1 flex-shrink-0">
-        <div className="w-7 h-7 flex items-center justify-center">
+     <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
+        <div className="w-9 h-9 flex items-center justify-center">
           <img
             src={selectedGame.icon}
             alt={selectedGame.name}
             className="w-full h-full rounded-md object-contain"
           />
         </div>
-        <h1 className="text-white text-base font-bold sm:text-sm whitespace-nowrap ml-2">
+        <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3">
           {selectedGame.name}
         </h1>
       </div>
@@ -674,20 +675,29 @@ export const GrowAGarden = () => {
         <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
           <div className="flex items-center gap-2">
             {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`relative whitespace-nowrap px-3 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
-                  activeCategory === category
-                    ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
-                }`}
-              >
-                {category === "Best Sellers" && (
-                  <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
+              <>
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
+                    activeCategory === category
+                      ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
+                      : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
+                  }`}
+                >
+                  {category === "Best Sellers" && (
+                    <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
+                  )}
+                  {category}
+                </button>
+                {/* Insert gradient line after Bundles */}
+                {category === "Bundles" && (
+                  <div
+                    key="gradient-divider"
+                    className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-6 rounded-full"
+                  />
                 )}
-                {category}
-              </button>
+              </>
             ))}
           </div>
         </div>

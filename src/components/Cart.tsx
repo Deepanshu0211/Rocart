@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-
+// import { X, ShoppingCart, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 // Types
 type CartItem = {
   id: string;
@@ -500,20 +501,46 @@ export const Cart = ({
       </div>
 
       {cart.length > 0 && (
-        <button
-          onClick={handleOpenCart}
-          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#2e9c58] hover:bg-[#259951] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg  transition-all duration-300 z-50"
-        >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <path d="M3 6h18" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          <span className="font-semibold">View Cart</span>
-          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-            {cart.length}
-          </span>
-        </button>
+      <motion.button
+        onClick={handleOpenCart}
+        className="fixed bottom-9 left-1/2
+                  bg-[#2e9c58] text-white px-6 py-3 rounded-full 
+                  flex items-center justify-center gap-3 
+                  shadow-lg z-50"
+        animate={{
+          y: [0, -8, 0], // floating effect
+          // boxShadow: [
+          //   "0px 4px 6px rgba(0,0,0,0.1)",
+          //   "0px 8px 20px rgba(62,255,135,0.7)",
+          //   "0px 4px 6px rgba(0,0,0,0.1)"
+          // ]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          repeatType: "loop",
+          ease: "easeInOut"
+        }}
+        whileHover={{
+          scale: 1.05,
+          boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
+        }}
+        transitionHover={{
+          type: "spring",
+          stiffness: 3
+        }}
+      >
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <path d="M3 6h18" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+        <span className="font-semibold">View Cart</span>
+        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+          {cart.length}
+        </span>
+      </motion.button>
+
       )}
 
       <div
