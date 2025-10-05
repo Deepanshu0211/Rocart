@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
 import { Cart } from "../components/Cart";
+import { motion } from "framer-motion"
 
 // Fix import.meta.env typing for Vite
 const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
@@ -195,6 +196,18 @@ export const GrowAGarden = () => {
     bundles: 0,
   });
 
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const [scrollRefs] = useState<{ [key: string]: React.RefObject<HTMLDivElement> }>({
+    bestSellers: { current: null },
+    summerSpecials: { current: null },
+    knives: { current: null },
+    guns: { current: null },
+    bundles: { current: null },
+  });
+
   // Cart state management with unified localStorage persistence
   const CART_VERSION = "1.0.0";
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -360,6 +373,25 @@ export const GrowAGarden = () => {
     }
   }, [cart]);
 
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isSearchActive && searchInputRef.current && !searchInputRef.current.parentElement?.contains(event.target as Node)) {
+        if (!searchQuery) {
+          setIsSearchActive(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchActive, searchQuery]);
+
   function convertPrice(
     amount: number,
     originalCurrency: string,
@@ -439,24 +471,30 @@ export const GrowAGarden = () => {
   };
 
   const handlePrev = (section: string) => {
-    setCurrentIndices((prev) => ({
-      ...prev,
-      [section]: prev[section] === 0 ? Math.max(products.length - 4, 0) : prev[section] - 1,
-    }));
+    const scrollContainer = scrollRefs[section]?.current;
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: -240, behavior: 'smooth' });
+    }
   };
 
   const handleNext = (section: string) => {
-    setCurrentIndices((prev) => ({
-      ...prev,
-      [section]: prev[section] >= Math.max(products.length - 4, 0) ? 0 : prev[section] + 1,
-    }));
+    const scrollContainer = scrollRefs[section]?.current;
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
+    }
   };
 
-  const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
-    const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 50);
+  // Filter products based on search query
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : products;
 
+  const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
     return (
-      <section className="space-y-4">
+      <section className="space-y-4 bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`text-xl ${sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
@@ -468,7 +506,6 @@ export const GrowAGarden = () => {
             <button
               onClick={() => handlePrev(sectionId)}
               className="text-gray-400 hover:text-white transition-colors"
-              disabled={currentIndices[sectionId] === 0}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -477,7 +514,6 @@ export const GrowAGarden = () => {
             <button
               onClick={() => handleNext(sectionId)}
               className="text-gray-400 hover:text-white transition-colors"
-              disabled={currentIndices[sectionId] >= Math.max(productsToShow.length - 4, 0)}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -493,28 +529,69 @@ export const GrowAGarden = () => {
         </div>
 
         <div className="relative">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-            {visibleProducts.length > 0 ? (
-              visibleProducts.map((product, idx) => (
+          <div 
+            ref={(el) => { if (el) scrollRefs[sectionId].current = el; }}
+            className="flex gap-4 overflow-x-auto scrollbar-hide py-2 px-1 cursor-grab active:cursor-grabbing"
+            style={{ scrollBehavior: 'smooth' }}
+            onMouseDown={(e) => {
+              const el = e.currentTarget;
+              const startX = e.pageX - el.offsetLeft;
+              const scrollLeft = el.scrollLeft;
+              
+              const handleMouseMove = (e: MouseEvent) => {
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - startX) * 2;
+                el.scrollLeft = scrollLeft - walk;
+              };
+              
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                el.style.cursor = 'grab';
+              };
+              
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              el.style.cursor = 'grabbing';
+            }}
+          >
+            {productsToShow.length > 0 ? (
+              productsToShow.map((product, idx) => (
                 <div
                   key={`${sectionId}-${idx}`}
-                  className="relative flex-shrink-0 w-[223px] h-[286px] bg-[#000000] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                  className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
                 >
-                  <div className="relative bg-black h-[200px] w-full rounded-t-2xl overflow-hidden">
-                    <div className="absolute top-3 left-3 flex items-center gap-1 text-white text-xs font-bold px-2 py-1 rounded-md bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-10">
+                  <div className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden">
+                    <div className="absolute top-3 left-3 flex items-center gap-1 text-white text-xs font-bold px-2 py-1 rounded-md bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20">
                       <img src="/icon/save.png" alt="save" className="h-[14px] w-auto" />
                       <span>Save $24</span>
                     </div>
 
+                    <motion.div
+                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                      whileHover={{ scale: 1.15 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                    />
+
                     {product.node.images.edges[0] ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-[#030904]">
-                        <img
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center"
+                        whileHover={{
+                          rotate: [0, -3, 3, -2, 2, 0],
+                          transition: {
+                            delay: 0.25,
+                            duration: 0.6,
+                            ease: "easeInOut",
+                          },
+                        }}
+                      >
+                        <motion.img
                           src={product.node.images.edges[0].node.url}
                           alt={product.node.title}
-                          className="object-contain"
+                          className="object-contain relative z-10"
                           style={{ maxWidth: "150px", maxHeight: "120px" }}
                         />
-                      </div>
+                      </motion.div>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-[#3dff87]/30 text-4xl">🎮</div>
@@ -526,23 +603,21 @@ export const GrowAGarden = () => {
                     <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
                       {product.node.title}
                     </h3>
-             <div className="flex items-start justify-between gap-2">
-                <span className="text-[#3dff87] font-bold text-sm">
-                  {formatPrice(product)}
-                </span>
-                <button
-                  onClick={() => addToCart(product)}
-                  className="hover:bg-[#031C0D] transition-all"
-                >
-                  <img
-                    src="/icon/cart.png"
-                    alt="Add"
-                    className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
-                  />
-                </button>
-              </div>
-
-
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-[#3dff87] font-bold text-sm">
+                        {formatPrice(product)}
+                      </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="hover:bg-[#031C0D] transition-all"
+                      >
+                        <img
+                          src="/icon/cart.png"
+                          alt="Add"
+                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -596,10 +671,59 @@ export const GrowAGarden = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg flex-shrink-0">
-            <span className="text-[#3dff87] text-xs font-bold">{userCurrency}</span>
-            {detectedCountry && (
-              <span className="text-gray-400 text-xs">({detectedCountry})</span>
+          {/* Search Bar */}
+          <div className="relative flex items-center flex-shrink-0">
+            {!isSearchActive ? (
+              <button
+                onClick={() => setIsSearchActive(true)}
+                className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg hover:bg-[#1a2621] hover:border-[#3dff87]/40 transition-all"
+                title="Search products"
+              >
+                <svg className="w-5 h-5 text-[#3dff87]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            ) : (
+              <motion.div 
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "auto", opacity: 1 }}
+                className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/40 px-3 py-2 rounded-lg"
+              >
+                <svg className="w-5 h-5 text-[#3dff87]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="bg-transparent text-white text-sm outline-none w-40 placeholder-gray-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="text-gray-400 hover:text-white transition-colors"
+                    title="Clear search"
+                  >
+                    {/* <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> */}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchActive(false);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors ml-1"
+                  title="Close search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
             )}
           </div>
 
@@ -613,6 +737,17 @@ export const GrowAGarden = () => {
       </div>
 
       <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {searchQuery && (
+          <div className="bg-[#1a2621]/30 border border-[#3dff87]/20 rounded-lg p-4">
+            <p className="text-gray-300 text-sm">
+              Search results for: <span className="text-[#3dff87] font-semibold">"{searchQuery}"</span>
+              {filteredProducts.length > 0 && (
+                <span className="text-gray-400 ml-2">({filteredProducts.length} found)</span>
+              )}
+            </p>
+          </div>
+        )}
+
         {activeSection && (
           <button
             onClick={() => setActiveSection(null)}
@@ -645,33 +780,48 @@ export const GrowAGarden = () => {
           </div>
         )}
 
-        {!loading && !error && products.length > 0 && (
+        {!loading && !error && filteredProducts.length > 0 && (
           <>
             {(!activeSection || activeSection === "bestSellers") && (
-              renderSection("bestSellers", "Best Sellers", "/icon/crown.png", products)
+              renderSection("bestSellers", "Best Sellers", "/icon/crown.png", filteredProducts)
             )}
             {(!activeSection || activeSection === "summerSpecials") && (
-              renderSection("summerSpecials", "Summer Specials", "/icon/summer.png", products)
+              renderSection("summerSpecials", "Summer Specials", "/icon/summer.png", filteredProducts)
             )}
             {(!activeSection || activeSection === "knives") && (
-              renderSection("knives", "Knives", "/icon/knive.png", products)
+              renderSection("knives", "Knives", "/icon/knive.png", filteredProducts)
             )}
             {(!activeSection || activeSection === "guns") && (
-              renderSection("guns", "Guns", "/icon/gun.png", products)
+              renderSection("guns", "Guns", "/icon/gun.png", filteredProducts)
             )}
             {(!activeSection || activeSection === "bundles") && (
-              renderSection("bundles", "Bundles", "/icon/bundle.png", products)
+              renderSection("bundles", "Bundles", "/icon/bundle.png", filteredProducts)
             )}
           </>
         )}
 
-        {products.length === 0 && !loading && !error && (
+        {!loading && !error && filteredProducts.length === 0 && (
           <div className="text-center py-20">
-            <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🎮</div>
+            <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🔍</div>
             <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">No products found</h3>
-            <p className="text-gray-400 text-sm sm:text-base">
-              {activeCategory !== "All" ? `No products found in "${activeCategory}".` : "Check back later for new items!"}
+            <p className="text-gray-400 text-sm sm:text-base mb-4">
+              {searchQuery 
+                ? `No results found for "${searchQuery}"`
+                : activeCategory !== "All" 
+                  ? `No products found in "${activeCategory}".` 
+                  : "Check back later for new items!"}
             </p>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setIsSearchActive(false);
+                }}
+                className="px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition-colors"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -502,7 +502,7 @@ export const Cart = ({
       {cart.length > 0 && (
         <button
           onClick={handleOpenCart}
-          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#3dff87] hover:bg-[#259951] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg shadow-[#3dff87]/30 hover:shadow-[#3dff87]/50 transition-all duration-300 z-50"
+          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#2e9c58] hover:bg-[#259951] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg  transition-all duration-300 z-50"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
