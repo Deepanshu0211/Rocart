@@ -453,7 +453,7 @@ export const GrowAGarden = () => {
   };
 
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
-    const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 4);
+    const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 50);
 
     return (
       <section className="space-y-4">
