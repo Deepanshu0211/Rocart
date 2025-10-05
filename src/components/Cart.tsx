@@ -61,6 +61,8 @@ export const Cart = ({
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   const SHOPIFY_DOMAIN: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
   const STOREFRONT_TOKEN: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
@@ -184,7 +186,7 @@ export const Cart = ({
     }
   };
 
-  // Load and merge cart data, and open cart strictly when a new item is added
+  // Load and merge cart data, and show notification when a new item is added
   useEffect(() => {
     const validInitialCart = initialCart.filter(
       (item) => item.id && item.id.match(/\/\d+$/) && item.title && item.price > 0
@@ -195,9 +197,12 @@ export const Cart = ({
     const newCartIds = new Set(validInitialCart.map((item) => item.id));
     const hasNewItem = [...newCartIds].some((id) => !prevCartIds.has(id));
 
-    // Open cart only if a new item is added
+    // Show notification when a new item is added
     if (hasNewItem && validInitialCart.length > 0) {
-      setIsOpen(true);
+      const newItems = validInitialCart.filter(item => !prevCartIds.has(item.id));
+      setNotificationMessage(`${newItems[0].title} added to cart!`);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
     }
 
     setCart((prevCart) => {
@@ -466,17 +471,46 @@ export const Cart = ({
 
   return (
     <>
+      {/* Notification Toast */}
+      <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] transition-all duration-500 ease-out ${
+        showNotification ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'
+      }`}>
+        <div className="bg-gradient-to-r from-[#06100A] to-[#0a1a0f] backdrop-blur-xl border border-[#3dff87]/30 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-[#3dff87]/20 flex items-center gap-4 min-w-[300px]">
+          <div className="relative flex-shrink-0">
+            <div className="absolute inset-0 bg-[#3dff87] rounded-full blur-md opacity-40 animate-pulse"></div>
+            <div className="relative bg-[#3dff87] rounded-full p-1.5">
+              <svg className="w-5 h-5 text-[#030904]" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-sm text-white">{notificationMessage}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Item successfully added</p>
+          </div>
+          <button 
+            onClick={() => setShowNotification(false)}
+            className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       {cart.length > 0 && (
         <button
           onClick={handleOpenCart}
-          className="fixed bottom-4 right-4 bg-[#3dff87] hover:bg-[#259951] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shadow-md shadow-[#3dff87]/20 hover:shadow-[#3dff87]/40 transition-all duration-300 z-50"
+          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#3dff87] hover:bg-[#259951] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg shadow-[#3dff87]/30 hover:shadow-[#3dff87]/50 transition-all duration-300 z-50"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
             <path d="M3 6h18" />
             <path d="M16 10a4 4 0 0 1-8 0" />
           </svg>
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+          <span className="font-semibold">View Cart</span>
+          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
             {cart.length}
           </span>
         </button>

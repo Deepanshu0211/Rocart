@@ -523,24 +523,26 @@ export const GrowAGarden = () => {
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
-                    <h3 className="text-white text-xs font-semibold mb-1 line-clamp-2">
+                    <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
                       {product.node.title}
                     </h3>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[#3dff87] font-bold text-sm">
-                        {formatPrice(product)}
-                      </span>
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="hover:bg-[#031C0D] transition-all"
-                      >
-                        <img
-                          src="/icon/cart.png"
-                          alt="Add"
-                          className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                        />
-                      </button>
-                    </div>
+             <div className="flex items-start justify-between gap-2">
+                <span className="text-[#3dff87] font-bold text-sm">
+                  {formatPrice(product)}
+                </span>
+                <button
+                  onClick={() => addToCart(product)}
+                  className="hover:bg-[#031C0D] transition-all"
+                >
+                  <img
+                    src="/icon/cart.png"
+                    alt="Add"
+                    className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                  />
+                </button>
+              </div>
+
+
                   </div>
                 </div>
               ))
