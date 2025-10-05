@@ -118,7 +118,7 @@ export const GameSelector = ({
         </div>
         <div className="ml-[0.8vw] flex-1 flex items-center gap-[0.5vw] relative z-10">
           <span className="font-poppins font-bold text-white text-[1vw] leading-tight">{selectedGame.name}</span>
-          <ChevronDownIcon className={`w-[2vw] h-[2vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
+          <ChevronDownIcon className={`w-[1.5vw] h-[2vw] text-white mr-[1vw] transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
         </div>
       </button>
 
@@ -347,6 +347,19 @@ const HeaderSection = (): JSX.Element => {
     }
   };
 
+  // Check if we're on a game page
+  const isGamePage = () => {
+    const currentPath = window.location.pathname;
+    const gamePaths = [
+      '/murderMystery', '/GrowAGarden', '/StealABrainrot', '/AdoptMe',
+      '/BladeBall', '/BloxFruits', '/NinetyNineNights', '/AnimeVanguards', '/DressToImpress'
+    ];
+    return gamePaths.some(path => currentPath.includes(path));
+  };
+
+  // Determine header background color
+  const headerBgClass = isGamePage() ? 'bg-black' : 'bg-[#0C160F]';
+
   useEffect(() => {
     const detectAndSetCurrency = async () => {
       const storedCountry = sessionStorage.getItem('userCountry');
@@ -395,7 +408,7 @@ const HeaderSection = (): JSX.Element => {
 
   return (
     <>
-      <header className="w-full h-16 md:h-[10vh] flex items-center justify-between px-4 md:px-[2vw] bg-[#060606] relative">
+      <header className={`w-full h-16 md:h-[10vh] flex items-center justify-between px-4 md:px-[2vw] ${headerBgClass} relative`}>
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between w-full">
           <button onClick={() => setIsMobileMenuOpen(true)} className="text-[#3DFF87] p-2 bg-[url('/icon/header.png')] bg-cover bg-center hover:bg-gray-800 rounded-lg transition-colors">

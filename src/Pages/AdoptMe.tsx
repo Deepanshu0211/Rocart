@@ -42,7 +42,7 @@ const currencyMap = {
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
 
-async function fetchProducts(category: string = "All", searchTerm: string = "") {
+async function fetchProducts(category: string = "All") {
   const query = `
     {
       collection(id: "gid://shopify/Collection/647388102941") {
@@ -109,14 +109,6 @@ async function fetchProducts(category: string = "All", searchTerm: string = "") 
         tag.toLowerCase() === categoryTag || 
         tag.toLowerCase().includes(category.toLowerCase())
       )
-    );
-  }
-
-  // Client-side search filtering
-  if (searchTerm.trim()) {
-    filteredProducts = filteredProducts.filter((product: { node: { title: string; description: string; }; }) => 
-      product.node.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.node.description && product.node.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }
 
@@ -189,10 +181,8 @@ export const AdoptMe = () => {
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [currentIndices, setCurrentIndices] = useState<{ [key: string]: number }>({
-    hotItems: 0,
     bestSellers: 0,
     pets: 0,
   });
@@ -205,7 +195,6 @@ export const AdoptMe = () => {
       if (storedCartData) {
         const parsedData = JSON.parse(storedCartData);
         if (parsedData.version === CART_VERSION && Array.isArray(parsedData.items)) {
-          // Validate each item in the cart
           const validItems = parsedData.items.filter((item: any) => 
             item.id && 
             item.title && 
@@ -292,7 +281,7 @@ export const AdoptMe = () => {
         
         setLoading(true);
         setError(null);
-        const productsData = await fetchProducts(activeCategory, searchTerm);
+        const productsData = await fetchProducts(activeCategory);
         setProducts(productsData);
         setLoading(false);
       } catch (error) {
@@ -308,13 +297,11 @@ export const AdoptMe = () => {
 
     initializeData();
 
-    // Listen for currency change events from LanguageModal
     const handleCurrencyChange = async (event: Event) => {
       const { country, currency } = (event as CustomEvent).detail;
       setDetectedCountry(country);
       setUserCurrency(currency);
       console.log(`✓ Currency changed to: ${currency} (${country})`);
-      // Fetch new exchange rates for the selected currency
       try {
         const rates = await fetchExchangeRates(currency);
         setExchangeRates(rates);
@@ -328,15 +315,14 @@ export const AdoptMe = () => {
     return () => {
       window.removeEventListener('currencyChanged', handleCurrencyChange);
     };
-  }, [activeCategory, searchTerm]);
+  }, [activeCategory]);
 
-  // Separate effect for category and search changes
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        const productsData = await fetchProducts(activeCategory, searchTerm);
+        const productsData = await fetchProducts(activeCategory);
         setProducts(productsData);
       } catch (error) {
         console.error("Error loading products:", error);
@@ -351,9 +337,8 @@ export const AdoptMe = () => {
     };
 
     loadProducts();
-  }, [activeCategory, searchTerm]);
+  }, [activeCategory]);
 
-  // Persist cart to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem('cart', JSON.stringify({ version: CART_VERSION, items: cart }));
@@ -362,7 +347,6 @@ export const AdoptMe = () => {
     }
   }, [cart]);
 
-  // Converts price from originalCurrency to targetCurrency using exchangeRates
   function convertPrice(
     amount: number,
     originalCurrency: string,
@@ -402,7 +386,6 @@ export const AdoptMe = () => {
     }
   };
 
-  // Add to cart function
   const addToCart = (product: Product) => {
     const variant = product.node.variants.edges[0].node;
     const existingItem = cart.find((item) => item.id === variant.id);
@@ -428,7 +411,6 @@ export const AdoptMe = () => {
     console.log(`✓ Added to cart: ${product.node.title}`);
   };
 
-  // Update quantity in cart
   const updateQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(cart.filter((item) => item.id !== itemId));
@@ -439,12 +421,10 @@ export const AdoptMe = () => {
     }
   };
 
-  // Remove item from cart
   const removeFromCart = (itemId: string) => {
     setCart(cart.filter((item) => item.id !== itemId));
   };
 
-  // Navigation handlers for carousel
   const handlePrev = (section: string) => {
     setCurrentIndices((prev) => ({
       ...prev,
@@ -459,7 +439,6 @@ export const AdoptMe = () => {
     }));
   };
 
-  // Render section with carousel functionality
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
     const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 4);
 
@@ -467,7 +446,7 @@ export const AdoptMe = () => {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`text-xl ${sectionId === 'hotItems' ? 'text-red-500' : sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
+            <span className={`text-xl ${sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
               <img src={icon} alt={title} className="w-6 h-6 inline-block" />
             </span>
             <h2 className="text-white text-xl font-bold">{title}</h2>
@@ -506,43 +485,54 @@ export const AdoptMe = () => {
               visibleProducts.map((product, idx) => (
                 <div
                   key={`${sectionId}-${idx}`}
-                  className="flex-shrink-0 w-[140px] bg-[#00A241] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                  className="relative flex-shrink-0 w-[223px] h-[286px] bg-[#000000] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
                 >
-                  <div className="relative aspect-square bg-black">
+                <div className="relative bg-black h-[200px] w-full rounded-t-2xl overflow-hidden">
+                    <div className="absolute top-3 left-3 flex items-center gap-1 text-white text-xs font-bold px-2 py-1 rounded-md bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-10">
+                      <img src="/icon/save.png" alt="save" className="h-[14px] w-auto" />
+                      <span>Save $24</span>
+                    </div>
+
                     {product.node.images.edges[0] ? (
-                      <img
-                        src={product.node.images.edges[0].node.url}
-                        alt={product.node.title}
-                        className="w-full h-full object-contain p-2"
-                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#030904]">
+                        <img
+                          src={product.node.images.edges[0].node.url}
+                          alt={product.node.title}
+                          className="object-contain"
+                          style={{ maxWidth: "150px", maxHeight: "120px" }}
+                        />
+                      </div>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-[#3dff87]/30 text-4xl">🎮</div>
                       </div>
                     )}
                   </div>
 
-                  <div className="p-3">
-                    <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
-                      {product.node.title}
-                    </h3>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[#3dff87] font-bold text-sm">
-                        {formatPrice(product)}
-                      </span>
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="hover:bg-[#2dd66e00] transition-all"
-                      >
-                        <img
-                          src="/icon/cart.png"
-                          alt="Add"
-                          className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                        />
-                      </button>
-                    </div>
+                {/* Bottom info section */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
+                  <h3 className="text-white text-xs font-semibold mb-1 line-clamp-2">
+                    {product.node.title}
+                  </h3>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[#3dff87] font-bold text-sm">
+                      {formatPrice(product)}
+                    </span>
+                    <button
+                      onClick={() => addToCart(product)}
+                      className="hover:bg-[#031C0D] transition-all"
+                    >
+                      <img
+                        src="/icon/cart.png"
+                        alt="Add"
+                        className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
+                      />
+                    </button>
                   </div>
                 </div>
+              </div>
+               
+
               ))
             ) : (
               <div className="w-full text-center py-8 text-gray-400">
@@ -559,36 +549,43 @@ export const AdoptMe = () => {
     <div className="min-h-screen bg-[#06100A] relative">
       <Header />
 
-      <div className="bg-[#0a1612]/95 border-b border-[#3dff87]/10 sticky top-0 z-10 backdrop-blur-sm">
-        <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center gap-4 flex-wrap sm:flex-nowrap">
+        <div
+          className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-[#3dff87]/10 bg-no-repeat bg-center bg-cover "
+          style={{ backgroundImage: "url('/icon/navbg.png')" }}
+        >
+
+
+        <div className="max-w-[95vw] mx-auto px-4 py-1 flex items-center gap-4 flex-wrap sm:flex-nowrap">
           <div className="border-l border-[#3dff87]/30 py-3" />
-          
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#3dff87]/20 to-[#259951]/20 p-1.5 flex items-center justify-center border border-[#3dff87]/30">
+
+          <div className="flex items-center border bg-[#06100A] border-[#9999] rounded-lg px-3 py-1 gap-1 flex-shrink-0">
+            <div className="w-7 h-7  flex items-center justify-center">
               <img
                 src={selectedGame.icon}
                 alt={selectedGame.name}
                 className="w-full h-full object-contain"
               />
             </div>
-            <h1 className="text-white text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">{selectedGame.name}</h1>
+            <h1 className="text-white text-base sm:text-sm   whitespace-nowrap">{selectedGame.name}</h1>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-                  activeCategory === category
-                    ? "text-black bg-gradient-to-r from-[#a9d692] via-[#3DFF88] to-[#259951] shadow-md shadow-[#3dff87]/20"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a2621] border border-[#3dff87]/10"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+       <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setActiveCategory(category)}
+            className={`relative whitespace-nowrap px-3 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all ${
+              activeCategory === category
+                ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
+                : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
+            }`}
+          >
+            {category}
+            <span className="absolute bottom-0  left-1/2 transform -translate-x-1/2 w-4 h-[2px] bg-white rounded-xl"></span>
+          </button>
+        ))}
+      </div>
+
 
           <div className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg flex-shrink-0">
             <span className="text-[#3dff87] text-xs font-bold">{userCurrency}</span>
@@ -641,79 +638,6 @@ export const AdoptMe = () => {
 
         {!loading && !error && products.length > 0 && (
           <>
-            {(!activeSection || activeSection === "hotItems") && (
-              renderSection("hotItems", "Hot Items", "/icon/best.png", products)
-            )}
-            {(!activeSection || activeSection === "search") && (
-              <section className="space-y-6">
-                <div className="relative bg-[url('/icon/searchbg.png')] bg-cover bg-left bg-no-repeat w-[50vw] max-w-md p-2 rounded-lg">
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    className="w-full pl-5 pr-12 py-2 rounded-lg bg-[#1a2621]/80 text-white border border-[#3dff87]/20 focus:outline-none focus:border-[#3dff87] transition-all duration-300 ease-in-out"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[#3dff87] transition-colors duration-300 ease-in-out">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" />
-                    </svg>
-                  </span>
-                </div>
-
-                {searchTerm.trim() !== "" && (
-                  <div className="flex gap-4 flex-wrap pt-4 animate-fadeIn">
-                    {products.length > 0 ? (
-                      products.map((product) => (
-                        <div
-                          key={product.node.id}
-                          className="flex-shrink-0 w-[140px] bg-[#0a1612] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden cursor-pointer group transition-transform duration-300 ease-in-out hover:scale-[1.05] hover:shadow-[0_0_15px_#3dff87] animate-fadeIn"
-                        >
-                          <div className="relative aspect-square bg-black">
-                            {product.node.images.edges[0] ? (
-                              <img
-                                src={product.node.images.edges[0].node.url}
-                                alt={product.node.title}
-                                className="w-full h-full object-contain p-2 transition-transform duration-300 ease-in-out group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <div className="text-[#3dff87]/30 text-4xl">🎮</div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-3">
-                            <h3 className="text-white text-xs font-semibold mb-2 line-clamp-2 h-8">
-                              {product.node.title}
-                            </h3>
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-[#3dff87] font-bold text-sm">
-                                {formatPrice(product)}
-                              </span>
-                              <button
-                                onClick={() => addToCart(product)}
-                                className="p-1 rounded-full transition-all duration-300 ease-in-out hover:scale-110 active:scale-95"
-                              >
-                                <img
-                                  src="/icon/cart.png"
-                                  alt="Add"
-                                  className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125 active:scale-95"
-                                />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-400 text-center w-full py-8 animate-fadeIn">
-                        No products found.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </section>
-            )}
             {(!activeSection || activeSection === "bestSellers") && (
               renderSection("bestSellers", "Best Sellers", "/icon/crown.png", products)
             )}
