@@ -149,7 +149,7 @@ html, body {
 *::-webkit-scrollbar,
 html::-webkit-scrollbar {
   width: 8px;
-  height: 4px;
+  height: 6px;
 }
 
 *::-webkit-scrollbar-track,

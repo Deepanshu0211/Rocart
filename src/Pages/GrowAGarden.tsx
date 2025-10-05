@@ -418,17 +418,15 @@ export const GrowAGarden = () => {
       userCurrency,
       exchangeRates
     );
-    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " ";
+    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency;
     const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
-    if (noDecimalCurrencies.includes(userCurrency)) {
-      return `${symbol}${Math.round(convertedAmount).toLocaleString()}`;
-    } else {
-      const formatted = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(convertedAmount);
-      return `${symbol}${formatted}`;
-    }
+    const price = noDecimalCurrencies.includes(userCurrency)
+      ? Math.round(convertedAmount).toLocaleString()
+      : new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedAmount);
+    return { symbol, price };
   };
 
   const addToCart = (product: Product) => {
@@ -493,6 +491,8 @@ export const GrowAGarden = () => {
     : products;
 
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
+    const isGridView = activeSection === sectionId;
+
     return (
       <section className="space-y-4 bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
         <div className="flex items-center justify-between">
@@ -502,38 +502,46 @@ export const GrowAGarden = () => {
             </span>
             <h2 className="text-white text-xl font-bold">{title}</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handlePrev(sectionId)}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => handleNext(sectionId)}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setActiveSection(sectionId)}
-              className="text-[#3dff87] text-sm hover:underline"
-            >
-              <img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" />
-            </button>
-          </div>
+          {!isGridView && (
+            <div className="flex items-center gap-6">
+              <button
+                onClick={() => handlePrev(sectionId)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleNext(sectionId)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setActiveSection(sectionId)}
+                className="text-[#3dff87] text-sm hover:underline"
+              >
+                <img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="relative">
           <div 
             ref={(el) => { if (el) scrollRefs[sectionId].current = el; }}
-            className="flex gap-4 overflow-x-auto scrollbar-hide py-2 px-1 cursor-grab active:cursor-grabbing"
-            style={{ scrollBehavior: 'smooth' }}
+           className={`${
+              isGridView
+                ? 'grid grid-cols-5 grid-rows-2 gap-3'
+                : 'flex gap-3 overflow-x-auto scrollbar-hide py-4 px-1 cursor-grab active:cursor-grabbing'
+            }`}
+
+            style={{ scrollBehavior: isGridView ? 'auto' : 'smooth' }}
             onMouseDown={(e) => {
+              if (isGridView) return;
               const el = e.currentTarget;
               const startX = e.pageX - el.offsetLeft;
               const scrollLeft = el.scrollLeft;
@@ -604,8 +612,9 @@ export const GrowAGarden = () => {
                       {product.node.title}
                     </h3>
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-[#3dff87] font-bold text-sm">
-                        {formatPrice(product)}
+                      <span className="font-bold text-sm">
+                        <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
+                        <span className="text-white"> {formatPrice(product)?.price}</span>
                       </span>
                       <button
                         onClick={() => addToCart(product)}
@@ -756,7 +765,7 @@ export const GrowAGarden = () => {
             <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to all
+            Back
           </button>
         )}
 
