@@ -1,3 +1,10 @@
+const categoryIcons: { [key: string]: string } = {
+  "Best Sellers": "/icon/crown.png",
+  "Summer Specials": "/icon/summer.png",
+  Knives: "/icon/knive.png",
+  Guns: "/icon/gun.png",
+  Bundles: "/icon/bundle.png",
+};
 import { useEffect, useState, useRef } from "react";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
@@ -15,10 +22,10 @@ const games = [
 const categories = [
   "All",
   "Best Sellers",
+  "Bundles",
   "Summer Specials",
   "Knives",
   "Guns",
-  "Bundles",
 ];
 
 const currencySymbols = {
@@ -183,18 +190,12 @@ export const GrowAGarden = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [selectedGame, setSelectedGame] = useState<{ name: string; icon: string }>(games[0]);
+  const [selectedGame] = useState<{ name: string; icon: string }>(games[0]);
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [currentIndices, setCurrentIndices] = useState<{ [key: string]: number }>({
-    bestSellers: 0,
-    summerSpecials: 0,
-    knives: 0,
-    guns: 0,
-    bundles: 0,
-  });
+  // removed unused currentIndices
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
@@ -503,22 +504,18 @@ export const GrowAGarden = () => {
             <h2 className="text-white text-xl font-bold">{title}</h2>
           </div>
           {!isGridView && (
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => handlePrev(sectionId)}
                 className="text-gray-400 hover:text-white transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <img src="/icon/leftarrow.png" alt="left" className="w-8 h-8 inline-block" />
               </button>
               <button
                 onClick={() => handleNext(sectionId)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-[#3DFF88] hover:text-white transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+              <img src="/icon/rightarrow.png" alt="Next" className="w-8 h-8 inline-block" />
               </button>
               <button
                 onClick={() => setActiveSection(sectionId)}
@@ -532,7 +529,7 @@ export const GrowAGarden = () => {
 
         <div className="relative">
           <div 
-            ref={(el) => { if (el) scrollRefs[sectionId].current = el; }}
+            ref={scrollRefs[sectionId]}
            className={`${
               isGridView
                 ? 'grid grid-cols-5 grid-rows-2 gap-3'
@@ -653,39 +650,48 @@ export const GrowAGarden = () => {
       <Header />
 
       <div
-        className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
-        style={{ backgroundImage: "url('/icon/navbg.png')" }}
+        className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
+     
       >
-        <div className="max-w-[95vw] mx-auto px-4 py-1 flex items-center gap-4 flex-wrap sm:flex-nowrap">
+        <div className="max-w-[95vw] mx-auto px-2 py-1 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* <div className="border-l border-[#3dff87]/30 py-3" /> */}
 
-          <div className="flex items-center border bg-[#06100A] border-[#9999] rounded-xl px-3 py-1 gap-1 flex-shrink-0">
-            <div className="w-7 h-7 flex items-center justify-center">
-              <img
-                src={selectedGame.icon}
-                alt={selectedGame.name}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <h1 className="text-white text-base sm:text-sm whitespace-nowrap">{selectedGame.name}</h1>
-          </div>
+      {/* Game Selector on extreme left */}
+      <div className="flex ml-1 items-center  py-1 gap-1 flex-shrink-0">
+        <div className="w-7 h-7 flex items-center justify-center">
+          <img
+            src={selectedGame.icon}
+            alt={selectedGame.name}
+            className="w-full h-full rounded-md object-contain"
+          />
+        </div>
+        <h1 className="text-white text-base font-bold sm:text-sm whitespace-nowrap ml-2">
+          {selectedGame.name}
+        </h1>
+      </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
+
+        <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
+          <div className="flex items-center gap-2">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`relative whitespace-nowrap px-3 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all ${
+                className={`relative whitespace-nowrap px-3 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
                   activeCategory === category
                     ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
                     : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
                 }`}
               >
+                {category === "Best Sellers" && (
+                  <img src={categoryIcons["Best Sellers"]} alt="Best Sellers" className="w-5 h-5 inline-block" />
+                )}
                 {category}
-                {/* <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[2px] bg-white rounded-xl"></span> */}
               </button>
             ))}
           </div>
+        </div>
+
 
           {/* Search Bar */}
           <div className="relative flex items-center flex-shrink-0">
@@ -695,7 +701,7 @@ export const GrowAGarden = () => {
                 className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg hover:bg-[#1a2621] hover:border-[#3dff87]/40 transition-all"
                 title="Search products"
               >
-                <svg className="w-5 h-5 text-[#3dff87]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-[#f0f0f0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
