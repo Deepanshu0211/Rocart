@@ -669,7 +669,7 @@ export const GrowAGarden = () => {
       <Header />
 
       <div
-        className="bg-[#06100A]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
+        className="bg-[#030904] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
       >
         <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
@@ -695,7 +695,7 @@ export const GrowAGarden = () => {
                   className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1
                     ${
                       activeCategory === category
-                        ? "text-white bg-gradient-to-b from-[#030904] to-[#01460c51] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
+                        ? "text-white bg-gradient-to-b from-[#030904] to-[#01460d3d] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
                         : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
                     }`}
                 >

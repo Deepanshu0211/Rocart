@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-// import { X, ShoppingCart, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+
 // Types
 type CartItem = {
   id: string;
@@ -500,85 +500,71 @@ export const Cart = ({
         </div>
       </div>
 
-      {cart.length > 0 && (
-        <>
-          <motion.button
-            onClick={handleOpenCart}
-            className="fixed bottom-9 left-[43vw]
-                      bg-[#2e9c58] text-white px-6 py-3 rounded-full 
-                      flex items-center justify-center gap-3 
-                      shadow-lg z-50"
-            animate={{
-              y: [0, -8, 0], // floating effect
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "loop",
-              ease: "easeInOut"
-            }}
+      {/* Cart Buttons */}
+      <>
+        <motion.button
+          onClick={handleOpenCart}
+          className="fixed bottom-9 left-[43vw] bg-[#2e9c58] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg z-50"
+          animate={{
+            y: [0, -8, 0], // floating effect
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatType: "loop",
+            ease: "easeInOut"
+          }}
+          whileHover={{
+            scale: 1.05,
+            boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
+          }}
+        >
+          <img src="/icon/car1.png" alt="Cart Icon" className="w-6 h-6 inline-block" />
+          <span className="font-semibold">View Cart</span>
+          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+            {cart.length}
+          </span>
+        </motion.button>
+
+        <motion.button
+          onClick={handleOpenCart}
+          className="group fixed top-[40vh] right-0 w-12 h-16 bg-[#3dff87]/20 rounded-l-lg flex items-center justify-center shadow-lg z-50 overflow-hidden"
+          whileHover={{
+            width: "4.5rem",
+            backgroundColor: "#2e9c58",
+            boxShadow: "0 0 15px 4px #2e9c58",
+            transition: { duration: 0.3, ease: "easeOut" },
+          }}
+        >
+          <motion.div
+            className="absolute left-0 top-0 w-[2px] h-full bg-[#3dff87] rounded-full"
+            initial={{ x: -10, opacity: 0 }}
             whileHover={{
-              scale: 1.05,
-              boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
+              x: 0,
+              opacity: 1,
+              transition: { duration: 0.3, ease: "easeOut" },
             }}
-            transitionHover={{
-              type: "spring",
-              stiffness: 3
+          />
+          <motion.svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            whileHover={{
+              scale: 1.2,
+            
+              transition: { duration: 0.3 },
             }}
           >
-            <img src="/icon/car1.png" alt="Cart Icon" className="w-6 h-6 inline-block" />
-            <span className="font-semibold">View Cart</span>
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-              {cart.length}
-            </span>
-          </motion.button>
-
-          
-  <motion.button
-  onClick={handleOpenCart}
-  className="group fixed top-[40vh] right-0 w-12 h-16 bg-[#1a1a1a] rounded-l-lg flex items-center justify-center shadow-lg z-50 overflow-hidden"
-  whileHover={{
-    width: "4.5rem",
-    backgroundColor: "#2e9c58",
-    boxShadow: "0 0 15px 4px #2e9c58",
-    transition: { duration: 0.3, ease: "easeOut" },
-  }}
->
-  {/* Line sliding in from left */}
-  <motion.div
-    className="absolute left-0 top-0 w-[2px] h-full bg-[#3dff87] rounded-full"
-    initial={{ x: -10, opacity: 0 }}
-    whileHover={{
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.3, ease: "easeOut" },
-    }}
-  />
-
-  {/* SVG icon */}
-  <motion.svg
-    className="w-6 h-6 text-white"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    viewBox="0 0 24 24"
-    whileHover={{
-      scale: 1.2,
-      filter: "drop-shadow(0 0 6px #3dff87)",
-      transition: { duration: 0.3 },
-    }}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-    />
-  </motion.svg>
-</motion.button>
-
-
-        </>
-      )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </motion.svg>
+        </motion.button>
+      </>
 
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-96 md:w-[400px] bg-[#030904] shadow-2xl border-l border-[#3dff87]/20 transform transition-transform duration-300 ease-in-out z-50 ${
@@ -673,7 +659,7 @@ export const Cart = ({
 
           {cart.length > 0 && (
             <div className="p-4">
-            <div className="bg-[#06100A] p-4 rounded-[2vw] border border-[#999999] mb-4">
+              <div className="bg-[#06100A] p-4 rounded-[2vw] border border-[#999999] mb-4">
                 <div className="flex justify-between font-bold text-sm">
                   <span>
                     <span className="text-[#3dff87]">{currencySymbols[userCurrency] || "$"}</span>
