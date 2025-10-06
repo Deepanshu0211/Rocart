@@ -570,10 +570,10 @@ export const GrowAGarden = () => {
                 initial="initial"
               >
                 {/* Save Badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
+                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
                   <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
-                  <span className="text-[11px]">
-                    Save $24
+                  <span className="text-[11px] tracking-tighter">
+                    Save $24.00
                   </span>
                 </div>
 
@@ -695,7 +695,7 @@ export const GrowAGarden = () => {
                   className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1
                     ${
                       activeCategory === category
-                        ? "text-white bg-gradient-to-b from-[#030904] to-[#09eb2e45] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
+                        ? "text-white bg-gradient-to-b from-[#030904] to-[#01460c51] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
                         : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
                     }`}
                 >

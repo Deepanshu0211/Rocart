@@ -201,7 +201,7 @@ export const Cart = ({
     // Show notification when a new item is added
     if (hasNewItem && validInitialCart.length > 0) {
       const newItems = validInitialCart.filter(item => !prevCartIds.has(item.id));
-      setNotificationMessage(`${newItems[0].title} added to cart!`);
+      setNotificationMessage(`${newItems[0].title} Added To Cart!`);
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 3000);
     }
@@ -487,7 +487,7 @@ export const Cart = ({
           </div>
           <div className="flex-1">
             <p className="font-semibold text-sm text-white">{notificationMessage}</p>
-            <p className="text-xs text-gray-400 mt-0.5">Item successfully added</p>
+            <p className="text-xs text-gray-400 mt-0.5">Item successfully added.</p>
           </div>
           <button 
             onClick={() => setShowNotification(false)}
@@ -501,46 +501,83 @@ export const Cart = ({
       </div>
 
       {cart.length > 0 && (
-      <motion.button
-        onClick={handleOpenCart}
-        className="fixed bottom-9 left-[43vw]
-                  bg-[#2e9c58] text-white px-6 py-3 rounded-full 
-                  flex items-center justify-center gap-3 
-                  shadow-lg z-50"
-        animate={{
-          y: [0, -8, 0], // floating effect
-          // boxShadow: [
-          //   "0px 4px 6px rgba(0,0,0,0.1)",
-          //   "0px 8px 20px rgba(62,255,135,0.7)",
-          //   "0px 4px 6px rgba(0,0,0,0.1)"
-          // ]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          repeatType: "loop",
-          ease: "easeInOut"
-        }}
-        whileHover={{
-          scale: 1.05,
-          boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
-        }}
-        transitionHover={{
-          type: "spring",
-          stiffness: 3
-        }}
-      >
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-          <path d="M3 6h18" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-        <span className="font-semibold">View Cart</span>
-        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-          {cart.length}
-        </span>
-      </motion.button>
+        <>
+          <motion.button
+            onClick={handleOpenCart}
+            className="fixed bottom-9 left-[43vw]
+                      bg-[#2e9c58] text-white px-6 py-3 rounded-full 
+                      flex items-center justify-center gap-3 
+                      shadow-lg z-50"
+            animate={{
+              y: [0, -8, 0], // floating effect
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "easeInOut"
+            }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
+            }}
+            transitionHover={{
+              type: "spring",
+              stiffness: 3
+            }}
+          >
+            <img src="/icon/car1.png" alt="Cart Icon" className="w-6 h-6 inline-block" />
+            <span className="font-semibold">View Cart</span>
+            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {cart.length}
+            </span>
+          </motion.button>
 
+          
+  <motion.button
+  onClick={handleOpenCart}
+  className="group fixed top-[40vh] right-0 w-12 h-16 bg-[#1a1a1a] rounded-l-lg flex items-center justify-center shadow-lg z-50 overflow-hidden"
+  whileHover={{
+    width: "4.5rem",
+    backgroundColor: "#2e9c58",
+    boxShadow: "0 0 15px 4px #2e9c58",
+    transition: { duration: 0.3, ease: "easeOut" },
+  }}
+>
+  {/* Line sliding in from left */}
+  <motion.div
+    className="absolute left-0 top-0 w-[2px] h-full bg-[#3dff87] rounded-full"
+    initial={{ x: -10, opacity: 0 }}
+    whileHover={{
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.3, ease: "easeOut" },
+    }}
+  />
+
+  {/* SVG icon */}
+  <motion.svg
+    className="w-6 h-6 text-white"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    viewBox="0 0 24 24"
+    whileHover={{
+      scale: 1.2,
+      filter: "drop-shadow(0 0 6px #3dff87)",
+      transition: { duration: 0.3 },
+    }}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+    />
+  </motion.svg>
+</motion.button>
+
+
+        </>
       )}
 
       <div
@@ -636,11 +673,11 @@ export const Cart = ({
 
           {cart.length > 0 && (
             <div className="p-4">
-              <div className="bg-[#06100A] p-4 rounded-[2vw] border border-[#999999] mb-4">
-                <div className="flex justify-between font-bold text-white text-sm">
+            <div className="bg-[#06100A] p-4 rounded-[2vw] border border-[#999999] mb-4">
+                <div className="flex justify-between font-bold text-sm">
                   <span>
-                    {currencySymbols[userCurrency] || "$"}
-                    {getCartTotal().toFixed(2)}
+                    <span className="text-[#3dff87]">{currencySymbols[userCurrency] || "$"}</span>
+                    <span className="text-white"> {getCartTotal().toFixed(2)}</span>
                   </span>
                 </div>
                 <div className="flex justify-between text-[#21843B] text-sm border-[#3dff87]/10">
