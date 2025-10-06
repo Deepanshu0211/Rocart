@@ -689,25 +689,24 @@ export const GrowAGarden = () => {
             <div className="flex items-center gap-2">
               {categories.map((category) => (
                 <>
-             <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
-                  className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all flex items-center gap-1
-                    ${
-                      activeCategory === category
-                        ? "text-white bg-gradient-to-b from-[#030904] to-[#01460d3d] shadow-md shadow-[#3dff87]/20 after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-6 after:h-[2px] after:bg-white after:rounded-full after:content-['']"
-                        : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
-                    }`}
-                >
-                  {category === "Best Sellers" && (
-                    <img
-                      src={categoryIcons["Best Sellers"]}
-                      alt="Best Sellers"
-                      className="w-5 h-5 inline-block"
-                    />
-                  )}
-                  {category}
-                </button>
+              <button
+                key={category}
+                onClick={() => setActiveCategory(category)}
+                className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
+                  text-gray-400
+                  hover:text-white hover:bg-gradient-to-b hover:from-[#030904] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
+                  hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
+              >
+                {category === "Best Sellers" && (
+                  <img
+                    src={categoryIcons["Best Sellers"]}
+                    alt="Best Sellers"
+                    className="w-5 h-5 inline-block"
+                  />
+                )}
+                {category}
+              </button>
+
 
                   {category === "Bundles" && (
                     <div

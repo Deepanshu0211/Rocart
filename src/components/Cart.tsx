@@ -502,6 +502,7 @@ export const Cart = ({
 
       {/* Cart Buttons */}
       <>
+      {cart.length > 0 && (
         <motion.button
           onClick={handleOpenCart}
           className="fixed bottom-9 left-[43vw] bg-[#2e9c58] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg z-50"
@@ -525,6 +526,7 @@ export const Cart = ({
             {cart.length}
           </span>
         </motion.button>
+      )}
 
         <motion.button
           onClick={handleOpenCart}
