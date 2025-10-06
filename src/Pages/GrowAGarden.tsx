@@ -669,7 +669,7 @@ export const GrowAGarden = () => {
       <Header />
 
       <div
-        className="bg-[#030904] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
+        className="bg-[#06100A] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
       >
         <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
@@ -694,7 +694,7 @@ export const GrowAGarden = () => {
                 onClick={() => setActiveCategory(category)}
                 className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
                   text-gray-400
-                  hover:text-white hover:bg-gradient-to-b hover:from-[#030904] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
+                  hover:text-white hover:bg-gradient-to-b hover:from-[#d4dcd520] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
                   hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
               >
                 {category === "Best Sellers" && (
