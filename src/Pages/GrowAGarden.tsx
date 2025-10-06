@@ -373,6 +373,28 @@ export const GrowAGarden = () => {
     }
   }, [cart]);
 
+    const mainRef = useRef<HTMLDivElement | null>(null);
+    const [hideLogo, setHideLogo] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setHideLogo(entry.isIntersecting); // hide when main content visible
+      },
+      {
+        root: null,
+        threshold: 0.3, // adjust sensitivity
+      }
+    );
+
+    if (mainRef.current) observer.observe(mainRef.current);
+
+    return () => {
+      if (mainRef.current) observer.unobserve(mainRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (isSearchActive && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -494,8 +516,7 @@ export const GrowAGarden = () => {
     const isGridView = activeSection === sectionId;
 
     return (
-      <section className="mt-[-20px] space-y-[-2]  bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
-
+      <section className="mt-[-20px] space-y-[-2] bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`text-xl ${sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
@@ -565,71 +586,69 @@ export const GrowAGarden = () => {
                   key={`${sectionId}-${idx}`}
                   className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
                 >
-              <motion.div
-                className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
-                whileHover="hovered"
-                initial="initial"
-              >
-                {/* Save Badge */}
-                <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
-                  <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
-                  <span className="text-[11px] tracking-tighter">
-                    Save $24.00
-                  </span>
-                </div>
-
-                {/* Background */}
-                <motion.div
-                  className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
-                  variants={{
-                    initial: { scale: 1 },
-                    hovered: { scale: 1.15 },
-                  }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-
-                {/* Product Image */}
-                {product.node.images.edges[0] ? (
                   <motion.div
-                    className="absolute inset-0 flex items-center justify-center"
-                    variants={{
-                      initial: { rotate: 0 },
-                      hovered: { rotate: [0, -3, 3, -2, 2, 0] },
-                    }}
-                    transition={{
-                      delay: 0.25,
-                      duration: 0.6,
-                      ease: "easeInOut",
-                    }}
+                    className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
+                    whileHover="hovered"
+                    initial="initial"
                   >
-                    <motion.img
-                      src={product.node.images.edges[0].node.url}
-                      alt={product.node.title}
-                      className="object-contain relative z-10"
-                      style={{ maxWidth: "150px", maxHeight: "120px" }}
+                    {/* Save Badge */}
+                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
+                      <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
+                      <span className="text-[11px] tracking-tighter">
+                        Save $24.00
+                      </span>
+                    </div>
+
+                    {/* Background */}
+                    <motion.div
+                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                      variants={{
+                        initial: { scale: 1 },
+                        hovered: { scale: 1.15 },
+                      }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
                     />
+
+                    {/* Product Image */}
+                    {product.node.images.edges[0] ? (
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center"
+                        variants={{
+                          initial: { rotate: 0 },
+                          hovered: { rotate: [0, -3, 3, -2, 2, 0] },
+                        }}
+                        transition={{
+                          delay: 0.25,
+                          duration: 0.6,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <motion.img
+                          src={product.node.images.edges[0].node.url}
+                          alt={product.node.title}
+                          className="object-contain relative z-10"
+                          style={{ maxWidth: "150px", maxHeight: "120px" }}
+                        />
+                      </motion.div>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                      </div>
+                    )}
+
+                    {/* Add to Cart Button - Appears on Hover */}
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
+                      variants={{
+                        initial: { y: 20, opacity: 0 },
+                        hovered: { y: 2, opacity: 1 },
+                      }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
+                    </motion.button>
                   </motion.div>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-[#3dff87]/30 text-4xl">🎮</div>
-                  </div>
-                )}
-
-                {/* Add to Cart Button - Appears on Hover */}
-                <motion.button
-                  onClick={() => addToCart(product)}
-                  className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
-                  variants={{
-                    initial: { y: 20, opacity: 0 },
-                    hovered: { y: 2, opacity: 1 },
-                  }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                >
-                 <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
-                </motion.button>
-              </motion.div>
-
-
 
                   <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
                     <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
@@ -690,24 +709,23 @@ export const GrowAGarden = () => {
             <div className="flex items-center gap-2">
               {categories.map((category) => (
                 <>
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
-                  text-gray-400
-                  hover:text-white hover:bg-gradient-to-b hover:from-[#d4dcd520] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
-                  hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
-              >
-                {category === "Best Sellers" && (
-                  <img
-                    src={categoryIcons["Best Sellers"]}
-                    alt="Best Sellers"
-                    className="w-5 h-5 inline-block"
-                  />
-                )}
-                {category}
-              </button>
-
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
+                      text-gray-400
+                      hover:text-white hover:bg-gradient-to-b hover:from-[#d4dcd520] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
+                      hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
+                  >
+                    {category === "Best Sellers" && (
+                      <img
+                        src={categoryIcons["Best Sellers"]}
+                        alt="Best Sellers"
+                        className="w-5 h-5 inline-block"
+                      />
+                    )}
+                    {category}
+                  </button>
 
                   {category === "Bundles" && (
                     <div
@@ -872,13 +890,25 @@ export const GrowAGarden = () => {
       </div>
 
       <div
-        className="w-full h-[0.2vh] mt-auto"
-        style={{
-          background: "linear-gradient(to right, #3DFF87, #000000)",
-        }}
-      />
+        className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${
+          hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      >
+        <img
+          src="/icon/ro.png"
+          alt="Company Logo"
+          className="w-12 h-12 object-contain"
+        />
+      </div>
 
-      <MainContentSection />
+      {/* Header Section */}
+    
+
+      {/* Main Content */}
+      <div ref={mainRef} className=" relative">
+        <MainContentSection />
+      </div>
+
 
       <Cart
         cart={cart}
@@ -887,6 +917,8 @@ export const GrowAGarden = () => {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeFromCart}
       />
+
+    
     </div>
   );
 };

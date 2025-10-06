@@ -636,7 +636,7 @@ export const Cart = ({
                         <img
                           src="/icon/delete.png"
                           alt="Decrease"
-                          className="w-5 h-5 object-contain"
+                          className="w-4 h-4 object-contain"
                         />
                       </button>
                       <span className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center rounded flex items-center justify-center text-white text-sm">
