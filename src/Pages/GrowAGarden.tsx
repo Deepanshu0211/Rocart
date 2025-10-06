@@ -494,7 +494,8 @@ export const GrowAGarden = () => {
     const isGridView = activeSection === sectionId;
 
     return (
-      <section className="space-y-4 bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
+      <section className="mt-[-20px] space-y-[-2]  bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`text-xl ${sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
