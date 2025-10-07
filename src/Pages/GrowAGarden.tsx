@@ -700,15 +700,15 @@ export const GrowAGarden = () => {
                 <img
                   src={selectedGame.icon}
                   alt={selectedGame.name}
-                  className="w-full h-full rounded-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
                 />
 
                 {/* Dropdown on hover */}
                   <div
                     className="absolute left-[3vw] top-[10vh] z-[500]
-                              border border-[#3dff87]/30 rounded-2xl
-                              shadow-[0_8px_32px_0_rgba(61,255,135,0.25)]
-                              py-1 min-w-[260px]
+                               rounded-2xl
+                              
+                              py-1 min-w-[20vw]
                               opacity-0 translate-x-[-10px] transition-all duration-500
                               group-hover:opacity-100 group-hover:translate-x-0
                               pointer-events-none group-hover:pointer-events-auto
