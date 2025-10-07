@@ -4,6 +4,9 @@ import MainContentSection from "../screens/Frame/sections/MainContentSection/Mai
 import { Cart } from "../components/Cart";
 import { motion } from "framer-motion";
 import React from "react";
+import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
+import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
+import WeAre from "./WeAre";
 
 const categoryIcons: { [key: string]: string } = {
   "Best Sellers": "/icon/crown.png",
@@ -504,6 +507,7 @@ export const GrowAGarden = () => {
       scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
     }
   };
+  
 
   // Filter products based on search query
   const filteredProducts = searchQuery
@@ -589,92 +593,98 @@ export const GrowAGarden = () => {
                   onMouseEnter={(e) => e.stopPropagation()}
                   onMouseLeave={(e) => e.stopPropagation()}
                 >
+                <motion.div
+                  className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
+                  whileHover="hovered"
+                  initial="initial"
+                  animate="initial"
+                >
+                  {/* Save Badge */}
                   <motion.div
-                    className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
-                    whileHover="hovered"
-                    initial="initial"
-                    animate="initial"
+                    className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat min-w-[9vw] z-20"
+                    variants={{
+                      initial: { opacity: 0, y: -15 },
+                      hovered: { opacity: 1, y: 0 },
+                    }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
                   >
-                    {/* Save Badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat  min-w-[9vw]">
-                      <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
-                      <span className="text-[11px] tracking-tighter">
-                        Save $24.00
-                      </span>
-                    </div>
-
-                    {/* Background */}
-                    <motion.div
-                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
-                      variants={{
-                        initial: { scale: 1 },
-                        hovered: { scale: 1.15 },
-                      }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                    />
-
-                    {/* Product Image */}
-                    {product.node.images.edges[0] ? (
-                      <motion.div
-                        className="absolute inset-0 flex items-center justify-center z-5"
-                        variants={{
-                          initial: { rotate: 0 },
-                          hovered: { rotate: [0, -3, 3, -2, 2, 0] },
-                        }}
-                        transition={{
-                          delay: 0.25,
-                          duration: 0.6,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        <motion.img
-                          src={product.node.images.edges[0].node.url}
-                          alt={product.node.title}
-                          className="object-contain relative z-5"
-                          style={{ maxWidth: "150px", maxHeight: "120px" }}
-                        />
-                      </motion.div>
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center z-5">
-                        <div className="text-[#3dff87]/30 text-4xl">🎮</div>
-                      </div>
-                    )}
-
-                    {/* Add to Cart Button - Appears on Hover */}
-                    <motion.button
-                      onClick={() => addToCart(product)}
-                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl  hover:bg-[#2dd66e] hover:scale-110"
-                      variants={{
-                        initial: { y: 20, opacity: 0 },
-                        hovered: { y: 2, opacity: 1 },
-                      }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    >
-                      <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
-                    </motion.button>
+                    <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
+                    <span className="text-[11px] tracking-tighter">Save $24.00</span>
                   </motion.div>
 
-                  <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
-                    <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
-                      {product.node.title}
-                    </h3>
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-bold text-sm">
-                        <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
-                        <span className="text-white"> {formatPrice(product)?.price}</span>
-                      </span>
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
-                      >
-                        <img
-                          src="/icon/cart.png"
-                          alt="Add to Cart"
-                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
-                        />
-                      </button>
+                  {/* Background */}
+                  <motion.div
+                    className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                    variants={{
+                      initial: { scale: 1 },
+                      hovered: { scale: 1.15 },
+                    }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  />
+
+                  {/* Product Image */}
+                  {product.node.images.edges[0] ? (
+                    <motion.div
+                      className="absolute inset-0 flex items-center justify-center z-5"
+                      variants={{
+                        initial: { rotate: 0 },
+                        hovered: { rotate: [0, -3, 3, -2, 2, 0] },
+                      }}
+                      transition={{
+                        delay: 0.25,
+                        duration: 0.6,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      <motion.img
+                        src={product.node.images.edges[0].node.url}
+                        alt={product.node.title}
+                        className="object-contain relative z-5"
+                        style={{ maxWidth: "150px", maxHeight: "120px" }}
+                      />
+                    </motion.div>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center z-5">
+                      <div className="text-[#3dff87]/30 text-4xl">🎮</div>
                     </div>
+                  )}
+
+                  {/* Add to Cart Button */}
+                  <motion.button
+                    onClick={() => addToCart(product)}
+                    className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110"
+                    variants={{
+                      initial: { y: 20, opacity: 0 },
+                      hovered: { y: 2, opacity: 1 },
+                    }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  >
+                    <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
+                  </motion.button>
+                </motion.div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
+                  <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
+                    {product.node.title}
+                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-bold text-sm">
+                      <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
+                      <span className="text-white"> {formatPrice(product)?.price}</span>
+                    </span>
+                    <button
+                      onClick={() => addToCart(product)}
+                      className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
+                    >
+                      <img
+                        src="/icon/cart.png"
+                        alt="Add to Cart"
+                        className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                      />
+                    </button>
                   </div>
+                </div>
+
                 </div>
               ))
             ) : (
@@ -704,41 +714,37 @@ export const GrowAGarden = () => {
                 />
 
                 {/* Dropdown on hover */}
-                  <div
-                    className="absolute left-[3vw] top-[10vh] z-[500]
-                               rounded-2xl
-                              
-                              py-1 min-w-[20vw]
-                              opacity-0 translate-x-[-10px] transition-all duration-500
-                              group-hover:opacity-100 group-hover:translate-x-0
-                              pointer-events-none group-hover:pointer-events-auto
-                              backdrop-blur-2xl backdrop-saturate-200 bg-[#031C0D]/90"
-                  >
+                <div
+                  className="fixed left-[3vw] top-[6vh] rounded-2xl py-1 min-w-[20vw]
+                            opacity-0 translate-x-[-10px] transition-all duration-100 delay-100
+                            group-hover:opacity-100 group-hover:translate-x-0
+                            pointer-events-none group-hover:pointer-events-auto
+                            backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000]"
+                >            
+                    {[
+                      { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
+                      { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
+                      { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
+                      { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
+                      { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
+                      { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
+                      { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
+                      { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+                      { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
+                    ].map(game => (
+                      <div key={game.id} className="w-full">
+                        <button
+                          className="flex items-center gap-3 px-2 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-lg font-bold w-full text-left rounded-xl"
+                          onClick={() => window.location.href = game.route}
+                        >
+                          <img src={game.icon} alt={game.name} className="w-10 h-10 object-contain rounded-lg" />
+                          {game.name}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
 
 
-
-                  {[
-                    { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
-                    { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
-                    { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
-                    { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
-                    { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
-                    { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
-                    { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
-                    { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
-                    { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
-                  ].map(game => (
-                    <div key={game.id} className="w-full">
-                      <button
-                        className="flex items-center gap-3 px-2 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-lg font-bold w-full text-left rounded-xl"
-                        onClick={() => window.location.href = game.route}
-                      >
-                        <img src={game.icon} alt={game.name} className="w-10 h-10 object-contain rounded-lg" />
-                        {game.name}
-                      </button>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
             <h1
@@ -952,6 +958,9 @@ export const GrowAGarden = () => {
       </div>
 
       <div ref={mainRef} className="relative">
+        <TrustedBySection />
+        <FAQSection />
+        <WeAre />
         <MainContentSection />
       </div>
 
