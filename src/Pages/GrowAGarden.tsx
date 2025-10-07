@@ -693,19 +693,30 @@ export const GrowAGarden = () => {
       <Header />
 
       <div className="bg-[#06100A] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover">
-        <div className="max-w-[95vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="max-w-[full] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
             <div className="w-9 h-9 flex items-center justify-center">
               <div className="relative group w-24 h-24 flex items-center justify-center">
                 <img
                   src={selectedGame.icon}
                   alt={selectedGame.name}
-                  className="w-full h-full rounded-2xl object-contain cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full rounded-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-105"
                 />
+
                 {/* Dropdown on hover */}
-                <div
-                  className="absolute left-[3vw] top-12 z-500 bg-[#031C0D] border border-[#3dff87]/30 rounded-2xl shadow-2xl py-1 min-w-[260px] opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-10px] transition-all duration-500 pointer-events-none group-hover:pointer-events-auto"
-                >
+                  <div
+                    className="absolute left-[3vw] top-[10vh] z-[500]
+                              border border-[#3dff87]/30 rounded-2xl
+                              shadow-[0_8px_32px_0_rgba(61,255,135,0.25)]
+                              py-1 min-w-[260px]
+                              opacity-0 translate-x-[-10px] transition-all duration-500
+                              group-hover:opacity-100 group-hover:translate-x-0
+                              pointer-events-none group-hover:pointer-events-auto
+                              backdrop-blur-2xl backdrop-saturate-200 bg-[#031C0D]/90"
+                  >
+
+
+
                   {[
                     { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
                     { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
@@ -730,9 +741,17 @@ export const GrowAGarden = () => {
                 </div>
               </div>
             </div>
-            <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3">
+            <h1
+              className="
+                text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3
+                transition-transform duration-300 ease-in-out
+                hover:scale-105 
+                hover:drop-shadow-lg cursor-pointer
+              "
+            >
               {selectedGame.name}
             </h1>
+
           </div>
 
           <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
