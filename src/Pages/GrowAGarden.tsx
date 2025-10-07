@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
 import { Cart } from "../components/Cart";
-import { motion } from "framer-motion"
+import { motion } from "framer-motion";
+import React from "react";
 
 const categoryIcons: { [key: string]: string } = {
   "Best Sellers": "/icon/crown.png",
@@ -194,7 +195,7 @@ export const GrowAGarden = () => {
   const [selectedGame] = useState<{ name: string; icon: string }>(games[0]);
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  const [detectedCountry, setDetectedCountry] = useState<string>("");
+  const [detectedCountry, setDetectedCountry] = useState<string>("US");
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
@@ -373,8 +374,8 @@ export const GrowAGarden = () => {
     }
   }, [cart]);
 
-    const mainRef = useRef<HTMLDivElement | null>(null);
-    const [hideLogo, setHideLogo] = useState(false);
+  const mainRef = useRef<HTMLDivElement | null>(null);
+  const [hideLogo, setHideLogo] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -549,7 +550,7 @@ export const GrowAGarden = () => {
         </div>
 
         <div className="relative">
-          <div 
+          <div
             ref={scrollRefs[sectionId]}
             className={`${
               isGridView
@@ -585,14 +586,17 @@ export const GrowAGarden = () => {
                 <div
                   key={`${sectionId}-${idx}`}
                   className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
+                  onMouseEnter={(e) => e.stopPropagation()}
+                  onMouseLeave={(e) => e.stopPropagation()}
                 >
                   <motion.div
                     className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
                     whileHover="hovered"
                     initial="initial"
+                    animate="initial"
                   >
                     {/* Save Badge */}
-                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-20 min-w-[9vw]">
+                    <div className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat  min-w-[9vw]">
                       <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
                       <span className="text-[11px] tracking-tighter">
                         Save $24.00
@@ -612,7 +616,7 @@ export const GrowAGarden = () => {
                     {/* Product Image */}
                     {product.node.images.edges[0] ? (
                       <motion.div
-                        className="absolute inset-0 flex items-center justify-center"
+                        className="absolute inset-0 flex items-center justify-center z-5"
                         variants={{
                           initial: { rotate: 0 },
                           hovered: { rotate: [0, -3, 3, -2, 2, 0] },
@@ -626,12 +630,12 @@ export const GrowAGarden = () => {
                         <motion.img
                           src={product.node.images.edges[0].node.url}
                           alt={product.node.title}
-                          className="object-contain relative z-10"
+                          className="object-contain relative z-5"
                           style={{ maxWidth: "150px", maxHeight: "120px" }}
                         />
                       </motion.div>
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center z-5">
                         <div className="text-[#3dff87]/30 text-4xl">🎮</div>
                       </div>
                     )}
@@ -639,7 +643,7 @@ export const GrowAGarden = () => {
                     {/* Add to Cart Button - Appears on Hover */}
                     <motion.button
                       onClick={() => addToCart(product)}
-                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl z-20 hover:bg-[#2dd66e] hover:scale-110"
+                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl  hover:bg-[#2dd66e] hover:scale-110"
                       variants={{
                         initial: { y: 20, opacity: 0 },
                         hovered: { y: 2, opacity: 1 },
@@ -688,17 +692,43 @@ export const GrowAGarden = () => {
     <div className="min-h-screen bg-[#06100A] relative">
       <Header />
 
-      <div
-        className="bg-[#06100A] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover"
-      >
-        <div className="max-w-[105vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+      <div className="bg-[#06100A] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover">
+        <div className="max-w-[95vw] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
             <div className="w-9 h-9 flex items-center justify-center">
-              <img
-                src={selectedGame.icon}
-                alt={selectedGame.name}
-                className="w-full h-full rounded-md object-contain"
-              />
+              <div className="relative group w-24 h-24 flex items-center justify-center">
+                <img
+                  src={selectedGame.icon}
+                  alt={selectedGame.name}
+                  className="w-full h-full rounded-2xl object-contain cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                />
+                {/* Dropdown on hover */}
+                <div
+                  className="absolute left-[3vw] top-12 z-500 bg-[#031C0D] border border-[#3dff87]/30 rounded-2xl shadow-2xl py-1 min-w-[260px] opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-10px] transition-all duration-500 pointer-events-none group-hover:pointer-events-auto"
+                >
+                  {[
+                    { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
+                    { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
+                    { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
+                    { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
+                    { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
+                    { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
+                    { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
+                    { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+                    { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
+                  ].map(game => (
+                    <div key={game.id} className="w-full">
+                      <button
+                        className="flex items-center gap-3 px-2 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-lg font-bold w-full text-left rounded-xl"
+                        onClick={() => window.location.href = game.route}
+                      >
+                        <img src={game.icon} alt={game.name} className="w-10 h-10 object-contain rounded-lg" />
+                        {game.name}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3">
               {selectedGame.name}
@@ -708,9 +738,8 @@ export const GrowAGarden = () => {
           <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
             <div className="flex items-center gap-2">
               {categories.map((category) => (
-                <>
+                <React.Fragment key={category}>
                   <button
-                    key={category}
                     onClick={() => setActiveCategory(category)}
                     className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
                       text-gray-400
@@ -729,11 +758,10 @@ export const GrowAGarden = () => {
 
                   {category === "Bundles" && (
                     <div
-                      key="gradient-divider"
-                      className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-6 rounded-full"
+                      className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-60 rounded-full"
                     />
                   )}
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
@@ -750,7 +778,7 @@ export const GrowAGarden = () => {
                 </svg>
               </button>
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: "auto", opacity: 1 }}
                 className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/40 px-3 py-2 rounded-lg"
@@ -772,6 +800,9 @@ export const GrowAGarden = () => {
                     className="text-gray-400 hover:text-white transition-colors"
                     title="Clear search"
                   >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                 )}
                 <button
@@ -792,7 +823,7 @@ export const GrowAGarden = () => {
 
           <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
             </svg>
             Join Discord
           </button>
@@ -868,11 +899,11 @@ export const GrowAGarden = () => {
             <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🔍</div>
             <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">No products found</h3>
             <p className="text-gray-400 text-sm sm:text-base mb-4">
-              {searchQuery 
+              {searchQuery
                 ? `No results found for "${searchQuery}"`
-                : activeCategory !== "All" 
-                  ? `No products found in "${activeCategory}".` 
-                  : "Check back later for new items!"}
+                : activeCategory !== "All"
+                ? `No products found in "${activeCategory}".`
+                : "Check back later for new items!"}
             </p>
             {searchQuery && (
               <button
@@ -901,14 +932,9 @@ export const GrowAGarden = () => {
         />
       </div>
 
-      {/* Header Section */}
-    
-
-      {/* Main Content */}
-      <div ref={mainRef} className=" relative">
+      <div ref={mainRef} className="relative">
         <MainContentSection />
       </div>
-
 
       <Cart
         cart={cart}
@@ -917,8 +943,6 @@ export const GrowAGarden = () => {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeFromCart}
       />
-
-    
     </div>
   );
 };
