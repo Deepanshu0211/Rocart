@@ -9,7 +9,18 @@ const WeAre: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#06100A] to-[#0B1510] text-gray-300 py-16 px-2 sm:px-4">
+    <div className="min-h-screen from-[#06100A] to-[#0B1510] text-gray-300 py-16 px-2 sm:px-4">
+      <div
+        className="absolute inset-0 
+          bg-[url('/bg/mesh.png')] bg-contain bg-repeat
+          opacity-90 pointer-events-none 
+          from-[#06100A] via-transparent to-[#2A2A2A]
+        "
+        style={{
+          backgroundSize: "100% auto",
+          backgroundPosition: "bottom 0%",
+        }}
+      />
       {/* Header */}
       <motion.div
         {...fadeUp(0)}
