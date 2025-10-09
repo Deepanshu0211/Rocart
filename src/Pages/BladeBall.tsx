@@ -328,9 +328,10 @@ export const BladeBall = () => {
 
   const renderTokenSection = () => {
     return (
-      <div className="min-h-screen bg-[#06100A] relative">
+    <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
+
         <Header />
-        <div className="bg-[#0a1612]/95 border-b border-[#3dff87]/10 sticky top-0 z-10 backdrop-blur-sm">
+        <div className=" sticky top-0 z-10 b">
           <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center gap-4 flex-wrap sm:flex-nowrap">
             <div className="border-l border-[#3dff87]/30 py-3" />
             
@@ -361,7 +362,7 @@ export const BladeBall = () => {
           </div>
         </div>
 
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 bg-[#06100A]">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 ">
           {loading && (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
@@ -383,7 +384,8 @@ export const BladeBall = () => {
           )}
 
           {!loading && !error && product && (
-            <div className="flex flex-col sm:flex-row items-center gap-[15vw]  p-6 rounded-lg shadow-lg max-w-3xl mx-auto">
+          <div className="flex justify-center items-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-[15vw] p-6  text-center mx-auto">
               <div className="w-64 h-64 flex-shrink-0">
                 {product.node.images.edges[0]?.node.url ? (
                   <img
@@ -397,36 +399,50 @@ export const BladeBall = () => {
                   </div>
                 )}
               </div>
-              <div className="flex-1 text-white space-y-4">
-                <h2 className="text-2xl font-bold">{product.node.title}</h2>
+
+              <div className="flex-1 text-white space-y-4 sm:text-left text-center">
+                <h2 className="text-2xl font-bold text-left" >{product.node.title}</h2>
+
                 {product.node.description && (
-                  <p className="text-base text-gray-400">{product.node.description}</p>
+                  <p className="text-base text-gray-400 text-left">{product.node.description}</p>
                 )}
-                <p className="text-base text-gray-400">$5 per 1000</p>
-                <p className="text-xl font-semibold">{formatPrice(product)}</p>
-                <div className="flex items-center gap-6">
+
+                <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                  5$ per 1000
+                </p>
+
+                <div className="flex items-center justify-center sm:justify-start gap-6">
+                  <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
+                    Quantity
+                  </p>
                   <input
                     type="number"
                     defaultValue="2000"
                     min="2000"
                     max="300000"
-                    className="w-28 p-2 bg-[#1a2621] text-white border border-[#3dff87]/20 rounded-lg focus:outline-none focus:border-[#3dff87]"
+                    className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
                     onChange={(e) => {
                       const value = parseInt(e.target.value) || 2000;
                       if (value < 2000) e.target.value = "2000";
                       if (value > 300000) e.target.value = "300000";
                     }}
                   />
-                  <span className="text-gray-400 text-sm">(min 2000 - max 300000)</span>
+                  <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                    (min 2000 - max 300000)
+                  </span>
                 </div>
                 <button
                   onClick={handleAddToCart}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
                 >
-                  Add to Cart
+                  <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
+                  <span>Add to Cart</span>
                 </button>
+
               </div>
             </div>
+          </div>
+
           )}
         </div>
         
