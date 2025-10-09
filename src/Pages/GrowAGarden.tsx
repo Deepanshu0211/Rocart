@@ -202,7 +202,10 @@ export const GrowAGarden = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [scrollRefs] = useState<{ [key: string]: React.RefObject<HTMLDivElement> }>({
     bestSellers: { current: null },
@@ -418,6 +421,20 @@ export const GrowAGarden = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSearchActive, searchQuery]);
 
+  // Handle dropdown open/close with debounce
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 200); // 200ms delay before closing
+  };
+
   function convertPrice(
     amount: number,
     originalCurrency: string,
@@ -507,7 +524,6 @@ export const GrowAGarden = () => {
       scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
     }
   };
-  
 
   // Filter products based on search query
   const filteredProducts = searchQuery
@@ -706,45 +722,51 @@ export const GrowAGarden = () => {
         <div className="max-w-[full] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
             <div className="w-9 h-9 flex items-center justify-center">
-              <div className="relative group w-24 h-24 flex items-center justify-center">
+              <div
+                className="relative w-24 h-24 flex items-center justify-center"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
                 <img
                   src={selectedGame.icon}
                   alt={selectedGame.name}
-                  className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                  className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                 />
 
-                {/* Dropdown on hover */}
-                <div
-                  className="fixed left-[3vw] top-[6vh] rounded-2xl py-1 min-w-[20vw]
-                            opacity-0 translate-x-[-10px] transition-all duration-100 delay-100
-                            group-hover:opacity-100 group-hover:translate-x-0
-                            pointer-events-none group-hover:pointer-events-auto
-                            backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000]"
-                >            
-                    {[
-                      { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
-                      { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
-                      { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
-                      { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
-                      { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
-                      { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
-                      { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
-                      { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
-                      { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
-                    ].map(game => (
-                      <div key={game.id} className="w-full">
-                        <button
-                          className="flex items-center gap-3 px-2 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-lg font-bold w-full text-left rounded-xl"
-                          onClick={() => window.location.href = game.route}
-                        >
-                          <img src={game.icon} alt={game.name} className="w-10 h-10 object-contain rounded-lg" />
-                          {game.name}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-
-
+                {/* Dropdown */}
+                <motion.div
+                  ref={dropdownRef}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={isDropdownOpen ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className={`absolute left-[3vw] top-[6vh] rounded-2xl py-2 min-w-[20vw] backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000] shadow-lg shadow-[#3dff87]/10 ${
+                    isDropdownOpen ? 'pointer-events-auto' : 'pointer-events-none'
+                  }`}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {[
+                    { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
+                    { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
+                    { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
+                    { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
+                    { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
+                    { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
+                    { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
+                    { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+                    { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
+                  ].map(game => (
+                    <div key={game.id} className="w-full">
+                      <button
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-base font-semibold w-full text-left rounded-xl"
+                        onClick={() => window.location.href = game.route}
+                      >
+                        <img src={game.icon} alt={game.name} className="w-8 h-8 object-contain rounded-lg" />
+                        {game.name}
+                      </button>
+                    </div>
+                  ))}
+                </motion.div>
               </div>
             </div>
             <h1
@@ -757,7 +779,6 @@ export const GrowAGarden = () => {
             >
               {selectedGame.name}
             </h1>
-
           </div>
 
           <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
