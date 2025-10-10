@@ -125,29 +125,29 @@ const WeAre: React.FC = () => {
                 valuable:
               </h3>
               <ul className="list-disc ml-8 space-y-1">
-                <li>
-                  <span className="text-[#FFFFFFb3] font-semibold text-xs">
+                <li className="text-[#FFFFFFb3] font-semibold text-xs">
+                  <span>
                     Rare Mutated Seeds:
                   </span>{" "}
                   Special variants like Blood Moon mutations or seasonal
                   exclusives that produce high-value crops
                 </li>
-                <li>
-                  <span className="text-[#FFFFFFb3] font-semibold text-xs">
+                <li className="text-[#FFFFFFb3] font-semibold text-xs">
+                  <span>
                     Premium Gears:
                   </span>{" "}
                   Top-tier tools that significantly boost farming efficiency and
                   harvest yields
                 </li>
-                <li>
-                  <span className="text-[#FFFFFFb3] font-semibold text-xs">
+                <li className="text-[#FFFFFFb3] font-semibold text-xs">
+                  <span>
                     Limited Pets:
                   </span>{" "}
                   Special companions that provide unique bonuses to growth rates
                   and profits
                 </li>
-                <li>
-                  <span className="text-[#FFFFFFb3] font-semibold text-xs">
+                <li className="text-[#FFFFFFb3] font-semibold text-xs">
+                  <span >
                     Event Items:
                   </span>{" "}
                   Exclusive items from special events that often have powerful

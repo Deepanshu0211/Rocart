@@ -130,7 +130,7 @@ export const FAQSection = () => {
                     relative rounded-2xl border transition-all duration-500 ease-out overflow-hidden
                     ${
                       isOpen
-                        ? "border-[#3dff87] shadow-[0_0_40px_rgba(61,255,135,0.15)]"
+                        ? " shadow-[0_0_40px_rgba(61,255,135,0.15)]"
                         : "border-[#ffffff20] hover:border-[#3dff8750]"
                     }
                     bg-gradient-to-br from-[#0a1a0f] to-[#0e1f14]

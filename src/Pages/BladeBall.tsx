@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
 import { Cart } from "../components/Cart";
+import { motion } from "framer-motion";
 
 // Fix import.meta.env typing for Vite
 const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
@@ -27,12 +28,12 @@ const currencyMap = {
   GR: "EUR", FI: "EUR", EU: "EUR", SE: "SEK", DK: "DKK",
   NO: "NOK", CH: "CHF", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON",
   IN: "INR", JP: "JPY", CN: "CNY", KR: "KRW", SG: "SGD",
-  HK: "HKD", TW: "TWD", TH: "THB", MY: "MYR", IDR: "IDR",
+  HK: "HKD", TW: "TWD", TH: "THB", MY: "MYR", ID: "IDR",
   PH: "PHP", VN: "VND", PK: "PKR", BD: "BDT",
   AE: "AED", SA: "SAR", QA: "QAR", KW: "KWD", IL: "ILS",
   TR: "TRY", EG: "EGP",
   AU: "AUD", NZ: "NZD",
-  BR: "BRL", AR: "ARS", CLP: "CLP", CO: "COP", PE: "PEN",
+  BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP", PE: "PEN",
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
 
@@ -152,11 +153,17 @@ export const BladeBall = () => {
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
-  const [selectedGame, setSelectedGame] = useState<{ name: string; icon: string }>(games[0]);
+  const [selectedGame] = useState<{ name: string; icon: string }>(games[0]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkStoredCurrency = () => {
@@ -244,6 +251,38 @@ export const BladeBall = () => {
     initializeData();
   }, []);
 
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isSearchActive && searchInputRef.current && !searchInputRef.current.parentElement?.contains(event.target as Node)) {
+        if (!searchQuery) {
+          setIsSearchActive(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchActive, searchQuery]);
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 200);
+  };
+
   function convertPrice(
     amount: number,
     originalCurrency: string,
@@ -328,34 +367,79 @@ export const BladeBall = () => {
 
   const renderTokenSection = () => {
     return (
-    <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
-
+      <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
         <Header />
-       <div className="sticky top-0 z-10 bg-[#06100A]/50 backdrop-blur-md">
-          <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
-            {/* Left side - game info */}
-            <div className="flex items-center gap-3 border border-[#999999]/15 px-3 rounded-xl py-0.5 flex-shrink-0">
-              <div className="w-10 h-10 rounded-lg  flex items-center justify-center ">
-                <img
-                  src={selectedGame.icon}
-                  alt={selectedGame.name}
-                  className="w-full h-full object-contain"
-                />
+          <div className="sticky top-0 z-10 bg-[#0b0b0b]/50 backdrop-blur-md ">
+           <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
+           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
+              <div className="w-9 h-9 flex items-center justify-center">
+                <div
+                  className="relative w-24 h-24 flex items-center justify-center"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <img
+                    src={selectedGame.icon}
+                    alt={selectedGame.name}
+                    className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                  />
+                  <motion.div
+                    ref={dropdownRef}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={isDropdownOpen ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className={`absolute left-[3vw] top-[6vh] rounded-2xl py-2 min-w-[20vw] backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000] shadow-lg shadow-[#3dff87]/10 ${
+                      isDropdownOpen ? 'pointer-events-auto' : 'pointer-events-none'
+                    }`}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    {[
+                      { id: 1, name: "Murder Mystery 2", icon: "/kenjo/mur.png", route: "/murderMystery" },
+                      { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
+                      { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
+                      { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
+                      { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
+                      { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
+                      { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
+                      { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+                      { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
+                    ].map(game => (
+                      <div key={game.id} className="w-full">
+                        <button
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-base font-semibold w-full text-left rounded-xl"
+                          onClick={() => window.location.href = game.route}
+                        >
+                          <img src={game.icon} alt={game.name} className="w-8 h-8 object-contain rounded-lg" />
+                          {game.name}
+                        </button>
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
-              <h1 className="text-white text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">
+              <h1
+                className="
+                  text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3
+                  transition-transform duration-300 ease-in-out
+                  hover:scale-105 
+                  hover:drop-shadow-lg cursor-pointer
+                "
+              >
                 {selectedGame.name}
               </h1>
             </div>
 
-            {/* Right side - button */}
-            <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
+        
+
+          <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
               Join Discord
             </button>
           </div>
-        </div>
+          </div>
 
 
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 ">
@@ -380,79 +464,76 @@ export const BladeBall = () => {
           )}
 
           {!loading && !error && product && (
-          <div className="flex justify-center items-center">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-[15vw] p-6  text-center mx-auto">
-              <div className="w-64 h-64 shadow-lg p-5 rounded-xl bg-[#030904] ">
-                {product.node.images.edges[0]?.node.url ? (
-                  <img
-                    src={product.node.images.edges[0].node.url}
-                    alt={product.node.title}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#1a2621] rounded-lg flex items-center justify-center">
-                    <span className="text-[#3dff87]/30 text-2xl">🎮</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 text-white space-y-4 sm:text-left text-center">
-                <h2 className="text-2xl font-bold text-left" >{product.node.title}</h2>
-
-                {product.node.description && (
-                  <p className="text-base text-gray-400 text-left">{product.node.description}</p>
-                )}
-
-                <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
-                  5$ per 1000
-                </p>
-                <p className="text-3xl sm:text-xl font-semibold">
-                  <span className="text-[#3dff87]/70">
-                    {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
-                  </span>
-                  <span className="text-white ml-1">
-                    {formatPrice(product)
-                      .replace(
-                        currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
-                        ""
-                      )
-                      .trim()}
-                  </span>
-                </p>
-
-
-                <div className="flex items-center justify-center sm:justify-start gap-6">
-                  <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
-                    Quantity
-                  </p>
-                  <input
-                    type="number"
-                    defaultValue="2000"
-                    min="2000"
-                    max="300000"
-                    className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 2000;
-                      if (value < 2000) e.target.value = "2000";
-                      if (value > 300000) e.target.value = "300000";
-                    }}
-                  />
-                  <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
-                    (min 2000 - max 300000)
-                  </span>
+            <div className="flex justify-center items-center">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-[15vw] p-6 text-center mx-auto">
+                <div className="w-64 h-64 shadow-lg p-5 rounded-xl bg-[#030904] ">
+                  {product.node.images.edges[0]?.node.url ? (
+                    <img
+                      src={product.node.images.edges[0].node.url}
+                      alt={product.node.title}
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#1a2621] rounded-lg flex items-center justify-center">
+                      <span className="text-[#3dff87]/30 text-2xl">🎮</span>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
-                >
-                  <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
-                  <span>Add to Cart</span>
-                </button>
 
+                <div className="flex-1 text-white space-y-4 sm:text-left text-center">
+                  <h2 className="text-2xl font-bold text-left">{product.node.title}</h2>
+
+                  {product.node.description && (
+                    <p className="text-base text-gray-400 text-left">{product.node.description}</p>
+                  )}
+
+                  <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                    5$ per 1000
+                  </p>
+                  <p className="text-3xl sm:text-xl font-semibold">
+                    <span className="text-[#3dff87]/70">
+                      {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
+                    </span>
+                    <span className="text-white ml-1">
+                      {formatPrice(product)
+                        .replace(
+                          currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
+                          ""
+                        )
+                        .trim()}
+                    </span>
+                  </p>
+
+                  <div className="flex items-center justify-center sm:justify-start gap-6">
+                    <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
+                      Quantity
+                    </p>
+                    <input
+                      type="number"
+                      defaultValue="2000"
+                      min="2000"
+                      max="300000"
+                      className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 2000;
+                        if (value < 2000) e.target.value = "2000";
+                        if (value > 300000) e.target.value = "300000";
+                      }}
+                    />
+                    <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
+                      (min 2000 - max 300000)
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
+                  >
+                    <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
+                    <span>Add to Cart</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
           )}
         </div>
         

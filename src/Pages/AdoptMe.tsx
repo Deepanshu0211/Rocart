@@ -1,7 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
 import { Cart } from "../components/Cart";
+import { motion } from "framer-motion";
+import React from "react";
+import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
+import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
+import WeAre from "./WeAre";
+
+// Category icons
+const categoryIcons: { [key: string]: string } = {
+  "Best Sellers": "/icon/crown.png",
+ 
+};
 
 // Fix import.meta.env typing for Vite
 const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
@@ -101,12 +112,11 @@ async function fetchProducts(category: string = "All") {
 
   let filteredProducts = data.data.collection?.products.edges || [];
 
-  // Client-side filtering for categories
   if (category !== "All") {
     const categoryTag = category.toLowerCase().replace(/\s+/g, '-');
-    filteredProducts = filteredProducts.filter((product: Product) => 
-      product.node.tags.some((tag: string) => 
-        tag.toLowerCase() === categoryTag || 
+    filteredProducts = filteredProducts.filter((product: Product) =>
+      product.node.tags.some((tag: string) =>
+        tag.toLowerCase() === categoryTag ||
         tag.toLowerCase().includes(category.toLowerCase())
       )
     );
@@ -177,17 +187,24 @@ export const AdoptMe = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [selectedGame, setSelectedGame] = useState<{ name: string; icon: string }>(games[0]);
+  const [selectedGame] = useState<{ name: string; icon: string }>(games[0]);
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  const [detectedCountry, setDetectedCountry] = useState<string>("");
+  const [detectedCountry, setDetectedCountry] = useState<string>("US");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [currentIndices, setCurrentIndices] = useState<{ [key: string]: number }>({
-    bestSellers: 0,
-    pets: 0,
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [scrollRefs] = useState<{ [key: string]: React.RefObject<HTMLDivElement> }>({
+    bestSellers: { current: null },
+    pets: { current: null },
   });
 
-  // Cart state management with unified localStorage persistence
+  // Cart state management
   const CART_VERSION = "1.0.0";
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -195,12 +212,12 @@ export const AdoptMe = () => {
       if (storedCartData) {
         const parsedData = JSON.parse(storedCartData);
         if (parsedData.version === CART_VERSION && Array.isArray(parsedData.items)) {
-          const validItems = parsedData.items.filter((item: any) => 
-            item.id && 
-            item.title && 
-            typeof item.price === 'number' && 
-            item.currency && 
-            typeof item.quantity === 'number' && 
+          const validItems = parsedData.items.filter((item: any) =>
+            item.id &&
+            item.title &&
+            typeof item.price === 'number' &&
+            item.currency &&
+            typeof item.quantity === 'number' &&
             item.quantity > 0
           );
           return validItems;
@@ -219,7 +236,7 @@ export const AdoptMe = () => {
     const checkStoredCurrency = () => {
       const storedCountry = sessionStorage.getItem('userCountry');
       const storedCurrency = sessionStorage.getItem('userCurrency');
-      
+
       if (storedCountry && storedCurrency) {
         setDetectedCountry(storedCountry);
         setUserCurrency(storedCurrency);
@@ -247,15 +264,15 @@ export const AdoptMe = () => {
           if (response.ok) {
             const data = await response.json();
             const countryCode = (api.parser(data) || "").toUpperCase();
-            
+
             if (countryCode && (currencyMap as Record<string, string>)[countryCode]) {
               setDetectedCountry(countryCode);
               const detectedCurrency = (currencyMap as Record<string, string>)[countryCode];
               setUserCurrency(detectedCurrency);
-              
+
               sessionStorage.setItem('userCountry', countryCode);
               sessionStorage.setItem('userCurrency', detectedCurrency);
-              
+
               console.log(`✓ Detected country: ${countryCode}, Currency: ${detectedCurrency}`);
               return;
             }
@@ -265,7 +282,7 @@ export const AdoptMe = () => {
           continue;
         }
       }
-      
+
       console.warn("All geolocation APIs failed, defaulting to USD");
       setUserCurrency("USD");
       setDetectedCountry("US");
@@ -276,9 +293,9 @@ export const AdoptMe = () => {
     const initializeData = async () => {
       try {
         await detectCountryAndCurrency();
-        const rates = await fetchExchangeRates(userCurrency);
+        const rates = await fetchExchangeRates();
         setExchangeRates(rates);
-        
+
         setLoading(true);
         setError(null);
         const productsData = await fetchProducts(activeCategory);
@@ -296,7 +313,9 @@ export const AdoptMe = () => {
     };
 
     initializeData();
+  }, []);
 
+  useEffect(() => {
     const handleCurrencyChange = async (event: Event) => {
       const { country, currency } = (event as CustomEvent).detail;
       setDetectedCountry(country);
@@ -309,9 +328,7 @@ export const AdoptMe = () => {
         console.error("Error fetching exchange rates after currency change:", error);
       }
     };
-
     window.addEventListener('currencyChanged', handleCurrencyChange);
-    
     return () => {
       window.removeEventListener('currencyChanged', handleCurrencyChange);
     };
@@ -335,9 +352,14 @@ export const AdoptMe = () => {
         setLoading(false);
       }
     };
-
     loadProducts();
   }, [activeCategory]);
+
+  useEffect(() => {
+    if (userCurrency && Object.keys(exchangeRates).length === 0) {
+      fetchExchangeRates().then(rates => setExchangeRates(rates));
+    }
+  }, [userCurrency]);
 
   useEffect(() => {
     try {
@@ -346,6 +368,60 @@ export const AdoptMe = () => {
       console.error('Error saving cart to localStorage:', e);
     }
   }, [cart]);
+
+  const mainRef = useRef<HTMLDivElement | null>(null);
+  const [hideLogo, setHideLogo] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setHideLogo(entry.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0.3,
+      }
+    );
+
+    if (mainRef.current) observer.observe(mainRef.current);
+
+    return () => {
+      if (mainRef.current) observer.unobserve(mainRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isSearchActive && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchActive]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isSearchActive && searchInputRef.current && !searchInputRef.current.parentElement?.contains(event.target as Node)) {
+        if (!searchQuery) {
+          setIsSearchActive(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSearchActive, searchQuery]);
+
+  const handleMouseEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 200);
+  };
 
   function convertPrice(
     amount: number,
@@ -373,23 +449,21 @@ export const AdoptMe = () => {
       userCurrency,
       exchangeRates
     );
-    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " ";
+    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency;
     const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
-    if (noDecimalCurrencies.includes(userCurrency)) {
-      return `${symbol}${Math.round(convertedAmount).toLocaleString()}`;
-    } else {
-      const formatted = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(convertedAmount);
-      return `${symbol}${formatted}`;
-    }
+    const price = noDecimalCurrencies.includes(userCurrency)
+      ? Math.round(convertedAmount).toLocaleString()
+      : new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedAmount);
+    return { symbol, price };
   };
 
   const addToCart = (product: Product) => {
     const variant = product.node.variants.edges[0].node;
     const existingItem = cart.find((item) => item.id === variant.id);
-    
+
     if (existingItem) {
       setCart(cart.map((item) =>
         item.id === variant.id
@@ -407,7 +481,7 @@ export const AdoptMe = () => {
       };
       setCart([...cart, newItem]);
     }
-    
+
     console.log(`✓ Added to cart: ${product.node.title}`);
   };
 
@@ -426,24 +500,31 @@ export const AdoptMe = () => {
   };
 
   const handlePrev = (section: string) => {
-    setCurrentIndices((prev) => ({
-      ...prev,
-      [section]: prev[section] === 0 ? Math.max(products.length - 4, 0) : prev[section] - 1,
-    }));
+    const scrollContainer = scrollRefs[section]?.current;
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: -240, behavior: 'smooth' });
+    }
   };
 
   const handleNext = (section: string) => {
-    setCurrentIndices((prev) => ({
-      ...prev,
-      [section]: prev[section] >= Math.max(products.length - 4, 0) ? 0 : prev[section] + 1,
-    }));
+    const scrollContainer = scrollRefs[section]?.current;
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
+    }
   };
 
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : products;
+
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
-    const visibleProducts = productsToShow.slice(currentIndices[sectionId], currentIndices[sectionId] + 4);
+    const isGridView = activeSection === sectionId;
 
     return (
-      <section className="space-y-4">
+      <section className="mt-[-20px] space-y-[-2] bg-[url('/bg/mesh.png')] bg-cover bg-center bg-no-repeat">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`text-xl ${sectionId === 'bestSellers' ? 'text-yellow-500' : 'text-purple-500'}`}>
@@ -451,88 +532,158 @@ export const AdoptMe = () => {
             </span>
             <h2 className="text-white text-xl font-bold">{title}</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handlePrev(sectionId)}
-              className="text-gray-400 hover:text-white transition-colors"
-              disabled={currentIndices[sectionId] === 0}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => handleNext(sectionId)}
-              className="text-gray-400 hover:text-white transition-colors"
-              disabled={currentIndices[sectionId] >= Math.max(products.length - 4, 0)}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setActiveSection(sectionId)}
-              className="text-[#3dff87] text-sm hover:underline"
-            >
-              <img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" />
-            </button>
-          </div>
+          {!isGridView && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handlePrev(sectionId)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <img src="/icon/leftarrow.png" alt="left" className="w-8 h-8 inline-block" />
+              </button>
+              <button
+                onClick={() => handleNext(sectionId)}
+                className="text-[#3DFF88] hover:text-white transition-colors"
+              >
+                <img src="/icon/rightarrow.png" alt="Next" className="w-8 h-8 inline-block" />
+              </button>
+              <button
+                onClick={() => setActiveSection(sectionId)}
+                className="text-[#3dff87] text-sm hover:underline"
+              >
+                <img src="/icon/view.png" alt="View All" className="w-15 h-11 inline-block" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="relative">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-            {visibleProducts.length > 0 ? (
-              visibleProducts.map((product, idx) => (
+          <div
+            ref={scrollRefs[sectionId]}
+            className={`${
+              isGridView
+                ? 'grid grid-cols-5 grid-rows-2 gap-3'
+                : 'flex gap-3 overflow-x-auto scrollbar-hide py-4 px-1 cursor-grab active:cursor-grabbing'
+            }`}
+            style={{ scrollBehavior: isGridView ? 'auto' : 'smooth' }}
+            onMouseDown={(e) => {
+              if (isGridView) return;
+              const el = e.currentTarget;
+              const startX = e.pageX - el.offsetLeft;
+              const scrollLeft = el.scrollLeft;
+
+              const handleMouseMove = (e: MouseEvent) => {
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - startX) * 2;
+                el.scrollLeft = scrollLeft - walk;
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                el.style.cursor = 'grab';
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+              el.style.cursor = 'grabbing';
+            }}
+          >
+            {productsToShow.length > 0 ? (
+              productsToShow.map((product, idx) => (
                 <div
                   key={`${sectionId}-${idx}`}
-                  className="relative flex-shrink-0 w-[223px] h-[286px] bg-[#000000] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all cursor-pointer group"
+                  className="relative flex-shrink-0 w-[223px] h-[276px] bg-[url('/icon/itembg.png')] bg-cover bg-center bg-no-repeat rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer group border border-transparent hover:border-[#3dff87]/50 hover:shadow-lg hover:scale-[1.02]"
+                  onMouseEnter={(e) => e.stopPropagation()}
+                  onMouseLeave={(e) => e.stopPropagation()}
                 >
-                <div className="relative bg-black h-[200px] w-full rounded-t-2xl overflow-hidden">
-                    <div className="absolute top-3 left-3 flex items-center gap-1 text-white text-xs font-bold px-2 py-1 rounded-md bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat z-10">
-                      <img src="/icon/save.png" alt="save" className="h-[14px] w-auto" />
-                      <span>Save $24</span>
-                    </div>
+                  <motion.div
+                    className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
+                    whileHover="hovered"
+                    initial="initial"
+                    animate="initial"
+                  >
+                    <motion.div
+                      className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat min-w-[9vw] z-20"
+                      variants={{
+                        initial: { opacity: 0, y: -15 },
+                        hovered: { opacity: 1, y: 0 },
+                      }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
+                      <span className="text-[11px] tracking-tighter">Save $24.00</span>
+                    </motion.div>
+
+                    <motion.div
+                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                      variants={{
+                        initial: { scale: 1 },
+                        hovered: { scale: 1.15 },
+                      }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                    />
 
                     {product.node.images.edges[0] ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-[#030904]">
-                        <img
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center z-5"
+                        variants={{
+                          initial: { rotate: 0 },
+                          hovered: { rotate: [0, -3, 3, -2, 2, 0] },
+                        }}
+                        transition={{
+                          delay: 0.25,
+                          duration: 0.6,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <motion.img
                           src={product.node.images.edges[0].node.url}
                           alt={product.node.title}
-                          className="object-contain"
+                          className="object-contain relative z-5"
                           style={{ maxWidth: "150px", maxHeight: "120px" }}
                         />
-                      </div>
+                      </motion.div>
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center z-5">
                         <div className="text-[#3dff87]/30 text-4xl">🎮</div>
                       </div>
                     )}
-                  </div>
 
-                {/* Bottom info section */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
-                  <h3 className="text-white text-xs font-semibold mb-1 line-clamp-2">
-                    {product.node.title}
-                  </h3>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[#3dff87] font-bold text-sm">
-                      {formatPrice(product)}
-                    </span>
-                    <button
+                    <motion.button
                       onClick={() => addToCart(product)}
-                      className="hover:bg-[#031C0D] transition-all"
+                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110"
+                      variants={{
+                        initial: { y: 20, opacity: 0 },
+                        hovered: { y: 2, opacity: 1 },
+                      }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
                     >
-                      <img
-                        src="/icon/cart.png"
-                        alt="Add"
-                        className="w-8 h-8 transition-transform duration-300 ease-in-out hover:scale-125"
-                      />
-                    </button>
+                      <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
+                    </motion.button>
+                  </motion.div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
+                    <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
+                      {product.node.title}
+                    </h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-bold text-sm">
+                        <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
+                        <span className="text-white"> {formatPrice(product)?.price}</span>
+                      </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
+                      >
+                        <img
+                          src="/icon/cart.png"
+                          alt="Add to Cart"
+                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-               
-
               ))
             ) : (
               <div className="w-full text-center py-8 text-gray-400">
@@ -549,54 +700,156 @@ export const AdoptMe = () => {
     <div className="min-h-screen bg-[#06100A] relative">
       <Header />
 
-        <div
-          className="bg-[#0a1612]/95 sticky top-0 z-10 backdrop-blur-sm border-b border-[#3dff87]/10 bg-no-repeat bg-center bg-cover "
-          style={{ backgroundImage: "url('/icon/navbg.png')" }}
-        >
+      <div className="bg-[#06100A] sticky top-0 z-10 backdrop-blur-sm border-b border-t border-[#3dff87]/10 bg-no-repeat bg-center bg-cover">
+        <div className="max-w-[full] h-[9vh] mx-auto px-2 py-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
+            <div className="w-9 h-9 flex items-center justify-center">
+              <div
+                className="relative w-24 h-24 flex items-center justify-center"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <img
+                  src={selectedGame.icon}
+                  alt={selectedGame.name}
+                  className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
+                />
 
-
-        <div className="max-w-[95vw] mx-auto px-4 py-1 flex items-center gap-4 flex-wrap sm:flex-nowrap">
-          <div className="border-l border-[#3dff87]/30 py-3" />
-
-          <div className="flex items-center border bg-[#06100A] border-[#9999] rounded-lg px-3 py-1 gap-1 flex-shrink-0">
-            <div className="w-7 h-7  flex items-center justify-center">
-              <img
-                src={selectedGame.icon}
-                alt={selectedGame.name}
-                className="w-full h-full object-contain"
-              />
+                <motion.div
+                  ref={dropdownRef}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={isDropdownOpen ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className={`absolute left-[3vw] top-[6vh] rounded-2xl py-2 min-w-[20vw] backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000] shadow-lg shadow-[#3dff87]/10 ${
+                    isDropdownOpen ? 'pointer-events-auto' : 'pointer-events-none'
+                  }`}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {[
+                    { id: 1, name: "Murder Mystery 2", icon: "/game/murder.png", route: "/murderMystery" },
+                    { id: 2, name: "Grow A Garden", icon: "/game/garden.png", route: "/GrowAGarden" },
+                    { id: 3, name: "Steal A Brainrot", icon: "/logo/steal.png", route: "/StealABrainrot" },
+                    { id: 4, name: "Adopt Me!", icon: "/logo/adopt.png", route: "/AdoptMe" },
+                    { id: 5, name: "Blade Ball", icon: "/logo/blade.png", route: "/BladeBall" },
+                    { id: 6, name: "Blox Fruits", icon: "/logo/blox.png", route: "/BloxFruits" },
+                    { id: 7, name: "99 Nights In The Forest", icon: "/logo/99.png", route: "/NinetyNineNights" },
+                    { id: 8, name: "Anime Vanguards", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+                    { id: 9, name: "Dress To Impress", icon: "/logo/impress.png", route: "/DressToImpress" },
+                  ].map(game => (
+                    <div key={game.id} className="w-full">
+                      <button
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-[#3dff87]/10 transition-colors text-white text-base font-semibold w-full text-left rounded-xl"
+                        onClick={() => window.location.href = game.route}
+                      >
+                        <img src={game.icon} alt={game.name} className="w-8 h-8 object-contain rounded-lg" />
+                        {game.name}
+                      </button>
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
             </div>
-            <h1 className="text-white text-base sm:text-sm   whitespace-nowrap">{selectedGame.name}</h1>
+            <h1
+              className="
+                text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3
+                transition-transform duration-300 ease-in-out
+                hover:scale-105 
+                hover:drop-shadow-lg cursor-pointer
+              "
+            >
+              {selectedGame.name}
+            </h1>
           </div>
 
-       <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => setActiveCategory(category)}
-            className={`relative whitespace-nowrap px-3 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold transition-all ${
-              activeCategory === category
-                ? "text-white bg-gradient-to-b from-[#030904] to-[#256F31] shadow-md shadow-[#3dff87]/20"
-                : "text-gray-400 hover:text-white hover:bg-[#1a2621]"
-            }`}
-          >
-            {category}
-            <span className="absolute bottom-0  left-1/2 transform -translate-x-1/2 w-4 h-[2px] bg-white rounded-xl"></span>
-          </button>
-        ))}
-      </div>
+          <div className="flex justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-[#3dff87]/30 scrollbar-track-transparent flex-1">
+            <div className="flex items-center gap-2">
+              {categories.map((category) => (
+                <React.Fragment key={category}>
+                  <button
+                    onClick={() => setActiveCategory(category)}
+                    className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
+                      text-gray-400
+                      hover:text-white hover:bg-gradient-to-b hover:from-[#d4dcd520] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
+                      hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
+                  >
+                    {categoryIcons[category] && (
+                      <img
+                        src={categoryIcons[category]}
+                        alt={category}
+                        className="w-5 h-5 inline-block"
+                      />
+                    )}
+                    {category}
+                  </button>
+                    {category === "Bundles" && (
+                    <div
+                      className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-60 rounded-full"
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
 
-
-          <div className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg flex-shrink-0">
-            <span className="text-[#3dff87] text-xs font-bold">{userCurrency}</span>
-            {detectedCountry && (
-              <span className="text-gray-400 text-xs">({detectedCountry})</span>
+          <div className="relative flex items-center flex-shrink-0">
+            {!isSearchActive ? (
+              <button
+                onClick={() => setIsSearchActive(true)}
+                className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg hover:bg-[#1a2621] hover:border-[#3dff87]/40 transition-all"
+                title="Search products"
+              >
+                <svg className="w-5 h-5 text-[#f0f0f0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            ) : (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "auto", opacity: 1 }}
+                className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/40 px-3 py-2 rounded-lg"
+              >
+                <svg className="w-5 h-5 text-[#3dff87]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="bg-transparent text-white text-sm outline-none w-40 placeholder-gray-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="text-gray-400 hover:text-white transition-colors"
+                    title="Clear search"
+                  >
+                    {/* <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> */}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchActive(false);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors ml-1"
+                  title="Close search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
             )}
           </div>
 
           <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
             </svg>
             Join Discord
           </button>
@@ -604,6 +857,17 @@ export const AdoptMe = () => {
       </div>
 
       <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {searchQuery && (
+          <div className="bg-[#1a2621]/30 border border-[#3dff87]/20 rounded-lg p-4">
+            <p className="text-gray-300 text-sm">
+              Search results for: <span className="text-[#3dff87] font-semibold">"{searchQuery}"</span>
+              {filteredProducts.length > 0 && (
+                <span className="text-gray-400 ml-2">({filteredProducts.length} found)</span>
+              )}
+            </p>
+          </div>
+        )}
+
         {activeSection && (
           <button
             onClick={() => setActiveSection(null)}
@@ -612,7 +876,7 @@ export const AdoptMe = () => {
             <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to all
+            Back
           </button>
         )}
 
@@ -636,36 +900,61 @@ export const AdoptMe = () => {
           </div>
         )}
 
-        {!loading && !error && products.length > 0 && (
+        {!loading && !error && filteredProducts.length > 0 && (
           <>
             {(!activeSection || activeSection === "bestSellers") && (
-              renderSection("bestSellers", "Best Sellers", "/icon/crown.png", products)
+              renderSection("bestSellers", "Best Sellers", "/icon/crown.png", filteredProducts)
             )}
             {(!activeSection || activeSection === "pets") && (
-              renderSection("pets", "Pets", "/icon/pet.png", products)
+              renderSection("pets", "Pets", "/icon/pet.png", filteredProducts)
             )}
           </>
         )}
 
-        {products.length === 0 && !loading && !error && (
+        {!loading && !error && filteredProducts.length === 0 && (
           <div className="text-center py-20">
-            <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🎮</div>
+            <div className="text-[#3dff87]/30 text-6xl sm:text-8xl mb-4">🔍</div>
             <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">No products found</h3>
-            <p className="text-gray-400 text-sm sm:text-base">
-              {activeCategory !== "All" ? `No products found in "${activeCategory}".` : "Check back later for new items!"}
+            <p className="text-gray-400 text-sm sm:text-base mb-4">
+              {searchQuery
+                ? `No results found for "${searchQuery}"`
+                : activeCategory !== "All"
+                ? `No products found in "${activeCategory}".`
+                : "Check back later for new items!"}
             </p>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setIsSearchActive(false);
+                }}
+                className="px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition-colors"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         )}
       </div>
 
       <div
-        className="w-full h-[0.2vh] mt-auto"
-        style={{
-          background: "linear-gradient(to right, #3DFF87, #000000)",
-        }}
-      />
+        className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${
+          hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      >
+        <img
+          src="/icon/ro.png"
+          alt="Company Logo"
+          className="w-12 h-12 object-contain"
+        />
+      </div>
 
-      <MainContentSection />
+      <div ref={mainRef} className="relative">
+        <TrustedBySection />
+        <FAQSection />
+        <WeAre />
+        <MainContentSection />
+      </div>
 
       <Cart
         cart={cart}
