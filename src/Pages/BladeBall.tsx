@@ -331,28 +331,23 @@ export const BladeBall = () => {
     <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
 
         <Header />
-        <div className=" sticky top-0 z-10 b">
-          <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center gap-4 flex-wrap sm:flex-nowrap">
-            <div className="border-l border-[#3dff87]/30 py-3" />
-            
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#3dff87]/20 to-[#259951]/20 p-1.5 flex items-center justify-center border border-[#3dff87]/30">
+       <div className="sticky top-0 z-10 bg-[#06100A]/50 backdrop-blur-md">
+          <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
+            {/* Left side - game info */}
+            <div className="flex items-center gap-3 border border-[#999999]/15 px-3 rounded-xl py-0.5 flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg  flex items-center justify-center ">
                 <img
                   src={selectedGame.icon}
                   alt={selectedGame.name}
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-white text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">{selectedGame.name}</h1>
+              <h1 className="text-white text-base sm:text-lg font-bold tracking-tight whitespace-nowrap">
+                {selectedGame.name}
+              </h1>
             </div>
 
-            <div className="flex items-center gap-2 bg-[#1a2621]/50 border border-[#3dff87]/20 px-3 py-2 rounded-lg flex-shrink-0">
-              <span className="text-[#3dff87] text-xs font-bold">{userCurrency}</span>
-              {detectedCountry && (
-                <span className="text-gray-400 text-xs">({detectedCountry})</span>
-              )}
-            </div>
-
+            {/* Right side - button */}
             <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
@@ -361,6 +356,7 @@ export const BladeBall = () => {
             </button>
           </div>
         </div>
+
 
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 ">
           {loading && (
@@ -386,7 +382,7 @@ export const BladeBall = () => {
           {!loading && !error && product && (
           <div className="flex justify-center items-center">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-[15vw] p-6  text-center mx-auto">
-              <div className="w-64 h-64 flex-shrink-0">
+              <div className="w-64 h-64 shadow-lg p-5 rounded-xl bg-[#030904] ">
                 {product.node.images.edges[0]?.node.url ? (
                   <img
                     src={product.node.images.edges[0].node.url}
@@ -410,6 +406,20 @@ export const BladeBall = () => {
                 <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                   5$ per 1000
                 </p>
+                <p className="text-3xl sm:text-xl font-semibold">
+                  <span className="text-[#3dff87]/70">
+                    {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
+                  </span>
+                  <span className="text-white ml-1">
+                    {formatPrice(product)
+                      .replace(
+                        currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
+                        ""
+                      )
+                      .trim()}
+                  </span>
+                </p>
+
 
                 <div className="flex items-center justify-center sm:justify-start gap-6">
                   <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
