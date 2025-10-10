@@ -161,6 +161,7 @@ export const BladeBall = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [quantity, setQuantity] = useState<number>(2000); // New state for quantity
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -298,8 +299,22 @@ export const BladeBall = () => {
     return amountInUSD * rates[targetCurrency];
   }
 
-  const formatPrice = (product: Product | null) => {
-    if (!product?.node.variants.edges[0]) return "$10.00";
+  const formatPrice = (amount: number, currency: string) => {
+    const symbol = currencySymbols[currency as keyof typeof currencySymbols] || currency + " ";
+    const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
+    if (noDecimalCurrencies.includes(currency)) {
+      return `${symbol}${Math.round(amount).toLocaleString()}`;
+    } else {
+      const formatted = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+      return `${symbol}${formatted}`;
+    }
+  };
+
+  const calculateTotalPrice = () => {
+    if (!product?.node.variants.edges[0]) return "$0.00";
     const variant = product.node.variants.edges[0].node;
     const originalAmount = parseFloat(variant.price.amount);
     const originalCurrency = variant.price.currencyCode;
@@ -309,25 +324,14 @@ export const BladeBall = () => {
       userCurrency,
       exchangeRates
     );
-    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " ";
-    const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
-    if (noDecimalCurrencies.includes(userCurrency)) {
-      return `${symbol}${Math.round(convertedAmount).toLocaleString()}`;
-    } else {
-      const formatted = new Intl.NumberFormat('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(convertedAmount);
-      return `${symbol}${formatted}`;
-    }
+    const total = convertedAmount * (quantity / 1000); // Assuming price is per 1000 units
+    return formatPrice(total, userCurrency);
   };
 
   const handleAddToCart = () => {
     if (!product) return;
     
     const variant = product.node.variants.edges[0].node;
-    const quantityInput = document.querySelector('input[type="number"]') as HTMLInputElement;
-    const quantity = parseInt(quantityInput.value) || 2000;
     
     const existingItem = cart.find((item) => item.id === variant.id);
 
@@ -365,11 +369,17 @@ export const BladeBall = () => {
     setCart(cart.filter((item) => item.id !== itemId));
   };
 
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 2000;
+    const clampedValue = Math.max(2000, Math.min(300000, value));
+    setQuantity(clampedValue);
+  };
+
   const renderTokenSection = () => {
     return (
       <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
         <Header />
-          <div className="sticky top-0 z-10 bg-[#0b0b0b]/50 backdrop-blur-md ">
+          <div className="sticky top-0 z-10 bg-[#06100A]/50 backdrop-blur-md ">
            <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
            <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
               <div className="w-9 h-9 flex items-center justify-center">
@@ -430,8 +440,6 @@ export const BladeBall = () => {
               </h1>
             </div>
 
-        
-
           <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
@@ -465,37 +473,40 @@ export const BladeBall = () => {
 
           {!loading && !error && product && (
             <div className="flex justify-center items-center">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-[15vw] p-6 text-center mx-auto">
-                <div className="w-64 h-64 shadow-lg p-5 rounded-xl bg-[#030904] ">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-[10vw] text-center mx-auto">
+                {/* Image Card */}
+                <div className="w-[30vw] h-[50vh] shadow-2xl rounded-2xl bg-[#030904] overflow-hidden  flex items-center justify-center">
                   {product.node.images.edges[0]?.node.url ? (
                     <img
                       src={product.node.images.edges[0].node.url}
                       alt={product.node.title}
-                      className="w-full h-full object-contain rounded-lg"
+                      className="w-[95%] h-[95%] object-contain transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
-                    <div className="w-full h-full bg-[#1a2621] rounded-lg flex items-center justify-center">
-                      <span className="text-[#3dff87]/30 text-2xl">🎮</span>
+                    <div className="w-full h-full bg-[#1a2621] flex items-center justify-center">
+                      <span className="text-[#3dff87]/30 text-5xl">🎮</span>
                     </div>
                   )}
                 </div>
 
+                {/* Product Info */}
                 <div className="flex-1 text-white space-y-4 sm:text-left text-center">
-                  <h2 className="text-2xl font-bold text-left">{product.node.title}</h2>
+                  <h2 className="text-3xl font-bold text-left">{product.node.title}</h2>
 
                   {product.node.description && (
-                    <p className="text-base text-gray-400 text-left">{product.node.description}</p>
+                    <p className="text-md text-gray-400 text-left">{product.node.description}</p>
                   )}
 
                   <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                     5$ per 1000
                   </p>
-                  <p className="text-3xl sm:text-xl font-semibold">
+
+                  <p className="text-xl sm:text-3xl font-semibold">
                     <span className="text-[#3dff87]/70">
                       {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
                     </span>
                     <span className="text-white ml-1">
-                      {formatPrice(product)
+                      {formatPrice(parseFloat(product.node.variants.edges[0].node.price.amount), userCurrency)
                         .replace(
                           currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
                           ""
@@ -510,27 +521,33 @@ export const BladeBall = () => {
                     </p>
                     <input
                       type="number"
-                      defaultValue="2000"
+                      value={quantity}
                       min="2000"
                       max="300000"
-                      className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 2000;
-                        if (value < 2000) e.target.value = "2000";
-                        if (value > 300000) e.target.value = "300000";
-                      }}
+                      className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87] no-spin"
+                      onChange={handleQuantityChange}
                     />
+
                     <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                       (min 2000 - max 300000)
                     </span>
                   </div>
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
-                  >
-                    <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
-                    <span>Add to Cart</span>
-                  </button>
+
+                  <div className="flex items-center justify-center sm:justify-start gap-4">
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex items-center justify-center gap-2 w-4/5 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
+                    >
+                      <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
+                      <span>Add to Cart</span>
+                    </button>
+
+
+                    <p className="text-md font-medium text-white flex items-center gap-1">
+                      Total: <span className="text-[#b9b9b9]">{calculateTotalPrice()}</span>
+                    </p>
+
+                  </div>
                 </div>
               </div>
             </div>
