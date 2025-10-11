@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Eye, EyeOff, X, CheckCircle, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from '@supabase/supabase-js';
 
 // AuthenticationManager hook for header usage
 export function AuthenticationManager({ onUserChange }: { onUserChange?: (user: any) => void } = {}) {
+  const supabase = createClient((import.meta as any).env.VITE_SUPABASE_URL, (import.meta as any).env.VITE_SUPABASE_ANON_KEY);
+
   const [user, setUser] = useState<any>(() => {
     const stored = sessionStorage.getItem('customerData');
     return stored ? JSON.parse(stored) : null;
@@ -12,35 +15,58 @@ export function AuthenticationManager({ onUserChange }: { onUserChange?: (user: 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const normalizeUser = (u: any) => {
+    if (!u) return null;
+    let firstName = u.user_metadata?.firstName || u.user_metadata?.full_name || 'User';
+    let lastName = '';
+    if (u.user_metadata?.full_name && !u.user_metadata?.firstName) {
+      const parts = u.user_metadata.full_name.split(' ');
+      firstName = parts[0];
+      lastName = parts.slice(1).join(' ');
+    }
+    return {
+      id: u.id,
+      firstName,
+      lastName,
+      email: u.email,
+      phone: u.phone || null,
+      addresses: { edges: [] }
+    };
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const u = session?.user ?? null;
+      const normalized = normalizeUser(u);
+      setUser(normalized);
+      if (normalized) sessionStorage.setItem('customerData', JSON.stringify(normalized));
+      else sessionStorage.removeItem('customerData');
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (onUserChange) onUserChange(user);
   }, [user, onUserChange]);
 
-  const handleSetUser = (u: any) => {
-    setUser(u);
-    if (u) sessionStorage.setItem('customerData', JSON.stringify(u));
-    else sessionStorage.removeItem('customerData');
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     sessionStorage.removeItem('customerData');
-    sessionStorage.removeItem('shopifyCustomerToken');
-    sessionStorage.removeItem('shopifyTokenExpiry');
     setIsUserMenuOpen(false);
     setIsAuthModalOpen(false);
   };
 
   return {
     user,
-    setUser: handleSetUser,
+    setUser,
     isAuthModalOpen,
     setIsAuthModalOpen,
     isUserMenuOpen,
     setIsUserMenuOpen,
     userMenuRef,
     handleLogout,
-    handleSetUser,
   };
 }
 
@@ -53,6 +79,8 @@ export const AuthModal = ({
   onClose: () => void; 
   setUser: (user: any) => void 
 }) => {
+  const supabase = createClient((import.meta as any).env.VITE_SUPABASE_URL, (import.meta as any).env.VITE_SUPABASE_ANON_KEY);
+
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,9 +96,24 @@ export const AuthModal = ({
     agreeToTerms: false
   });
 
-  // Shopify Config
-  const SHOPIFY_DOMAIN = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
-  const STOREFRONT_TOKEN = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
+  const normalizeUser = (u: any) => {
+    if (!u) return null;
+    let firstName = u.user_metadata?.firstName || u.user_metadata?.full_name || 'User';
+    let lastName = '';
+    if (u.user_metadata?.full_name && !u.user_metadata?.firstName) {
+      const parts = u.user_metadata.full_name.split(' ');
+      firstName = parts[0];
+      lastName = parts.slice(1).join(' ');
+    }
+    return {
+      id: u.id,
+      firstName,
+      lastName,
+      email: u.email,
+      phone: u.phone || null,
+      addresses: { edges: [] }
+    };
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -80,54 +123,6 @@ export const AuthModal = ({
   const showMessage = (type: 'success' | 'error' | 'info', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
-  };
-
-  const fetchCustomerData = async (token: string) => {
-    const customerQuery = `
-      query getCustomer($customerAccessToken: String!) {
-        customer(customerAccessToken: $customerAccessToken) {
-          id
-          firstName
-          lastName
-          email
-          phone
-          addresses(first: 10) {
-            edges {
-              node {
-                address1
-                city
-                country
-                zip
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    try {
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-10/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: customerQuery,
-          variables: { customerAccessToken: token },
-        }),
-      });
-
-      const data = await response.json();
-      if (data.data?.customer) {
-        sessionStorage.setItem('customerData', JSON.stringify(data.data.customer));
-        return data.data.customer;
-      }
-      return null;
-    } catch (error) {
-      console.error('Error fetching customer data:', error);
-      return null;
-    }
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
@@ -140,38 +135,12 @@ export const AuthModal = ({
     setIsLoading(true);
 
     try {
-      const resetMutation = `
-        mutation customerRecover($email: String!) {
-          customerRecover(email: $email) {
-            customerUserErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-10/graphql.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: resetMutation,
-          variables: { email: formData.email },
-        }),
-      });
-
-      const data = await response.json();
-      const errors = data.data?.customerRecover?.customerUserErrors || [];
-
-      if (errors.length === 0) {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
+      if (error) {
+        showMessage('error', error.message || 'Failed to send reset email. Please try again.');
+      } else {
         showMessage('success', 'Password reset email sent! Please check your inbox and click the reset link.');
         setResetStep('complete');
-      } else {
-        showMessage('error', errors[0]?.message || 'Failed to send reset email. Please try again.');
       }
     } catch (error) {
       console.error('Password reset error:', error);
@@ -194,110 +163,43 @@ export const AuthModal = ({
     try {
       if (isLogin) {
         // Login
-        const loginMutation = `
-          mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
-            customerAccessTokenCreate(input: $input) {
-              customerAccessToken {
-                accessToken
-                expiresAt
-              }
-              customerUserErrors {
-                code
-                field
-                message
-              }
-            }
-          }
-        `;
-
-        const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-10/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-          },
-          body: JSON.stringify({
-            query: loginMutation,
-            variables: {
-              input: {
-                email: formData.email,
-                password: formData.password,
-              },
-            },
-          }),
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
         });
 
-        const data = await response.json();
-        const errors = data.data?.customerAccessTokenCreate?.customerUserErrors || [];
-
-        if (data.data?.customerAccessTokenCreate?.customerAccessToken) {
-          const token = data.data.customerAccessTokenCreate.customerAccessToken.accessToken;
-          const expiresAt = data.data.customerAccessTokenCreate.customerAccessToken.expiresAt;
-          
-          sessionStorage.setItem('shopifyCustomerToken', token);
-          sessionStorage.setItem('shopifyTokenExpiry', expiresAt);
-          
-          const customerData = await fetchCustomerData(token);
-          if (customerData) {
-            setUser(customerData);
-            showMessage('success', `Welcome back, ${customerData.firstName}!`);
-            setTimeout(() => onClose(), 1500);
-          }
-        } else {
-          showMessage('error', errors[0]?.message || 'Login failed. Please check your credentials.');
+        if (error) {
+          showMessage('error', error.message || 'Login failed. Please check your credentials.');
+        } else if (data.user) {
+          const normalized = normalizeUser(data.user);
+          setUser(normalized);
+          showMessage('success', `Welcome back, ${normalized.firstName}!`);
+          setTimeout(() => onClose(), 1500);
         }
       } else {
         // Register
-        const registerMutation = `
-          mutation customerCreate($input: CustomerCreateInput!) {
-            customerCreate(input: $input) {
-              customer {
-                id
-                email
-                firstName
-              }
-              customerUserErrors {
-                code
-                field
-                message
-              }
-            }
-          }
-        `;
-
-        const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-10/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-          },
-          body: JSON.stringify({
-            query: registerMutation,
-            variables: {
-              input: {
-                email: formData.email,
-                password: formData.password,
-                firstName: formData.username,
-                acceptsMarketing: formData.agreeToTerms,
-              },
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              firstName: formData.username,
+              acceptsMarketing: formData.agreeToTerms,
             },
-          }),
+          },
         });
 
-        const data = await response.json();
-        const errors = data.data?.customerCreate?.customerUserErrors || [];
-
-        if (data.data?.customerCreate?.customer) {
-          showMessage('success', 'Registration successful! Please log in with your credentials.');
-          setIsLogin(true);
-          setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-        } else {
-          if (errors.some((err: { message: string }) => err.message.includes('already exists'))) {
+        if (error) {
+          if (error.message.includes('already registered')) {
             showMessage('info', 'Account already exists! Please log in instead.');
             setIsLogin(true);
           } else {
-            showMessage('error', errors[0]?.message || 'Registration failed. Please try again.');
+            showMessage('error', error.message || 'Registration failed. Please try again.');
           }
+        } else {
+          showMessage('success', 'Registration successful! Please log in with your credentials.');
+          setIsLogin(true);
+          setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
         }
       }
     } catch (error) {
@@ -312,8 +214,22 @@ export const AuthModal = ({
     if ((window as any).google && isOpen) {
       (window as any).google.accounts.id.initialize({
         client_id: (import.meta as any).env.VITE_GOOGLE_CLIENT_ID,
-        callback: (response: unknown) => {
-          console.log('Google auth:', response);
+        callback: async (response: any) => {
+          try {
+            const { data, error } = await supabase.auth.signInWithIdToken({
+              provider: 'google',
+              token: response.credential,
+            });
+            if (error) throw error;
+            if (data.user) {
+              const normalized = normalizeUser(data.user);
+              setUser(normalized);
+              showMessage('success', `Welcome, ${normalized.firstName}!`);
+              setTimeout(() => onClose(), 1500);
+            }
+          } catch (error: any) {
+            showMessage('error', error.message || 'Google authentication failed.');
+          }
         },
       });
 

@@ -513,7 +513,7 @@ const HeaderSection = (): JSX.Element => {
       <AuthModal 
         isOpen={authManager.isAuthModalOpen} 
         onClose={() => authManager.setIsAuthModalOpen(false)} 
-        setUser={authManager.handleSetUser}
+        setUser={authManager.setUser}
       />
     </>
   );
