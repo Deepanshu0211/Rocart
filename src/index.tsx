@@ -12,6 +12,7 @@ import  GrowAGarden  from "./Pages/GrowAGarden";
 import  MurderMystery  from "./Pages/MurderMystery2";
 import  NinetyNineNights  from "./Pages/NinetyNineNights";
 import  StealABrainrot from "./Pages/StealABrainrot";
+import AdminPage from "./Pages/admin"; // Import the new admin page
 
 createRoot(document.getElementById("app") as HTMLElement).render(
   <StrictMode>
@@ -28,6 +29,12 @@ createRoot(document.getElementById("app") as HTMLElement).render(
         <Route path="/murderMystery" element={<MurderMystery />} />
         <Route path="/NinetyNineNights" element={<NinetyNineNights />} />
         <Route path="/StealABrainrot" element={<StealABrainrot />} />
+        
+        {/* NEW admin route */}
+        <Route path="/admin" element={<AdminPage />} />
+
+        {/* Catch-all route */}
+        <Route path="*" element={<div>404: Page Not Found</div>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
