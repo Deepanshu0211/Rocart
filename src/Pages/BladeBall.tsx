@@ -372,9 +372,13 @@ export const BladeBall = () => {
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 2000;
-    const clampedValue = Math.max(2000, Math.min(300000, value));
-    setQuantity(clampedValue);
+    const value = e.target.value;
+    if (value === "") {
+      setQuantity(0);
+    } else {
+      const numValue = parseInt(value) || 0;
+      setQuantity(numValue);
+    }
   };
 
   const renderTokenSection = () => {
@@ -524,6 +528,7 @@ export const BladeBall = () => {
                       <input
                         type="text"
                         value={quantity}
+                        onChange={handleQuantityChange}
                         className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
                        
                       />

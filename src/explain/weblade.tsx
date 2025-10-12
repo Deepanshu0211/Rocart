@@ -44,41 +44,30 @@ const weblade: React.FC = () => {
                  What is Blade Ball and why do players want swords and tokens?
             </h2>
             <p className="text-[#ffffffb3] text-xs leading-relaxed">
-              Grow a Garden is a massively popular Roblox farming game where
-              players cultivate crops, collect pets, and build their dream
-              gardens.  Seeds are essential items that let you grow different
-              crops with varying growth times and profit potential.
-               Gears provide important bonuses like faster growth rates and
-              better harvest yields. Players eagerly seek rare seeds and
-              powerful gears because they dramatically increase farming
-              efficiency and profits. The game's unique mutation system also
-              means certain seeds can evolve into valuable variants under
-              special conditions, making seed collection an exciting part of the
-              gameplay.
+           Blade Ball is a fast-paced game (especially popular in the USA) where players
+            dodge a deadly flying ball while dueling opponents with different special abilities.
+           
+           Blade Ball tokens are the in-game currency used to unlock new abilities, and other items. 
+           Players are eager to collect cool-looking plenty of tokens because it helps them stand out,
+            trade for rare items, and progress faster in this competitive game.
             </p>
           </div>
 
           <div className="rounded-2xl p-6">
             <h2 className="text-md font-semibold text-[#FFFFFF] mb-3">
-              Where is the best place to buy Grow a Garden items?
+             What's the best place to buy Blade Ball tokens?
             </h2>
             <p className="text-[#ffffffb3] text-xs leading-relaxed">
-              The best place to buy Grow a Garden items is Rocart's GAG shop,
-              which offers secure transactions and instant delivery of seeds,
-              gears, and pets. Bloxcart provides competitive prices on
-              everything from basic starter packs to rare mutated seeds and
-              limited-time items. Players choose Bloxcart because it eliminates
-              the grind of saving up in-game currency or waiting for special
-              events to get premium items. With reliable 24/7 service and a
-              trusted delivery system, Bloxcart has become the go-to marketplace
-              for Grow a Garden players looking to expand their farming
-              capabilities quickly and safely.
+            The best place to buy Blade Ball tokens is a reputable shop that offers fast, secure service. Bloxcart provides a safe,
+             convenient platform with instant delivery and competitive prices, so you can get your new swords or token packs in minutes.
+              Many experienced Blade Ball players trust Bloxcart because it consistently offers great deals on authentic items,
+             helping you save money while expanding your collection hassle-free.
             </p>
           </div>
 
           <div className="rounded-2xl p-6">
             <h2 className="text-md font-semibold text-[#FFFFFF] mb-3">
-              How do mutations work in Grow a Garden?
+             How do I purchase Blade Ball swords or tokens on Bloxcart?
             </h2>
             <p className="text-[#FFFFFFb3] text-xs leading-relaxed">
               Mutations in Grow a Garden are special variants of regular crops
