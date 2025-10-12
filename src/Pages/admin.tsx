@@ -1,18 +1,11 @@
-// admin.tsx
-
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useForm } from "react-hook-form";
 
-// Initialize Supabase clients
+// Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-// Public client for regular operations
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-// Admin client for setup (use with caution)
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 // Types for Product
 type Product = {
@@ -24,6 +17,8 @@ type Product = {
   currency: string;
   tags: string[];
   game: string;
+  stock_quantity?: number;
+  is_available: boolean;
 };
 
 // Form data type
@@ -32,9 +27,11 @@ type FormData = {
   description?: string;
   price: number;
   currency: string;
-  tags: string; // Comma-separated string for input
+  tags: string;
   game: string;
-  image: FileList; // For file upload
+  image: FileList;
+  stock_quantity: number;
+  is_available: boolean;
 };
 
 const AdminPanel = () => {
@@ -43,79 +40,20 @@ const AdminPanel = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNew, setIsAddingNew] = useState<boolean>(false);
-  const [isSetupComplete, setIsSetupComplete] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [currencyChanged, setCurrencyChanged] = useState<boolean>(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormData>({
+    defaultValues: {
+      currency: "USD",
+      stock_quantity: 0,
+      is_available: true,
+    },
+  });
+  const { register: registerLogin, handleSubmit: handleSubmitLogin } = useForm<{ password: string }>();
 
-  // Setup Supabase (table, bucket, policies)
-  const setupSupabase = async () => {
-    try {
-      // Step 1: Create the 'products' table
-      const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS products (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          title TEXT NOT NULL,
-          description TEXT,
-          image_url TEXT,
-          price NUMERIC NOT NULL,
-          currency TEXT NOT NULL,
-          tags TEXT[] NOT NULL,
-          game TEXT NOT NULL
-        );
-      `;
-      const { error: tableError } = await supabaseAdmin.rpc("execute_sql", { sql: createTableQuery });
-      if (tableError) throw new Error(`Error creating table: ${tableError.message}`);
-
-      // Step 2: Create the 'product-images' storage bucket
-      const { error: bucketError } = await supabaseAdmin.storage.createBucket("product-images", {
-        public: true, // Public read access
-        allowedMimeTypes: ["image/*"],
-      });
-      if (bucketError && bucketError.message !== "Bucket already exists") {
-        throw new Error(`Error creating bucket: ${bucketError.message}`);
-      }
-
-      // Step 3: Set storage policies
-      const policies = [
-        // Allow authenticated users to upload
-        {
-          name: "Allow authenticated uploads",
-          definition: `
-            CREATE POLICY "Allow authenticated uploads" ON storage.objects
-            FOR INSERT TO authenticated WITH CHECK (bucket_id = 'product-images');
-          `,
-        },
-        // Allow public read access
-        {
-          name: "Allow public read",
-          definition: `
-            CREATE POLICY "Allow public read" ON storage.objects
-            FOR SELECT TO public USING (bucket_id = 'product-images');
-          `,
-        },
-      ];
-
-      for (const policy of policies) {
-        const { error: policyError } = await supabaseAdmin.rpc("execute_sql", {
-          sql: policy.definition,
-        });
-        if (policyError && !policyError.message.includes("already exists")) {
-          throw new Error(`Error creating policy ${policy.name}: ${policyError.message}`);
-        }
-      }
-
-      // Step 4: Enable UUID extension (if not already enabled)
-      const { error: uuidError } = await supabaseAdmin.rpc("execute_sql", {
-        sql: "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";",
-      });
-      if (uuidError) throw new Error(`Error enabling UUID extension: ${uuidError.message}`);
-
-      setIsSetupComplete(true);
-    } catch (err: any) {
-      setError(`Setup failed: ${err.message}`);
-      setLoading(false);
-    }
-  };
+  const selectedCurrency = watch("currency");
+  const stockQuantity = watch("stock_quantity");
 
   // Fetch products from Supabase
   const fetchProducts = async () => {
@@ -133,16 +71,19 @@ const AdminPanel = () => {
     setLoading(false);
   };
 
-  // Run setup and fetch products on mount
   useEffect(() => {
-    const initialize = async () => {
-      await setupSupabase();
-      if (isSetupComplete) {
-        await fetchProducts();
-      }
-    };
-    initialize();
-  }, [isSetupComplete]);
+    if (isAuthenticated) {
+      fetchProducts();
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (editingProduct && selectedCurrency !== editingProduct.currency) {
+      setCurrencyChanged(true);
+    } else {
+      setCurrencyChanged(false);
+    }
+  }, [selectedCurrency, editingProduct]);
 
   // Handle file upload to Supabase Storage
   const uploadImage = async (file: File) => {
@@ -153,7 +94,6 @@ const AdminPanel = () => {
       throw new Error(`Error uploading image: ${error.message}`);
     }
 
-    // Get public URL
     const { data: publicData } = supabase.storage.from("product-images").getPublicUrl(filePath);
     return publicData.publicUrl;
   };
@@ -162,7 +102,6 @@ const AdminPanel = () => {
   const onSubmit = async (data: FormData) => {
     let imageUrl = editingProduct?.image_url || "";
 
-    // Upload image if provided
     if (data.image && data.image.length > 0) {
       try {
         imageUrl = await uploadImage(data.image[0]);
@@ -178,14 +117,15 @@ const AdminPanel = () => {
       title: data.title,
       description: data.description,
       image_url: imageUrl,
-      price: data.price,
+      price: parseFloat(data.price.toString()),
       currency: data.currency,
       tags: tagsArray,
       game: data.game,
+      stock_quantity: parseInt(data.stock_quantity.toString()),
+      is_available: data.is_available,
     };
 
     if (editingProduct) {
-      // Update existing product
       const { error } = await supabase
         .from("products")
         .update(productData)
@@ -195,10 +135,10 @@ const AdminPanel = () => {
         setError(`Error updating product: ${error.message}`);
       } else {
         setEditingProduct(null);
+        setCurrencyChanged(false);
         fetchProducts();
       }
     } else {
-      // Add new product
       const { error } = await supabase.from("products").insert([productData]);
 
       if (error) {
@@ -212,8 +152,39 @@ const AdminPanel = () => {
     reset();
   };
 
+  // Quick toggle availability
+  const toggleAvailability = async (product: Product) => {
+    const { error } = await supabase
+      .from("products")
+      .update({ is_available: !product.is_available })
+      .eq("id", product.id);
+
+    if (error) {
+      setError(`Error updating availability: ${error.message}`);
+    } else {
+      fetchProducts();
+    }
+  };
+
+  // Quick update stock
+  const updateStock = async (productId: string, newStock: number) => {
+    const { error } = await supabase
+      .from("products")
+      .update({ stock_quantity: newStock })
+      .eq("id", productId);
+
+    if (error) {
+      setError(`Error updating stock: ${error.message}`);
+    } else {
+      fetchProducts();
+    }
+  };
+
   // Delete product
   const deleteProduct = async (id: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this product?");
+    if (!confirmed) return;
+
     const { error } = await supabase.from("products").delete().eq("id", id);
 
     if (error) {
@@ -234,6 +205,8 @@ const AdminPanel = () => {
       currency: product.currency,
       tags: product.tags.join(", "),
       game: product.game,
+      stock_quantity: product.stock_quantity || 0,
+      is_available: product.is_available,
     });
   };
 
@@ -241,49 +214,104 @@ const AdminPanel = () => {
   const startAdding = () => {
     setIsAddingNew(true);
     setEditingProduct(null);
-    reset();
+    reset({
+      title: "",
+      description: "",
+      price: 0,
+      currency: "USD",
+      tags: "",
+      game: "",
+      stock_quantity: 0,
+      is_available: true,
+    });
   };
 
   // Cancel editing/adding
   const cancel = () => {
     setEditingProduct(null);
     setIsAddingNew(false);
+    setCurrencyChanged(false);
     reset();
   };
 
+  // Handle login with password
+  const onLoginSubmit = (data: { password: string }) => {
+    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
+    if (data.password === correctPassword) {
+      setIsAuthenticated(true);
+      setError(null);
+    } else {
+      setError("Incorrect password. Please try again.");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-[#1a2621] p-8 rounded-lg shadow-lg border border-[#3dff87]/20 w-full max-w-md">
+          <h1 className="text-2xl font-bold text-center text-white mb-6">Admin Login</h1>
+          <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
+              <input
+                type="password"
+                {...registerLogin("password", { required: "Password is required" })}
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              />
+              {error && <span className="text-red-500 text-sm">{error}</span>}
+            </div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition"
+            >
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="text-center py-10 text-white">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
-        <p className="text-gray-400 mt-4">Setting up or loading products...</p>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
+          <p className="text-gray-400 mt-4">Loading products...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-10 text-red-500">
-        <div className="text-xl mb-4">⚠️ Error</div>
-        <p className="text-gray-400">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
-        >
-          Retry
-        </button>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center text-red-500">
+          <div className="text-xl mb-4">⚠️ Error</div>
+          <p className="text-gray-400">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              fetchProducts();
+            }}
+            className="mt-4 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="p-6 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Admin Panel - Manage Products</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Admin Panel - Manage Products</h1>
 
       {/* Add New Button */}
       {!isAddingNew && !editingProduct && (
         <button
           onClick={startAdding}
-          className="mb-6 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
+          className="mb-6 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition w-full max-w-xs block mx-auto"
         >
           Add New Product
         </button>
@@ -291,63 +319,103 @@ const AdminPanel = () => {
 
       {/* Form for Add/Edit */}
       {(isAddingNew || editingProduct) && (
-        <form onSubmit={handleSubmit(onSubmit)} className="mb-8 space-y-4 bg-[#1a2621] p-6 rounded-lg border border-[#3dff87]/20">
+        <form onSubmit={handleSubmit(onSubmit)} className="mb-8 space-y-4 bg-[#1a2621] p-6 rounded-lg border border-[#3dff87]/20 max-w-2xl mx-auto">
           <div>
-            <label className="block mb-1 text-sm">Title</label>
+            <label className="block mb-1 text-sm text-gray-300">Title</label>
             <input
               {...register("title", { required: "Title is required" })}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
             />
             {errors.title && <span className="text-red-500 text-sm">{errors.title.message}</span>}
           </div>
 
           <div>
-            <label className="block mb-1 text-sm">Description</label>
+            <label className="block mb-1 text-sm text-gray-300">Description</label>
             <textarea
               {...register("description")}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
+              rows={3}
             />
           </div>
 
-          <div>
-            <label className="block mb-1 text-sm">Price</label>
-            <input
-              type="number"
-              step="0.01"
-              {...register("price", { required: "Price is required", min: { value: 0, message: "Price must be positive" } })}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
-            />
-            {errors.price && <span className="text-red-500 text-sm">{errors.price.message}</span>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 text-sm text-gray-300">Price</label>
+              <input
+                type="number"
+                step="0.01"
+                {...register("price", { required: "Price is required", min: { value: 0, message: "Price must be positive" } })}
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
+              />
+              {errors.price && <span className="text-red-500 text-sm">{errors.price.message}</span>}
+              {currencyChanged && (
+                <p className="text-yellow-500 text-sm mt-1">
+                  Currency changed. Please verify the price for {selectedCurrency}.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm text-gray-300">Currency</label>
+              <select
+                {...register("currency", { required: "Currency is required" })}
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="INR">INR</option>
+              </select>
+              {errors.currency && <span className="text-red-500 text-sm">{errors.currency.message}</span>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 text-sm text-gray-300">Stock Quantity</label>
+              <input
+                type="number"
+                {...register("stock_quantity", { 
+                  required: "Stock quantity is required", 
+                  min: { value: 0, message: "Stock cannot be negative" } 
+                })}
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
+              />
+              {errors.stock_quantity && <span className="text-red-500 text-sm">{errors.stock_quantity.message}</span>}
+              {stockQuantity === 0 && (
+                <p className="text-yellow-500 text-sm mt-1">⚠️ Product will show as "Out of Stock"</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block mb-1 text-sm text-gray-300">Availability Status</label>
+              <div className="flex items-center h-[42px]">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register("is_available")}
+                    className="w-5 h-5 accent-[#3dff87] mr-2"
+                  />
+                  <span className="text-white">Available for Purchase</span>
+                </label>
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block mb-1 text-sm">Currency</label>
-            <select
-              {...register("currency", { required: "Currency is required" })}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="INR">INR</option>
-            </select>
-            {errors.currency && <span className="text-red-500 text-sm">{errors.currency.message}</span>}
-          </div>
-
-          <div>
-            <label className="block mb-1 text-sm">Tags (comma-separated)</label>
+            <label className="block mb-1 text-sm text-gray-300">Tags (comma-separated)</label>
             <input
               {...register("tags")}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
               placeholder="e.g., best-sellers, summer-specials, knives"
             />
           </div>
 
           <div>
-            <label className="block mb-1 text-sm">Game</label>
+            <label className="block mb-1 text-sm text-gray-300">Game</label>
             <select
               {...register("game", { required: "Game is required" })}
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87] transition"
             >
               <option value="AdoptMe">AdoptMe</option>
               <option value="AnimeVanguards">Anime Vanguards</option>
@@ -358,7 +426,7 @@ const AdminPanel = () => {
           </div>
 
           <div>
-            <label className="block mb-1 text-sm">Image Upload</label>
+            <label className="block mb-1 text-sm text-gray-300">Image Upload</label>
             <input
               type="file"
               accept="image/*"
@@ -367,17 +435,17 @@ const AdminPanel = () => {
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 justify-end">
             <button
               type="submit"
-              className="px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
+              className="px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e] transition"
             >
               {editingProduct ? "Update Product" : "Add Product"}
             </button>
             <button
               type="button"
               onClick={cancel}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
             >
               Cancel
             </button>
@@ -386,31 +454,77 @@ const AdminPanel = () => {
       )}
 
       {/* Products List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {products.map((product) => (
-          <div key={product.id} className="p-4 bg-[#1a2621] rounded-lg shadow-lg border border-[#3dff87]/20">
+          <div key={product.id} className="p-4 bg-[#1a2621] rounded-lg shadow-lg border border-[#3dff87]/20 hover:shadow-xl transition relative">
+            {/* Availability Badge */}
+            <div className="absolute top-2 right-2 z-10">
+              {!product.is_available ? (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                  Unavailable
+                </span>
+              ) : product.stock_quantity === 0 ? (
+                <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                  Out of Stock
+                </span>
+              ) : product.stock_quantity && product.stock_quantity < 10 ? (
+                <span className="bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-semibold">
+                  Low Stock
+                </span>
+              ) : (
+                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                  In Stock
+                </span>
+              )}
+            </div>
+
             <img
               src={product.image_url || "/placeholder.png"}
               alt={product.title}
-              className="w-full h-48 object-cover mb-4 rounded"
+              className="w-full h-48 object-cover mb-4 rounded transition"
             />
-            <h2 className="text-xl font-semibold">{product.title}</h2>
-            <p className="text-gray-400">{product.description || "No description available"}</p>
-            <p className="font-bold">
-              {product.price} {product.currency}
+            <h2 className="text-xl font-semibold text-white">{product.title}</h2>
+            <p className="text-gray-400 text-sm mb-2">{product.description || "No description available"}</p>
+            <p className="font-bold text-[#3dff87] mb-2">
+              {product.price.toFixed(2)} {product.currency}
             </p>
-            <p className="text-sm text-gray-500">Tags: {product.tags.join(", ")}</p>
-            <p className="text-sm text-gray-500">Game: {product.game}</p>
-            <div className="mt-4 flex gap-2">
+            
+            {/* Stock Info */}
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm text-gray-400">Stock:</span>
+              <input
+                type="number"
+                min="0"
+                value={product.stock_quantity || 0}
+                onChange={(e) => updateStock(product.id, parseInt(e.target.value) || 0)}
+                className="w-20 px-2 py-1 bg-gray-800 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-[#3dff87]"
+              />
+              <span className="text-sm text-gray-400">units</span>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-2">Tags: {product.tags.join(", ")}</p>
+            <p className="text-sm text-gray-500 mb-3">Game: {product.game}</p>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => toggleAvailability(product)}
+                className={`px-3 py-1 rounded font-semibold transition ${
+                  product.is_available
+                    ? "bg-orange-500 hover:bg-orange-600 text-white"
+                    : "bg-green-500 hover:bg-green-600 text-white"
+                }`}
+              >
+                {product.is_available ? "Mark Unavailable" : "Mark Available"}
+              </button>
               <button
                 onClick={() => startEditing(product)}
-                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
               >
                 Edit
               </button>
               <button
                 onClick={() => deleteProduct(product.id)}
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
               >
                 Delete
               </button>

@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Types
 type CartItem = {
@@ -21,244 +27,128 @@ const currencySymbols: Record<string, string> = {
   ZAR: "R", TRY: "₺", ARS: "$", CLP: "$", CZK: "Kč",
 };
 
-interface ShopifyCartLine {
-  id: string;
-  quantity: number;
-  merchandise: {
-    id: string;
-    title: string;
-    priceV2: { amount: string; currencyCode: string };
-    image?: { url: string };
-    product: { title: string };
-  };
-}
-
 export const Cart = ({
   cart: initialCart,
   userCurrency,
   exchangeRates,
   onUpdateQuantity,
   onRemoveItem,
-  onRequireAuth,
-  checkoutId,
-  useShopifyCheckout = true,
-  onResetCheckoutId,
 }: {
   cart: CartItem[];
   userCurrency: string;
   exchangeRates: Record<string, number>;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
-  onRequireAuth?: () => void;
-  checkoutId?: string;
-  useShopifyCheckout?: boolean;
-  onResetCheckoutId?: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hasProcessed, setHasProcessed] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
 
-  const SHOPIFY_DOMAIN: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
-  const STOREFRONT_TOKEN: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
-
-  // Validate environment variables
+  // Load cart from Supabase on mount
   useEffect(() => {
-    if (useShopifyCheckout && (!SHOPIFY_DOMAIN || !STOREFRONT_TOKEN)) {
-      setFetchError("Store configuration error. Please check Shopify settings.");
-    }
-  }, [useShopifyCheckout, SHOPIFY_DOMAIN, STOREFRONT_TOKEN]);
-
-  // Update local cart quantity
-  const updateLocalQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCart((prevCart) => {
-        const updatedCart = prevCart.filter((item) => item.id !== itemId);
-        onRemoveItem(itemId);
-        return updatedCart;
-      });
-    } else {
-      setCart((prevCart) => {
-        const updatedCart = prevCart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        );
-        onUpdateQuantity(itemId, newQuantity);
-        return updatedCart;
-      });
-    }
-  };
-
-  // Fetch cart details from Shopify
-  const fetchCartDetails = async (cartId: string): Promise<CartItem[]> => {
-    const cartQuery = `
-      query getCart($id: ID!) {
-        cart(id: $id) {
-          id
-          lines(first: 100) {
-            edges {
-              node {
-                id
-                quantity
-                merchandise {
-                  ... on ProductVariant {
-                    id
-                    title
-                    priceV2 {
-                      amount
-                      currencyCode
-                    }
-                    image {
-                      url
-                    }
-                    product {
-                      title
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    try {
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Storefront-Access-Token": STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: cartQuery,
-          variables: { id: `gid://shopify/Cart/${cartId}` },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
-      }
-
-      if (!data.data?.cart) {
-        throw new Error("Cart not found or invalid.");
-      }
-
-      const lines = data.data.cart.lines?.edges || [];
-      if (lines.length === 0) {
-        setFetchError("No items found in Shopify cart. It may be empty or expired.");
-        return [];
-      }
-
-      return lines
-        .map(({ node }: { node: ShopifyCartLine }) => {
-          if (!node.merchandise?.id) {
-            console.warn("Invalid variant ID for line item:", node);
-            return null;
-          }
-          return {
-            id: node.merchandise.id,
-            title: node.merchandise.product?.title || node.merchandise.title || "Unknown Product",
-            price: parseFloat(node.merchandise.priceV2?.amount || "0"),
-            currency: node.merchandise.priceV2?.currencyCode || userCurrency,
-            image: node.merchandise.image?.url || "/placeholder.png",
-            quantity: node.quantity || 1,
-          };
-        })
-        .filter((item): item is CartItem => item !== null);
-    } catch (error: any) {
-      console.error("Error fetching cart details:", error.message);
-      setFetchError(`Failed to fetch cart: ${error.message}`);
-      if (error.message.includes("Cart not found") || error.message.includes("No items found")) {
-        onResetCheckoutId?.();
-      }
-      return [];
-    }
-  };
-
-  // Load and merge cart data, and show notification when a new item is added
-  useEffect(() => {
-    const validInitialCart = initialCart.filter(
-      (item) => item.id && item.id.match(/\/\d+$/) && item.title && item.price > 0
-    );
-
-    // Check for new items by comparing IDs
-    const prevCartIds = new Set(cart.map((item) => item.id));
-    const newCartIds = new Set(validInitialCart.map((item) => item.id));
-    const hasNewItem = [...newCartIds].some((id) => !prevCartIds.has(id));
-
-    // Show notification when a new item is added
-    if (hasNewItem && validInitialCart.length > 0) {
-      const newItems = validInitialCart.filter(item => !prevCartIds.has(item.id));
-      setNotificationMessage(`${newItems[0].title} Added To Cart!`);
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 3000);
-    }
-
-    setCart((prevCart) => {
-      const mergedCart = [...prevCart];
-      validInitialCart.forEach((initialItem) => {
-        const existingIndex = mergedCart.findIndex((item) => item.id === initialItem.id);
-        if (existingIndex !== -1) {
-          mergedCart[existingIndex] = { ...mergedCart[existingIndex], ...initialItem };
-        } else {
-          mergedCart.push(initialItem);
-        }
-      });
-      return mergedCart;
-    });
-
     const loadCart = async () => {
-      if (!checkoutId || !useShopifyCheckout || !SHOPIFY_DOMAIN || !STOREFRONT_TOKEN) {
-        setFetchError(null);
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading cart:", error.message);
         return;
       }
 
-      const fetchedCart = await fetchCartDetails(checkoutId);
-      if (fetchedCart.length > 0) {
-        setCart((prevCart) => {
-          const mergedCart = [...prevCart];
-          fetchedCart.forEach((fetchedItem) => {
-            const existingIndex = mergedCart.findIndex((item) => item.id === fetchedItem.id);
-            if (existingIndex !== -1) {
-              mergedCart[existingIndex] = { ...mergedCart[existingIndex], ...fetchedItem };
-            } else {
-              mergedCart.push(fetchedItem);
-            }
-          });
-          return mergedCart;
-        });
-        setFetchError(null);
-      } else {
-        setCart([]);
-        onResetCheckoutId?.();
+      if (data) {
+        setCart(data as CartItem[]);
       }
     };
 
     loadCart();
-  }, [initialCart, checkoutId, useShopifyCheckout, SHOPIFY_DOMAIN, STOREFRONT_TOKEN, onResetCheckoutId]);
+  }, []);
 
-  // Clear cart and reset states after successful checkout
-  const resetCartState = () => {
-    setCart([]);
-    setCheckoutSuccess(null);
-    setCheckoutError(null);
-    setIsCheckoutOpen(false);
-    setIsOpen(false);
-    setHasProcessed(false);
-    setFetchError(null);
-    onResetCheckoutId?.();
+  // Sync initial cart with Supabase when new items are added
+  useEffect(() => {
+    const syncNewItems = async () => {
+      const validInitialCart = initialCart.filter(
+        (item) => item.id && item.title && item.price > 0
+      );
+
+      const prevCartIds = new Set(cart.map((item) => item.id));
+      const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
+
+      if (newItems.length > 0) {
+        // Update local state immediately (optimistic update)
+        setCart((prevCart) => {
+          const updatedCart = [...prevCart];
+          newItems.forEach((newItem) => {
+            const existingIndex = updatedCart.findIndex((item) => item.id === newItem.id);
+            if (existingIndex === -1) {
+              updatedCart.push(newItem);
+              setNotificationMessage(`${newItem.title} Added To Cart!`);
+              setShowNotification(true);
+              setTimeout(() => setShowNotification(false), 3000);
+            }
+          });
+          return updatedCart;
+        });
+
+        // Sync to database in background
+        newItems.forEach(async (item) => {
+          const { error } = await supabase
+            .from("cart_items")
+            .upsert({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              currency: item.currency,
+              image: item.image,
+              quantity: item.quantity,
+            });
+          if (error) console.error("Error upserting item:", error.message);
+        });
+      }
+    };
+
+    syncNewItems();
+  }, [initialCart]);
+
+  // Update quantity with instant local update
+  const updateLocalQuantity = async (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      // Remove from local state immediately
+      setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
+      onRemoveItem(itemId);
+      
+      // Delete from database in background
+      supabase
+        .from("cart_items")
+        .delete()
+        .eq("id", itemId)
+        .then(({ error }) => {
+          if (error) console.error("Error removing item:", error.message);
+        });
+    } else {
+      // Update local state immediately
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+      onUpdateQuantity(itemId, newQuantity);
+
+      // Update database in background
+      supabase
+        .from("cart_items")
+        .update({ quantity: newQuantity })
+        .eq("id", itemId)
+        .then(({ error }) => {
+          if (error) console.error("Error updating quantity:", error.message);
+        });
+    }
   };
 
   // Currency conversion
@@ -290,184 +180,32 @@ export const Cart = ({
     return total > 10 ? total * 0.1 : 0;
   };
 
-  // Validate Shopify customer token
-  const validateToken = async (token: string): Promise<boolean> => {
-    const customerQuery = `
-      query getCustomer($customerAccessToken: String!) {
-        customer(customerAccessToken: $customerAccessToken) {
-          id
-          email
-        }
-      }
-    `;
-    try {
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Storefront-Access-Token": STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: customerQuery,
-          variables: { customerAccessToken: token },
-        }),
-      });
-      const data = await response.json();
-      return !!data.data?.customer?.id;
-    } catch (error) {
-      console.error("Token validation error:", error);
-      return false;
-    }
-  };
-
-  // Handle checkout process
-  const handleCheckout = async () => {
+  // Handle checkout (keep items in cart)
+  const handleCheckout = () => {
     if (cart.length === 0) {
       setCheckoutError("Your cart is empty.");
       setIsCheckoutOpen(true);
       return;
     }
 
-    const invalidItems = cart.filter((item) => !item.id);
-    if (invalidItems.length > 0) {
-      setCheckoutError(
-        `Invalid product variants in cart: ${invalidItems.map((item) => item.title).join(", ")}. Please remove them.`
-      );
-      setIsCheckoutOpen(true);
-      return;
-    }
-
-    const token = sessionStorage.getItem("shopifyCustomerToken");
-    if (!token) {
-      setCheckoutError("Please log in to proceed with checkout.");
-      onRequireAuth?.();
-      setIsCheckoutOpen(true);
-      return;
-    }
-
-    const isTokenValid = await validateToken(token);
-    if (!isTokenValid) {
-      sessionStorage.removeItem("shopifyCustomerToken");
-      sessionStorage.removeItem("shopifyTokenExpiry");
-      setCheckoutError("Session expired. Please log in again.");
-      onRequireAuth?.();
-      setIsCheckoutOpen(true);
-      return;
-    }
-
-    const expiry = sessionStorage.getItem("shopifyTokenExpiry");
-    if (expiry && new Date(expiry) < new Date()) {
-      sessionStorage.removeItem("shopifyCustomerToken");
-      sessionStorage.removeItem("shopifyTokenExpiry");
-      setCheckoutError("Session expired. Please log in again.");
-      onRequireAuth?.();
-      setIsCheckoutOpen(true);
-      return;
-    }
-
     setIsProcessing(true);
     setCheckoutError(null);
-    setCheckoutSuccess(null);
-    setHasProcessed(true);
+    setCheckoutSuccess("Checkout successful! (Simulated for demo)");
 
-    try {
-      const cartCreateMutation = `
-        mutation cartCreate($input: CartInput!) {
-          cartCreate(input: $input) {
-            cart {
-              id
-              checkoutUrl
-              totalQuantity
-              cost {
-                totalAmount {
-                  amount
-                  currencyCode
-                }
-              }
-            }
-            userErrors {
-              code
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const lineItems = cart.map((item) => ({
-        merchandiseId: item.id,
-        quantity: item.quantity,
-      }));
-
-      const countryCodeMap: Record<string, string> = {
-        USD: "US",
-        INR: "IN",
-        GBP: "GB",
-        EUR: "DE",
-        CAD: "CA",
-        AUD: "AU",
-      };
-      const countryCode = countryCodeMap[userCurrency] || "US";
-
-      const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-10/graphql.json`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Storefront-Access-Token": STOREFRONT_TOKEN,
-        },
-        body: JSON.stringify({
-          query: cartCreateMutation,
-          variables: {
-            input: {
-              lines: lineItems,
-              buyerIdentity: {
-                customerAccessToken: token,
-                countryCode,
-              },
-            },
-          },
-        }),
-      });
-
-      const data = await response.json();
-      if (data.data?.cartCreate?.cart) {
-        const cartData = data.data.cartCreate.cart;
-        setCheckoutSuccess("Order created! Redirecting to payment...");
-        window.location.href = cartData.checkoutUrl;
-        setTimeout(() => {
-          resetCartState();
-        }, 1000);
-      } else {
-        const errors = data.data?.cartCreate?.userErrors || data.errors || [];
-        const errorMessage = errors[0]?.message || "Failed to create checkout. Please try again.";
-        setCheckoutError(errorMessage);
-        setIsCheckoutOpen(true);
-        if (errorMessage.includes("Storefront is disabled") || errorMessage.includes("access denied")) {
-          setFetchError("Store is not accessible. It may be in pre-launch mode.");
-        }
-      }
-    } catch (error: any) {
-      console.error("Checkout error:", error.message);
-      setCheckoutError(`Network error during checkout: ${error.message}`);
-      setIsCheckoutOpen(true);
-      if (error.message.includes("Storefront is disabled") || error.message.includes("access denied")) {
-        setFetchError("Store is not accessible. It may be in pre-launch mode.");
-      }
-    } finally {
+    setTimeout(() => {
       setIsProcessing(false);
-    }
+      setIsCheckoutOpen(true);
+    }, 2000);
   };
 
   const handleCloseCheckout = () => {
     setIsCheckoutOpen(false);
     setCheckoutError(null);
     setCheckoutSuccess(null);
-    setHasProcessed(false);
   };
 
   const handleOpenCart = () => {
     setIsOpen(true);
-    setFetchError(null);
   };
 
   return (
@@ -507,7 +245,7 @@ export const Cart = ({
           onClick={handleOpenCart}
           className="fixed bottom-9 left-[43vw] bg-[#2e9c58] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg z-50"
           animate={{
-            y: [0, -8, 0], // floating effect
+            y: [0, -8, 0],
           }}
           transition={{
             duration: 2,
@@ -555,7 +293,6 @@ export const Cart = ({
             viewBox="0 0 24 24"
             whileHover={{
               scale: 1.2,
-            
               transition: { duration: 0.3 },
             }}
           >
@@ -584,22 +321,8 @@ export const Cart = ({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-8 space-y-4 ">
-            {fetchError && (
-              <div className="bg-red-500/10 p-4 rounded-lg text-red-300 text-sm text-center">
-                {fetchError}
-                <button
-                  onClick={() => {
-                    setFetchError(null);
-                    resetCartState();
-                  }}
-                  className="ml-2 text-[#3dff87] hover:underline"
-                >
-                  Start a new cart
-                </button>
-              </div>
-            )}
-            {cart.length === 0 && !fetchError ? (
+          <div className="flex-1 overflow-y-auto py-8 space-y-4">
+            {cart.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <img
                   src="/bg/noitem.png"
@@ -630,8 +353,12 @@ export const Cart = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateLocalQuantity(item.id, item.quantity - 1)}
+                        onClick={() => {
+                          const newQuantity = item.quantity - 1;
+                          updateLocalQuantity(item.id, newQuantity);
+                        }}
                         className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center rounded flex items-center justify-center"
+                        disabled={item.quantity <= 0}
                       >
                         <img
                           src="/icon/delete.png"

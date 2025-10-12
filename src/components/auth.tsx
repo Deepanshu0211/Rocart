@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, X, CheckCircle, AlertCircle, User, Mail, Lock, UserPlus, LogIn, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from '@supabase/supabase-js';
 
+// Initialize Supabase client
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
 // AuthenticationManager hook for header usage
 export function AuthenticationManager({ onUserChange }: { onUserChange?: (user: any) => void } = {}) {
-  const supabase = createClient((import.meta as any).env.VITE_SUPABASE_URL, (import.meta as any).env.VITE_SUPABASE_ANON_KEY);
-
   const [user, setUser] = useState<any>(() => {
     const stored = sessionStorage.getItem('customerData');
     return stored ? JSON.parse(stored) : null;
@@ -35,27 +39,35 @@ export function AuthenticationManager({ onUserChange }: { onUserChange?: (user: 
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       const normalized = normalizeUser(u);
       setUser(normalized);
-      if (normalized) sessionStorage.setItem('customerData', JSON.stringify(normalized));
-      else sessionStorage.removeItem('customerData');
+      if (normalized) {
+        sessionStorage.setItem('customerData', JSON.stringify(normalized));
+      } else {
+        sessionStorage.removeItem('customerData');
+      }
+      if (onUserChange) onUserChange(normalized);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (onUserChange) onUserChange(user);
-  }, [user, onUserChange]);
+  }, [onUserChange]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    sessionStorage.removeItem('customerData');
-    setIsUserMenuOpen(false);
-    setIsAuthModalOpen(false);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error.message);
+        return;
+      }
+      setUser(null);
+      sessionStorage.removeItem('customerData');
+      setIsUserMenuOpen(false);
+      setIsAuthModalOpen(false);
+    } catch (error) {
+      console.error('Unexpected logout error:', error);
+    }
   };
 
   return {
@@ -79,8 +91,6 @@ export const AuthModal = ({
   onClose: () => void; 
   setUser: (user: any) => void 
 }) => {
-  const supabase = createClient((import.meta as any).env.VITE_SUPABASE_URL, (import.meta as any).env.VITE_SUPABASE_ANON_KEY);
-
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,7 +172,6 @@ export const AuthModal = ({
 
     try {
       if (isLogin) {
-        // Login
         const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
@@ -172,13 +181,18 @@ export const AuthModal = ({
           showMessage('error', error.message || 'Login failed. Please check your credentials.');
         } else if (data.user) {
           const normalized = normalizeUser(data.user);
-          setUser(normalized);
-          showMessage('success', `Welcome back, ${normalized.firstName}!`);
+          if (normalized) {
+            setUser(normalized);
+            showMessage('success', `Welcome back, ${normalized.firstName}!`);
+          } else {
+            // Fallback if normalization unexpectedly returns null
+            setUser(null);
+            showMessage('success', 'Welcome back!');
+          }
           setTimeout(() => onClose(), 1500);
         }
       } else {
-        // Register
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
@@ -210,38 +224,27 @@ export const AuthModal = ({
     }
   };
 
-  useEffect(() => {
-    if ((window as any).google && isOpen) {
-      (window as any).google.accounts.id.initialize({
-        client_id: (import.meta as any).env.VITE_GOOGLE_CLIENT_ID,
-        callback: async (response: any) => {
-          try {
-            const { data, error } = await supabase.auth.signInWithIdToken({
-              provider: 'google',
-              token: response.credential,
-            });
-            if (error) throw error;
-            if (data.user) {
-              const normalized = normalizeUser(data.user);
-              setUser(normalized);
-              showMessage('success', `Welcome, ${normalized.firstName}!`);
-              setTimeout(() => onClose(), 1500);
-            }
-          } catch (error: any) {
-            showMessage('error', error.message || 'Google authentication failed.');
-          }
-        },
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/auth/callback'
+        }
       });
 
-      const buttonDiv = document.getElementById('googleSignInButton');
-      if (buttonDiv) {
-        (window as any).google.accounts.id.renderButton(
-          buttonDiv,
-          { theme: 'outline', size: 'large', width: 300 }
-        );
+      if (error) {
+        showMessage('error', error.message || 'Google authentication failed. Please try again.');
       }
+      // Note: OAuth flow will handle the callback and trigger onAuthStateChange
+    } catch (error) {
+      console.error('Google auth error:', error);
+      showMessage('error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }, [isOpen]);
+  };
 
   if (!isOpen) return null;
 
@@ -310,12 +313,14 @@ export const AuthModal = ({
                     onClick={() => setIsLogin(false)} 
                     className={`flex-1 text-center px-6 py-2 text-lg md:text-[1.5vw] font-semibold transition-colors border-b-2 md:border-b-[0.5vh] ${!isLogin ? 'text-[#eff0ef] border-white border-b-4' : 'text-gray-400 border-gray-600 hover:text-white'}`}
                   >
+                    <UserPlus className="w-4 h-4 inline mr-2" />
                     Register
                   </button>
                   <button 
                     onClick={() => setIsLogin(true)} 
                     className={`flex-1 text-center px-6 py-2 text-lg md:text-[1.5vw] font-semibold transition-colors border-b-2 md:border-b-[0.5vh] ${isLogin ? 'text-white border-white border-b-4' : 'text-gray-400 border-gray-600 hover:text-white'}`}
                   >
+                    <LogIn className="w-4 h-4 inline mr-2" />
                     Login
                   </button>
                 </div>
@@ -325,7 +330,10 @@ export const AuthModal = ({
                   {!isLogin ? (
                     <div className="flex flex-col items-center space-y-4 md:space-y-[1.5vh]">
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Username*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Username*
+                        </label>
                         <input 
                           type="text" 
                           name="username" 
@@ -337,7 +345,10 @@ export const AuthModal = ({
                         />
                       </div>
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Email*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          Email*
+                        </label>
                         <input 
                           type="email" 
                           name="email" 
@@ -349,7 +360,10 @@ export const AuthModal = ({
                         />
                       </div>
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Password*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Password*
+                        </label>
                         <div className="relative">
                           <input 
                             type={showPassword ? "text" : "password"} 
@@ -359,7 +373,7 @@ export const AuthModal = ({
                             className="w-full bg-[#030804] border border-[#000000] rounded-lg md:rounded-[0.5vw] px-4 py-3 md:px-[1vw] md:py-[1vh] text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
                             placeholder="Enter Password" 
                             required 
-                          />
+                        />
                           <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)} 
@@ -370,7 +384,10 @@ export const AuthModal = ({
                         </div>
                       </div>
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Confirm Password*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Confirm Password*
+                        </label>
                         <div className="relative">
                           <input 
                             type={showPassword ? "text" : "password"} 
@@ -417,12 +434,23 @@ export const AuthModal = ({
                         {isLoading ? "Creating Account..." : "Register"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <div id="googleSignInButton" className="w-full max-w-sm md:w-[25vw]"></div>
+                      <button 
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={isLoading}
+                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-2 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] font-semibold transition-all duration-200 border border-gray-300"
+                      >
+                        <Globe className="w-5 h-5" />
+                        Google
+                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center space-y-4 md:space-y-[1.5vh]">
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Email*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          Email*
+                        </label>
                         <input 
                           type="text" 
                           name="email" 
@@ -434,7 +462,10 @@ export const AuthModal = ({
                         />
                       </div>
                       <div className="w-full max-w-sm md:w-[25vw]">
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Password*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh] flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Password*
+                        </label>
                         <div className="relative">
                           <input 
                             type={showPassword ? "text" : "password"} 
@@ -456,9 +487,10 @@ export const AuthModal = ({
                       </div>
                       <button 
                         type="button" 
-                        className="text-[#3DFF88] text-sm md:text-[0.9vw] hover:underline"
+                        className="text-[#3DFF88] text-sm md:text-[0.9vw] hover:underline flex items-center gap-1"
                         onClick={() => setShowResetPassword(true)}
                       >
+                        <Lock className="w-4 h-4" />
                         Forgot your password?
                       </button>
                       <button 
@@ -469,7 +501,15 @@ export const AuthModal = ({
                         {isLoading ? "Signing In..." : "Sign In"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <div id="googleSignInButton" className="w-full max-w-sm md:w-[25vw]"></div>
+                      <button 
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={isLoading}
+                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-2 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] font-semibold transition-all duration-200 border border-gray-300"
+                      >
+                        <Globe className="w-5 h-5" />
+                        Google
+                      </button>
                     </div>
                   )}
                   <div className="md:hidden text-center mt-6 px-4">
@@ -487,7 +527,10 @@ export const AuthModal = ({
                     </p>
                     <form onSubmit={handlePasswordReset} className="w-full max-w-sm md:w-[25vw] space-y-4">
                       <div>
-                        <label className="block text-sm md:text-[0.9vw] text-white mb-2">Email*</label>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 flex items-center gap-2">
+                          <Mail className="w-4 h-4" />
+                          Email*
+                        </label>
                         <input 
                           type="email" 
                           name="email" 

@@ -7,6 +7,11 @@ import React from "react";
 import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import WeAre from "./WeAre";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const categoryIcons: { [key: string]: string } = {
   "Best Sellers": "/icon/crown.png",
@@ -15,10 +20,6 @@ const categoryIcons: { [key: string]: string } = {
   Guns: "/icon/gun.png",
   Bundles: "/icon/bundle.png",
 };
-
-// Fix import.meta.env typing for Vite
-const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
-const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
 
 const games = [
   { name: "Grow A Garden", icon: "/kenjo/grow.png" },
@@ -57,81 +58,6 @@ const currencyMap = {
   BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP", PE: "PEN",
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
-
-async function fetchProducts(category: string = "All") {
-  const query = `
-    {
-      collection(id: "gid://shopify/Collection/647388135709") {
-        id
-        products(first: 10) {
-          edges {
-            node {
-              id
-              title
-              description
-              images(first: 1) {
-                edges {
-                  node {
-                    url
-                  }
-                }
-              }
-              variants(first: 1) {
-                edges {
-                  node {
-                    id
-                    price {
-                      amount
-                      currencyCode
-                    }
-                  }
-                }
-              }
-              tags
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const res = await fetch(`https://${domain}/api/2024-01/graphql.json`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": token,
-    },
-    body: JSON.stringify({ query }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-
-  const data = await res.json();
-
-  if (data.errors) {
-    throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
-  }
-
-  let filteredProducts = data.data.collection?.products.edges || [];
-
-  if (category !== "All") {
-    const categoryTag = category.toLowerCase().replace(/\s+/g, '-');
-    filteredProducts = filteredProducts.filter((product: Product) =>
-      product.node.tags.some((tag: string) =>
-        tag.toLowerCase() === categoryTag ||
-        tag.toLowerCase().includes(category.toLowerCase())
-      )
-    );
-  }
-
-  if (filteredProducts.length === 0) {
-    console.warn(`No products found for category: ${category}`);
-  }
-
-  return filteredProducts;
-}
 
 async function fetchExchangeRates(baseCurrency = "USD") {
   try {
@@ -192,6 +118,7 @@ type Product = { node: ProductNode };
 
 export const GrowAGarden = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("All");
@@ -205,43 +132,64 @@ export const GrowAGarden = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownTimeoutRef = useRef<number | null>(null);
 
-  const [scrollRefs] = useState<{ [key: string]: React.RefObject<HTMLDivElement> }>({
-    bestSellers: { current: null },
-    summerSpecials: { current: null },
-    knives: { current: null },
-    guns: { current: null },
-    bundles: { current: null },
+  // stable mapping of scroll containers
+  const scrollRefs = useRef<Record<string, HTMLDivElement | null>>({
+    bestSellers: null,
+    summerSpecials: null,
+    knives: null,
+    guns: null,
+    bundles: null,
   });
 
-  // Cart state management with unified localStorage persistence
-  const CART_VERSION = "1.0.0";
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const storedCartData = localStorage.getItem('cart');
-      if (storedCartData) {
-        const parsedData = JSON.parse(storedCartData);
-        if (parsedData.version === CART_VERSION && Array.isArray(parsedData.items)) {
-          const validItems = parsedData.items.filter((item: any) =>
-            item.id &&
-            item.title &&
-            typeof item.price === 'number' &&
-            item.currency &&
-            typeof item.quantity === 'number' &&
-            item.quantity > 0
-          );
-          return validItems;
-        } else {
-          localStorage.removeItem('cart');
-        }
+  const mainRef = useRef<HTMLDivElement | null>(null);
+  const [hideLogo, setHideLogo] = useState<boolean>(false);
+
+  // Cart state management with Supabase sync
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading cart:", error.message);
+        return;
       }
-    } catch (e) {
-      console.error('Error parsing stored cart:', e);
-      localStorage.removeItem('cart');
-    }
-    return [];
-  });
+
+      if (data) {
+        setCart(data as CartItem[]);
+      }
+    };
+
+    loadCart();
+  }, []);
+
+  useEffect(() => {
+    const syncCartWithSupabase = async () => {
+      await Promise.all(
+        cart.map(async (item) => {
+          const { error } = await supabase
+            .from("cart_items")
+            .upsert({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              currency: item.currency,
+              image: item.image,
+              quantity: item.quantity,
+            });
+          if (error) console.error("Error syncing item to Supabase:", error.message);
+        })
+      );
+    };
+
+    syncCartWithSupabase();
+  }, [cart]);
 
   useEffect(() => {
     const checkStoredCurrency = () => {
@@ -309,8 +257,29 @@ export const GrowAGarden = () => {
 
         setLoading(true);
         setError(null);
-        const productsData = await fetchProducts(activeCategory);
-        setProducts(productsData);
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("game", "GrowAGarden")
+          .order("title", { ascending: true });
+
+        if (error) {
+          throw new Error(`Error fetching products: ${error.message}`);
+        }
+
+        const mappedProducts = (data || []).map((p: any) => ({
+          node: {
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            images: { edges: [{ node: { url: p.image_url } }] },
+            variants: { edges: [{ node: { id: p.id, price: { amount: p.price.toString(), currencyCode: p.currency } } }] },
+            tags: p.tags,
+          },
+        }));
+
+        setAllProducts(mappedProducts);
+        setProducts(mappedProducts);
         setLoading(false);
       } catch (error) {
         console.error("Error initializing data:", error);
@@ -346,12 +315,22 @@ export const GrowAGarden = () => {
   }, [activeCategory]);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadProducts = () => {
       try {
         setLoading(true);
         setError(null);
-        const productsData = await fetchProducts(activeCategory);
-        setProducts(productsData);
+        if (activeCategory === "All") {
+          setProducts(allProducts);
+        } else {
+          const categoryTag = activeCategory.toLowerCase().replace(/\s+/g, '-');
+          const filteredProducts = allProducts.filter((product: Product) =>
+            product.node.tags.some((tag: string) =>
+              tag.toLowerCase() === categoryTag ||
+              tag.toLowerCase().includes(activeCategory.toLowerCase())
+            )
+          );
+          setProducts(filteredProducts);
+        }
       } catch (error) {
         console.error("Error loading products:", error);
         if (error instanceof Error) {
@@ -364,7 +343,7 @@ export const GrowAGarden = () => {
       }
     };
     loadProducts();
-  }, [activeCategory]);
+  }, [activeCategory, allProducts]);
 
   useEffect(() => {
     if (userCurrency && Object.keys(exchangeRates).length === 0) {
@@ -372,68 +351,105 @@ export const GrowAGarden = () => {
     }
   }, [userCurrency]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify({ version: CART_VERSION, items: cart }));
-    } catch (e) {
-      console.error('Error saving cart to localStorage:', e);
-    }
-  }, [cart]);
-
-  const mainRef = useRef<HTMLDivElement | null>(null);
-  const [hideLogo, setHideLogo] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        setHideLogo(entry.isIntersecting); // hide when main content visible
-      },
-      {
-        root: null,
-        threshold: 0.3, // adjust sensitivity
-      }
-    );
-
-    if (mainRef.current) observer.observe(mainRef.current);
-
-    return () => {
-      if (mainRef.current) observer.unobserve(mainRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isSearchActive && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isSearchActive]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isSearchActive && searchInputRef.current && !searchInputRef.current.parentElement?.contains(event.target as Node)) {
-        if (!searchQuery) {
-          setIsSearchActive(false);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSearchActive, searchQuery]);
-
-  // Handle dropdown open/close with debounce
+  // dropdown hover behavior
   const handleMouseEnter = () => {
     if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current);
+      window.clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
     }
     setIsDropdownOpen(true);
   };
 
   const handleMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => {
+    // small delay to allow moving into dropdown
+    dropdownTimeoutRef.current = window.setTimeout(() => {
       setIsDropdownOpen(false);
-    }, 200); // 200ms delay before closing
+      dropdownTimeoutRef.current = null;
+    }, 180);
   };
+
+  // logo hide on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || window.pageYOffset;
+      setHideLogo(y > 60);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const addToCart = async (product: Product) => {
+    const variant = product.node.variants.edges[0].node;
+    const existingItem = cart.find((item) => item.id === variant.id);
+
+    if (existingItem) {
+      const newQuantity = existingItem.quantity + 1;
+      setCart(cart.map((item) =>
+        item.id === variant.id ? { ...item, quantity: newQuantity } : item
+      ));
+      await supabase
+        .from("cart_items")
+        .upsert({ id: variant.id, quantity: newQuantity })
+        .eq("id", variant.id);
+    } else {
+      const newItem: CartItem = {
+        id: variant.id,
+        title: product.node.title,
+        price: parseFloat(variant.price.amount),
+        currency: variant.price.currencyCode,
+        image: product.node.images.edges[0]?.node.url,
+        quantity: 1,
+      };
+      setCart([...cart, newItem]);
+      await supabase
+        .from("cart_items")
+        .upsert(newItem);
+    }
+
+    console.log(`✓ Added to cart: ${product.node.title}`);
+  };
+
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      setCart(cart.filter((item) => item.id !== itemId));
+      await supabase.from("cart_items").delete().eq("id", itemId);
+    } else {
+      setCart(cart.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ));
+      await supabase
+        .from("cart_items")
+        .upsert({ id: itemId, quantity: newQuantity })
+        .eq("id", itemId);
+    }
+  };
+
+  const removeFromCart = async (itemId: string) => {
+    setCart(cart.filter((item) => item.id !== itemId));
+    await supabase.from("cart_items").delete().eq("id", itemId);
+  };
+
+  const handlePrev = (section: string) => {
+    const scrollContainer = scrollRefs.current[section];
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: -240, behavior: 'smooth' });
+    }
+  };
+
+  const handleNext = (section: string) => {
+    const scrollContainer = scrollRefs.current[section];
+    if (scrollContainer) {
+      scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
+    }
+  };
+
+  // Filter products based on search query
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : products;
 
   function convertPrice(
     amount: number,
@@ -471,67 +487,6 @@ export const GrowAGarden = () => {
         }).format(convertedAmount);
     return { symbol, price };
   };
-
-  const addToCart = (product: Product) => {
-    const variant = product.node.variants.edges[0].node;
-    const existingItem = cart.find((item) => item.id === variant.id);
-
-    if (existingItem) {
-      setCart(cart.map((item) =>
-        item.id === variant.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      const newItem: CartItem = {
-        id: variant.id,
-        title: product.node.title,
-        price: parseFloat(variant.price.amount),
-        currency: variant.price.currencyCode,
-        image: product.node.images.edges[0]?.node.url,
-        quantity: 1,
-      };
-      setCart([...cart, newItem]);
-    }
-
-    console.log(`✓ Added to cart: ${product.node.title}`);
-  };
-
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCart(cart.filter((item) => item.id !== itemId));
-    } else {
-      setCart(cart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
-    }
-  };
-
-  const removeFromCart = (itemId: string) => {
-    setCart(cart.filter((item) => item.id !== itemId));
-  };
-
-  const handlePrev = (section: string) => {
-    const scrollContainer = scrollRefs[section]?.current;
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: -240, behavior: 'smooth' });
-    }
-  };
-
-  const handleNext = (section: string) => {
-    const scrollContainer = scrollRefs[section]?.current;
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
-    }
-  };
-
-  // Filter products based on search query
-  const filteredProducts = searchQuery
-    ? products.filter((product) =>
-        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : products;
 
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
     const isGridView = activeSection === sectionId;
@@ -571,7 +526,7 @@ export const GrowAGarden = () => {
 
         <div className="relative">
           <div
-            ref={scrollRefs[sectionId]}
+            ref={(el) => (scrollRefs.current[sectionId] = el)}
             className={`${
               isGridView
                 ? 'grid grid-cols-5 grid-rows-2 gap-3'
@@ -580,12 +535,12 @@ export const GrowAGarden = () => {
             style={{ scrollBehavior: isGridView ? 'auto' : 'smooth' }}
             onMouseDown={(e) => {
               if (isGridView) return;
-              const el = e.currentTarget;
+              const el = e.currentTarget as HTMLElement;
               const startX = e.pageX - el.offsetLeft;
               const scrollLeft = el.scrollLeft;
 
-              const handleMouseMove = (e: MouseEvent) => {
-                const x = e.pageX - el.offsetLeft;
+              const handleMouseMove = (ev: MouseEvent) => {
+                const x = ev.pageX - el.offsetLeft;
                 const walk = (x - startX) * 2;
                 el.scrollLeft = scrollLeft - walk;
               };
@@ -668,7 +623,7 @@ export const GrowAGarden = () => {
                   {/* Add to Cart Button */}
                   <motion.button
                     onClick={() => addToCart(product)}
-                    className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110"
+                    className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110 flex items-center justify-center"
                     variants={{
                       initial: { y: 20, opacity: 0 },
                       hovered: { y: 2, opacity: 1 },
@@ -739,9 +694,7 @@ export const GrowAGarden = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={isDropdownOpen ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={`absolute left-[3vw] top-[6vh] rounded-2xl py-2 min-w-[20vw] backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000] shadow-lg shadow-[#3dff87]/10 ${
-                    isDropdownOpen ? 'pointer-events-auto' : 'pointer-events-none'
-                  }`}
+                  className={`absolute left-[3vw] top-[6vh] rounded-2xl py-2 min-w-[20vw] backdrop-blur-2xl backdrop-saturate-200 bg-[#0C1610] z-[1000] shadow-lg shadow-[#3dff87]/10 ${isDropdownOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
@@ -967,9 +920,7 @@ export const GrowAGarden = () => {
       </div>
 
       <div
-        className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${
-          hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
+        className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <img
           src="/icon/ro.png"

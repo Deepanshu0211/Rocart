@@ -379,7 +379,7 @@ export const BladeBall = () => {
     return (
       <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
         <Header />
-          <div className="sticky top-0 z-10 bg-[#06100A]/50 backdrop-blur-md ">
+          <div className="sticky top-0 z-10 border-b border-t border-[#3dff87]/10 bg-[#06100A]/50 backdrop-blur-md ">
            <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
            <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
               <div className="w-9 h-9 flex items-center justify-center">
@@ -502,7 +502,7 @@ export const BladeBall = () => {
                   </p>
 
                   <p className="text-xl sm:text-3xl font-semibold">
-                    <span className="text-[#3dff87]/70">
+                    <span className="text-[#4BFF90] font-bold">
                       {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
                     </span>
                     <span className="text-white ml-1">
@@ -519,14 +519,14 @@ export const BladeBall = () => {
                     <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
                       Quantity
                     </p>
-                    <input
-                      type="number"
-                      value={quantity}
-                      min="2000"
-                      max="300000"
-                      className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87] no-spin"
-                      onChange={handleQuantityChange}
-                    />
+                      <input
+                        type="text"
+                        value={quantity}
+                        className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
+                       
+                      />
+
+
 
                     <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                       (min 2000 - max 300000)
