@@ -421,6 +421,10 @@ const AdminPanel = () => {
               <option value="AnimeVanguards">Anime Vanguards</option>
               <option value="GrowAGarden">Grow A Garden</option>
               <option value="BladeBall">Blade Ball</option>
+              <option value="BloxFruits">Blox Fruits</option>
+              <option value="DressToImpress">Dress To Impress</option>
+              <option value="NinetyNineNights">Ninety Nine Nights</option>
+              <option value="StealABrainrot">Steal A Brainrot</option>
             </select>
             {errors.game && <span className="text-red-500 text-sm">{errors.game.message}</span>}
           </div>

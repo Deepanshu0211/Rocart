@@ -15,6 +15,7 @@ type CartItem = {
   currency: string;
   image?: string;
   quantity: number;
+  user_id?: string; // Add user_id for Supabase
 };
 
 // Currency symbols
@@ -33,12 +34,14 @@ export const Cart = ({
   exchangeRates,
   onUpdateQuantity,
   onRemoveItem,
+  user, // Add user prop from AuthenticationManager
 }: {
   cart: CartItem[];
   userCurrency: string;
   exchangeRates: Record<string, number>;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
+  user: any; // From AuthenticationManager
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -49,72 +52,175 @@ export const Cart = ({
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
 
-  // Load cart from Supabase on mount
+  // Local storage key for guest cart
+  const GUEST_CART_KEY = "guest_cart";
+
+  // Load cart based on authentication status
   useEffect(() => {
     const loadCart = async () => {
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (user) {
+        // Authenticated user: Load from Supabase
+        const { data, error } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error loading cart:", error.message);
-        return;
-      }
+        if (error) {
+          console.error("Error loading cart:", error.message);
+          return;
+        }
 
-      if (data) {
-        setCart(data as CartItem[]);
+        if (data) {
+          setCart(data as CartItem[]);
+        }
+      } else {
+        // Unauthenticated user: Load from localStorage
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          setCart(JSON.parse(guestCart));
+        } else {
+          setCart([]);
+        }
       }
     };
 
     loadCart();
-  }, []);
+  }, [user]);
 
-  // Sync initial cart with Supabase when new items are added
+  // Sync initial cart and handle login sync
   useEffect(() => {
-    const syncNewItems = async () => {
+    const syncCart = async () => {
       const validInitialCart = initialCart.filter(
         (item) => item.id && item.title && item.price > 0
       );
 
-      const prevCartIds = new Set(cart.map((item) => item.id));
-      const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
+      if (user) {
+        // Authenticated user: Sync to Supabase
+        const prevCartIds = new Set(cart.map((item) => item.id));
+        const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
 
-      if (newItems.length > 0) {
-        // Update local state immediately (optimistic update)
-        setCart((prevCart) => {
-          const updatedCart = [...prevCart];
-          newItems.forEach((newItem) => {
-            const existingIndex = updatedCart.findIndex((item) => item.id === newItem.id);
-            if (existingIndex === -1) {
-              updatedCart.push(newItem);
-              setNotificationMessage(`${newItem.title} Added To Cart!`);
-              setShowNotification(true);
-              setTimeout(() => setShowNotification(false), 3000);
-            }
-          });
-          return updatedCart;
-        });
-
-        // Sync to database in background
-        newItems.forEach(async (item) => {
-          const { error } = await supabase
-            .from("cart_items")
-            .upsert({
-              id: item.id,
-              title: item.title,
-              price: item.price,
-              currency: item.currency,
-              image: item.image,
-              quantity: item.quantity,
+        if (newItems.length > 0) {
+          // Update local state immediately (optimistic update)
+          setCart((prevCart) => {
+            const updatedCart = [...prevCart];
+            newItems.forEach((newItem) => {
+              const existingIndex = updatedCart.findIndex((item) => item.id === newItem.id);
+              if (existingIndex === -1) {
+                updatedCart.push({ ...newItem, user_id: user.id });
+                setNotificationMessage(`${newItem.title} Added To Cart!`);
+                setShowNotification(true);
+                setTimeout(() => setShowNotification(false), 3000);
+              }
             });
-          if (error) console.error("Error upserting item:", error.message);
-        });
+            return updatedCart;
+          });
+
+          // Sync to Supabase in background
+          newItems.forEach(async (item) => {
+            const { error } = await supabase
+              .from("cart_items")
+              .upsert({
+                id: item.id,
+                user_id: user.id,
+                title: item.title,
+                price: item.price,
+                currency: item.currency,
+                image: item.image,
+                quantity: item.quantity,
+              });
+            if (error) console.error("Error upserting item:", error.message);
+          });
+        }
+      } else {
+        // Unauthenticated user: Sync to localStorage
+        const prevCartIds = new Set(cart.map((item) => item.id));
+        const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
+
+        if (newItems.length > 0) {
+          setCart((prevCart) => {
+            const updatedCart = [...prevCart];
+            newItems.forEach((newItem) => {
+              const existingIndex = updatedCart.findIndex((item) => item.id === newItem.id);
+              if (existingIndex === -1) {
+                updatedCart.push(newItem);
+                setNotificationMessage(`${newItem.title} Added To Cart!`);
+                setShowNotification(true);
+                setTimeout(() => setShowNotification(false), 3000);
+              }
+            });
+            localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+            return updatedCart;
+          });
+        }
       }
     };
 
-    syncNewItems();
-  }, [initialCart]);
+    syncCart();
+  }, [initialCart, user]);
+
+  // Sync localStorage cart to Supabase on login
+  useEffect(() => {
+    const syncLocalCartToSupabase = async () => {
+      if (user) {
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          const localCart: CartItem[] = JSON.parse(guestCart);
+          if (localCart.length > 0) {
+            // Merge local cart with Supabase cart
+            const { data: existingItems, error: fetchError } = await supabase
+              .from("cart_items")
+              .select("*")
+              .eq("user_id", user.id);
+
+            if (fetchError) {
+              console.error("Error fetching existing cart:", fetchError.message);
+              return;
+            }
+
+            const existingIds = new Set(existingItems?.map((item) => item.id) || []);
+            const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
+
+            if (itemsToSync.length > 0) {
+              // Add new items to Supabase
+              const { error: upsertError } = await supabase
+                .from("cart_items")
+                .upsert(
+                  itemsToSync.map((item) => ({
+                    id: item.id,
+                    user_id: user.id,
+                    title: item.title,
+                    price: item.price,
+                    currency: item.currency,
+                    image: item.image,
+                    quantity: item.quantity,
+                  }))
+                );
+
+              if (upsertError) {
+                console.error("Error syncing local cart to Supabase:", upsertError.message);
+              } else {
+                // Update local state with merged cart
+                setCart((prevCart) => {
+                  const mergedCart = [...prevCart];
+                  itemsToSync.forEach((item) => {
+                    if (!mergedCart.some((cartItem) => cartItem.id === item.id)) {
+                      mergedCart.push({ ...item, user_id: user.id });
+                    }
+                  });
+                  return mergedCart;
+                });
+                // Clear localStorage after successful sync
+                localStorage.removeItem(GUEST_CART_KEY);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    syncLocalCartToSupabase();
+  }, [user]);
 
   // Update quantity with instant local update
   const updateLocalQuantity = async (itemId: string, newQuantity: number) => {
@@ -122,15 +228,22 @@ export const Cart = ({
       // Remove from local state immediately
       setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
       onRemoveItem(itemId);
-      
-      // Delete from database in background
-      supabase
-        .from("cart_items")
-        .delete()
-        .eq("id", itemId)
-        .then(({ error }) => {
-          if (error) console.error("Error removing item:", error.message);
-        });
+
+      if (user) {
+        // Delete from Supabase in background
+        supabase
+          .from("cart_items")
+          .delete()
+          .eq("id", itemId)
+          .eq("user_id", user.id)
+          .then(({ error }) => {
+            if (error) console.error("Error removing item:", error.message);
+          });
+      } else {
+        // Update localStorage
+        const updatedCart = cart.filter((item) => item.id !== itemId);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     } else {
       // Update local state immediately
       setCart((prevCart) =>
@@ -140,14 +253,23 @@ export const Cart = ({
       );
       onUpdateQuantity(itemId, newQuantity);
 
-      // Update database in background
-      supabase
-        .from("cart_items")
-        .update({ quantity: newQuantity })
-        .eq("id", itemId)
-        .then(({ error }) => {
-          if (error) console.error("Error updating quantity:", error.message);
-        });
+      if (user) {
+        // Update Supabase in background
+        supabase
+          .from("cart_items")
+          .update({ quantity: newQuantity })
+          .eq("id", itemId)
+          .eq("user_id", user.id)
+          .then(({ error }) => {
+            if (error) console.error("Error updating quantity:", error.message);
+          });
+      } else {
+        // Update localStorage
+        const updatedCart = cart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     }
   };
 
@@ -211,15 +333,21 @@ export const Cart = ({
   return (
     <>
       {/* Notification Toast */}
-      <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] transition-all duration-500 ease-out ${
-        showNotification ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'
-      }`}>
+      <div
+        className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] transition-all duration-500 ease-out ${
+          showNotification ? "translate-y-0 opacity-100" : "-translate-y-20 opacity-0 pointer-events-none"
+        }`}
+      >
         <div className="bg-gradient-to-r from-[#06100A] to-[#0a1a0f] backdrop-blur-xl border border-[#3dff87]/30 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-[#3dff87]/20 flex items-center gap-4 min-w-[300px]">
           <div className="relative flex-shrink-0">
             <div className="absolute inset-0 bg-[#3dff87] rounded-full blur-md opacity-40 animate-pulse"></div>
             <div className="relative bg-[#3dff87] rounded-full p-1.5">
               <svg className="w-5 h-5 text-[#030904]" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
           </div>
@@ -227,12 +355,16 @@ export const Cart = ({
             <p className="font-semibold text-sm text-white">{notificationMessage}</p>
             <p className="text-xs text-gray-400 mt-0.5">Item successfully added.</p>
           </div>
-          <button 
+          <button
             onClick={() => setShowNotification(false)}
             className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         </div>
@@ -240,31 +372,31 @@ export const Cart = ({
 
       {/* Cart Buttons */}
       <>
-      {cart.length > 0 && (
-        <motion.button
-          onClick={handleOpenCart}
-          className="fixed bottom-9 left-[43vw] bg-[#2e9c58] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg z-50"
-          animate={{
-            y: [0, -8, 0],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatType: "loop",
-            ease: "easeInOut"
-          }}
-          whileHover={{
-            scale: 1.05,
-            boxShadow: "0px 10px 25px rgba(62,255,135,0.8)"
-          }}
-        >
-          <img src="/icon/car1.png" alt="Cart Icon" className="w-6 h-6 inline-block" />
-          <span className="font-semibold">View Cart</span>
-          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-            {cart.length}
-          </span>
-        </motion.button>
-      )}
+        {cart.length > 0 && (
+          <motion.button
+            onClick={handleOpenCart}
+            className="fixed bottom-9 left-[43vw] bg-[#2e9c58] text-white px-6 py-3 rounded-full flex items-center justify-center gap-3 shadow-lg z-50"
+            animate={{
+              y: [0, -8, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "loop",
+              ease: "easeInOut",
+            }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0px 10px 25px rgba(62,255,135,0.8)",
+            }}
+          >
+            <img src="/icon/car1.png" alt="Cart Icon" className="w-6 h-6 inline-block" />
+            <span className="font-semibold">View Cart</span>
+            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {cart.length}
+            </span>
+          </motion.button>
+        )}
 
         <motion.button
           onClick={handleOpenCart}

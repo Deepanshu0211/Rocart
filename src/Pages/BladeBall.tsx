@@ -5,6 +5,7 @@ import { Cart } from "../components/Cart";
 import { motion } from "framer-motion";
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import Weblade from "../explain/weblade";
+import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
 
 // Fix import.meta.env typing for Vite
 const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
@@ -560,6 +561,7 @@ export const BladeBall = () => {
             </div>
           )}
         </div>
+        <TrustedBySection />
         <FAQSection />
         <Weblade />
         <MainContentSection />

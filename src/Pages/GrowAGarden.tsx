@@ -8,6 +8,7 @@ import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/Tru
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import WeAre from "./WeAre";
 import { createClient } from "@supabase/supabase-js";
+import { AuthenticationManager } from "../components/auth"; // Import AuthenticationManager
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -37,7 +38,7 @@ const categories = [
 const currencySymbols = {
   USD: "$", INR: "₹", GBP: "£", EUR: "€", JPY: "¥",
   CAD: "C$", AUD: "A$", CNY: "¥", BRL: "R$", MXN: "MX$",
-  KRW: "₩", SGD: "S$", AED: "د.إ", SAR: "﷼", HKD: "HK$",
+  KRW: "₩", SGD: "S$", AED: "د.إ", SAR: "ر.س", HKD: "HK$",
   CHF: "CHF", SEK: "kr", NOK: "kr", DKK: "kr", PLN: "zł",
   NZD: "NZ$", THB: "฿", MYR: "RM", IDR: "Rp", PHP: "₱",
   ZAR: "R", TRY: "₺", ARS: "$", CLP: "$", CZK: "Kč",
@@ -104,6 +105,7 @@ type CartItem = {
   currency: string;
   image?: string;
   quantity: number;
+  user_id?: string; // Add user_id for Supabase
 };
 
 type ProductNode = {
@@ -134,7 +136,10 @@ export const GrowAGarden = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<number | null>(null);
 
-  // stable mapping of scroll containers
+  // Initialize AuthenticationManager
+  const auth = AuthenticationManager();
+
+  // Stable mapping of scroll containers
   const scrollRefs = useRef<Record<string, HTMLDivElement | null>>({
     bestSellers: null,
     summerSpecials: null,
@@ -146,50 +151,105 @@ export const GrowAGarden = () => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const [hideLogo, setHideLogo] = useState<boolean>(false);
 
-  // Cart state management with Supabase sync
+  // Cart state management
   const [cart, setCart] = useState<CartItem[]>([]);
+  const GUEST_CART_KEY = "guest_cart";
 
+  // Load cart based on authentication status
   useEffect(() => {
     const loadCart = async () => {
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (auth.user) {
+        // Authenticated user: Load from Supabase
+        const { data, error } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", auth.user.id)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error loading cart:", error.message);
-        return;
-      }
+        if (error) {
+          console.error("Error loading cart:", error.message);
+          return;
+        }
 
-      if (data) {
-        setCart(data as CartItem[]);
+        if (data) {
+          setCart(data as CartItem[]);
+        }
+      } else {
+        // Unauthenticated user: Load from localStorage
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          setCart(JSON.parse(guestCart));
+        } else {
+          setCart([]);
+        }
       }
     };
 
     loadCart();
-  }, []);
+  }, [auth.user]);
 
+  // Sync localStorage cart to Supabase on login
   useEffect(() => {
-    const syncCartWithSupabase = async () => {
-      await Promise.all(
-        cart.map(async (item) => {
-          const { error } = await supabase
-            .from("cart_items")
-            .upsert({
-              id: item.id,
-              title: item.title,
-              price: item.price,
-              currency: item.currency,
-              image: item.image,
-              quantity: item.quantity,
-            });
-          if (error) console.error("Error syncing item to Supabase:", error.message);
-        })
-      );
+    const syncLocalCartToSupabase = async () => {
+      if (auth.user) {
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          const localCart: CartItem[] = JSON.parse(guestCart);
+          if (localCart.length > 0) {
+            // Fetch existing cart items from Supabase
+            const { data: existingItems, error: fetchError } = await supabase
+              .from("cart_items")
+              .select("*")
+              .eq("user_id", auth.user.id);
+
+            if (fetchError) {
+              console.error("Error fetching existing cart:", fetchError.message);
+              return;
+            }
+
+            const existingIds = new Set(existingItems?.map((item) => item.id) || []);
+            const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
+
+            if (itemsToSync.length > 0) {
+              // Add new items to Supabase
+              const { error: upsertError } = await supabase
+                .from("cart_items")
+                .upsert(
+                  itemsToSync.map((item) => ({
+                    id: item.id,
+                    user_id: auth.user.id,
+                    title: item.title,
+                    price: item.price,
+                    currency: item.currency,
+                    image: item.image,
+                    quantity: item.quantity,
+                  }))
+                );
+
+              if (upsertError) {
+                console.error("Error syncing local cart to Supabase:", upsertError.message);
+              } else {
+                // Update local state with merged cart
+                setCart((prevCart) => {
+                  const mergedCart = [...prevCart];
+                  itemsToSync.forEach((item) => {
+                    if (!mergedCart.some((cartItem) => cartItem.id === item.id)) {
+                      mergedCart.push({ ...item, user_id: auth.user.id });
+                    }
+                  });
+                  return mergedCart;
+                });
+                // Clear localStorage after successful sync
+                localStorage.removeItem(GUEST_CART_KEY);
+              }
+            }
+          }
+        }
+      }
     };
 
-    syncCartWithSupabase();
-  }, [cart]);
+    syncLocalCartToSupabase();
+  }, [auth.user]);
 
   useEffect(() => {
     const checkStoredCurrency = () => {
@@ -351,7 +411,7 @@ export const GrowAGarden = () => {
     }
   }, [userCurrency]);
 
-  // dropdown hover behavior
+  // Dropdown hover behavior
   const handleMouseEnter = () => {
     if (dropdownTimeoutRef.current) {
       window.clearTimeout(dropdownTimeoutRef.current);
@@ -361,14 +421,13 @@ export const GrowAGarden = () => {
   };
 
   const handleMouseLeave = () => {
-    // small delay to allow moving into dropdown
     dropdownTimeoutRef.current = window.setTimeout(() => {
       setIsDropdownOpen(false);
       dropdownTimeoutRef.current = null;
     }, 180);
   };
 
-  // logo hide on scroll
+  // Logo hide on scroll
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY || window.pageYOffset;
@@ -381,29 +440,64 @@ export const GrowAGarden = () => {
   const addToCart = async (product: Product) => {
     const variant = product.node.variants.edges[0].node;
     const existingItem = cart.find((item) => item.id === variant.id);
+    const newItem: CartItem = {
+      id: variant.id,
+      title: product.node.title,
+      price: parseFloat(variant.price.amount),
+      currency: variant.price.currencyCode,
+      image: product.node.images.edges[0]?.node.url,
+      quantity: existingItem ? existingItem.quantity + 1 : 1,
+      user_id: auth.user?.id,
+    };
 
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + 1;
-      setCart(cart.map((item) =>
-        item.id === variant.id ? { ...item, quantity: newQuantity } : item
-      ));
-      await supabase
-        .from("cart_items")
-        .upsert({ id: variant.id, quantity: newQuantity })
-        .eq("id", variant.id);
+    if (auth.user) {
+      // Authenticated user: Update Supabase
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + 1;
+        setCart(cart.map((item) =>
+          item.id === variant.id ? { ...item, quantity: newQuantity } : item
+        ));
+
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: newQuantity })
+          .eq("id", variant.id)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error updating quantity in Supabase:", error.message);
+          return;
+        }
+      } else {
+        setCart([...cart, newItem]);
+
+        const { error } = await supabase
+          .from("cart_items")
+          .upsert({
+            id: newItem.id,
+            user_id: auth.user.id,
+            title: newItem.title,
+            price: newItem.price,
+            currency: newItem.currency,
+            image: newItem.image,
+            quantity: newItem.quantity,
+          });
+
+        if (error) {
+          console.error("Error adding item to Supabase:", error.message);
+          return;
+        }
+      }
     } else {
-      const newItem: CartItem = {
-        id: variant.id,
-        title: product.node.title,
-        price: parseFloat(variant.price.amount),
-        currency: variant.price.currencyCode,
-        image: product.node.images.edges[0]?.node.url,
-        quantity: 1,
-      };
-      setCart([...cart, newItem]);
-      await supabase
-        .from("cart_items")
-        .upsert(newItem);
+      // Unauthenticated user: Update localStorage
+      const updatedCart = existingItem
+        ? cart.map((item) =>
+            item.id === variant.id ? { ...item, quantity: item.quantity + 1 } : item
+          )
+        : [...cart, newItem];
+
+      setCart(updatedCart);
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
     }
 
     console.log(`✓ Added to cart: ${product.node.title}`);
@@ -412,21 +506,60 @@ export const GrowAGarden = () => {
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(cart.filter((item) => item.id !== itemId));
-      await supabase.from("cart_items").delete().eq("id", itemId);
+      if (auth.user) {
+        const { error } = await supabase
+          .from("cart_items")
+          .delete()
+          .eq("id", itemId)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error removing item from Supabase:", error.message);
+        }
+      } else {
+        const updatedCart = cart.filter((item) => item.id !== itemId);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     } else {
       setCart(cart.map((item) =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       ));
-      await supabase
-        .from("cart_items")
-        .upsert({ id: itemId, quantity: newQuantity })
-        .eq("id", itemId);
+
+      if (auth.user) {
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: newQuantity })
+          .eq("id", itemId)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error updating quantity in Supabase:", error.message);
+        }
+      } else {
+        const updatedCart = cart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     }
   };
 
   const removeFromCart = async (itemId: string) => {
     setCart(cart.filter((item) => item.id !== itemId));
-    await supabase.from("cart_items").delete().eq("id", itemId);
+    if (auth.user) {
+      const { error } = await supabase
+        .from("cart_items")
+        .delete()
+        .eq("id", itemId)
+        .eq("user_id", auth.user.id);
+
+      if (error) {
+        console.error("Error removing item from Supabase:", error.message);
+      }
+    } else {
+      const updatedCart = cart.filter((item) => item.id !== itemId);
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+    }
   };
 
   const handlePrev = (section: string) => {
@@ -564,98 +697,97 @@ export const GrowAGarden = () => {
                   onMouseEnter={(e) => e.stopPropagation()}
                   onMouseLeave={(e) => e.stopPropagation()}
                 >
-                <motion.div
-                  className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
-                  whileHover="hovered"
-                  initial="initial"
-                  animate="initial"
-                >
-                  {/* Save Badge */}
                   <motion.div
-                    className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat min-w-[9vw] z-20"
-                    variants={{
-                      initial: { opacity: 0, y: -15 },
-                      hovered: { opacity: 1, y: 0 },
-                    }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="relative bg-black h-[210px] w-full rounded-t-2xl overflow-hidden group"
+                    whileHover="hovered"
+                    initial="initial"
+                    animate="initial"
                   >
-                    <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
-                    <span className="text-[11px] tracking-tighter">Save $24.00</span>
+                    {/* Save Badge */}
+                    <motion.div
+                      className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat min-w-[9vw] z-20"
+                      variants={{
+                        initial: { opacity: 0, y: -15 },
+                        hovered: { opacity: 1, y: 0 },
+                      }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      <img src="/icon/save.png" alt="save" className="h-[3vh] w-auto" />
+                      <span className="text-[11px] tracking-tighter">Save $24.00</span>
+                    </motion.div>
+
+                    {/* Background */}
+                    <motion.div
+                      className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
+                      variants={{
+                        initial: { scale: 1 },
+                        hovered: { scale: 1.15 },
+                      }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                    />
+
+                    {/* Product Image */}
+                    {product.node.images.edges[0] ? (
+                      <motion.div
+                        className="absolute inset-0 flex items-center justify-center z-5"
+                        variants={{
+                          initial: { rotate: 0 },
+                          hovered: { rotate: [0, -3, 3, -2, 2, 0] },
+                        }}
+                        transition={{
+                          delay: 0.25,
+                          duration: 0.6,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <motion.img
+                          src={product.node.images.edges[0].node.url}
+                          alt={product.node.title}
+                          className="object-contain relative z-5"
+                          style={{ maxWidth: "150px", maxHeight: "120px" }}
+                        />
+                      </motion.div>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center z-5">
+                        <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                      </div>
+                    )}
+
+                    {/* Add to Cart Button */}
+                    <motion.button
+                      onClick={() => addToCart(product)}
+                      className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110 flex items-center justify-center"
+                      variants={{
+                        initial: { y: 20, opacity: 0 },
+                        hovered: { y: 2, opacity: 1 },
+                      }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                    >
+                      <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
+                    </motion.button>
                   </motion.div>
 
-                  {/* Background */}
-                  <motion.div
-                    className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
-                    variants={{
-                      initial: { scale: 1 },
-                      hovered: { scale: 1.15 },
-                    }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                  />
-
-                  {/* Product Image */}
-                  {product.node.images.edges[0] ? (
-                    <motion.div
-                      className="absolute inset-0 flex items-center justify-center z-5"
-                      variants={{
-                        initial: { rotate: 0 },
-                        hovered: { rotate: [0, -3, 3, -2, 2, 0] },
-                      }}
-                      transition={{
-                        delay: 0.25,
-                        duration: 0.6,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <motion.img
-                        src={product.node.images.edges[0].node.url}
-                        alt={product.node.title}
-                        className="object-contain relative z-5"
-                        style={{ maxWidth: "150px", maxHeight: "120px" }}
-                      />
-                    </motion.div>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center z-5">
-                      <div className="text-[#3dff87]/30 text-4xl">🎮</div>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
+                    <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
+                      {product.node.title}
+                    </h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-bold text-sm">
+                        <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
+                        <span className="text-white"> {formatPrice(product)?.price}</span>
+                      </span>
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
+                      >
+                        <img
+                          src="/icon/cart.png"
+                          alt="Add to Cart"
+                          className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
+                        />
+                      </button>
                     </div>
-                  )}
-
-                  {/* Add to Cart Button */}
-                  <motion.button
-                    onClick={() => addToCart(product)}
-                    className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110 flex items-center justify-center"
-                    variants={{
-                      initial: { y: 20, opacity: 0 },
-                      hovered: { y: 2, opacity: 1 },
-                    }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  >
-                    <img src="/icon/car1.png" className="inline-block mr-1 w-6 h-6" /> Add to Cart
-                  </motion.button>
-                </motion.div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-3 rounded-b-2xl bg-[#031C0D]">
-                  <h3 className="text-white text-md font-semibold mb-1 line-clamp-2">
-                    {product.node.title}
-                  </h3>
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-bold text-sm">
-                      <span className="text-[#3dff87]">{formatPrice(product)?.symbol}</span>
-                      <span className="text-white"> {formatPrice(product)?.price}</span>
-                    </span>
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
-                    >
-                      <img
-                        src="/icon/cart.png"
-                        alt="Add to Cart"
-                        className="w-10 h-8 -mt-5 -ml-2 transition-transform duration-300 ease-in-out hover:scale-125"
-                      />
-                    </button>
                   </div>
-                </div>
-
                 </div>
               ))
             ) : (
@@ -942,9 +1074,11 @@ export const GrowAGarden = () => {
         exchangeRates={exchangeRates}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeFromCart}
+        user={auth.user} // Pass user to Cart component
       />
     </div>
   );
 };
+
 
 export default GrowAGarden;

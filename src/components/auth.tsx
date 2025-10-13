@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, X, CheckCircle, AlertCircle, User, Mail, Lock, UserPlus, LogIn, Globe } from "lucide-react";
+import { Eye, EyeOff, X, CheckCircle, AlertCircle, User, Mail, Lock, UserPlus, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from '@supabase/supabase-js';
 
@@ -434,15 +434,22 @@ export const AuthModal = ({
                         {isLoading ? "Creating Account..." : "Register"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <button 
+                     <button
                         type="button"
                         onClick={handleGoogleSignIn}
                         disabled={isLoading}
-                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-2 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] font-semibold transition-all duration-200 border border-gray-300"
+                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
+                                  disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
+                                  font-semibold transition-all duration-200 border border-gray-300"
                       >
-                        <Globe className="w-5 h-5" />
-                        Google
+                        <img
+                          src="/loginbg/google.png"
+                          alt="Google"
+                          className="w-5 h-5 object-contain"
+                        />
+                        <span className="leading-none">Google</span>
                       </button>
+
                     </div>
                   ) : (
                     <div className="flex flex-col items-center space-y-4 md:space-y-[1.5vh]">
@@ -501,15 +508,22 @@ export const AuthModal = ({
                         {isLoading ? "Signing In..." : "Sign In"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <button 
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        disabled={isLoading}
-                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-2 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] font-semibold transition-all duration-200 border border-gray-300"
-                      >
-                        <Globe className="w-5 h-5" />
-                        Google
-                      </button>
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isLoading}
+                      className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
+                                disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
+                                font-semibold transition-all duration-200 border border-gray-300"
+                    >
+                      <img
+                        src="/loginbg/google.png"
+                        alt="Google"
+                        className="w-5 h-5 object-contain"
+                      />
+                      <span className="leading-none">Google</span>
+                    </button>
+
                     </div>
                   )}
                   <div className="md:hidden text-center mt-6 px-4">
