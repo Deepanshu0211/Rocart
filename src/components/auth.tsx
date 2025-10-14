@@ -95,7 +95,7 @@ export const AuthModal = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-  const [resetStep, setResetStep] = useState<'email' | 'complete'>('email');
+  const [resetStep, setResetStep] = useState<'email' | 'otp' | 'newPassword' | 'complete'>('email');
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [formData, setFormData] = useState({
     username: '',
@@ -103,7 +103,10 @@ export const AuthModal = ({
     password: '',
     confirmPassword: '',
     referralCode: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    otp: '',
+    newPassword: '',
+    confirmNewPassword: ''
   });
 
   const normalizeUser = (u: any) => {
@@ -137,24 +140,97 @@ export const AuthModal = ({
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email) {
-      showMessage('error', 'Please enter your email address');
-      return;
+    
+    if (resetStep === 'email') {
+      if (!formData.email) {
+        showMessage('error', 'Please enter your email address');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
+        if (error) {
+          showMessage('error', error.message || 'Failed to send OTP. Please try again.');
+        } else {
+          showMessage('success', 'OTP sent to your email! Please check your inbox.');
+          setResetStep('otp');
+        }
+      } catch (error) {
+        console.error('OTP send error:', error);
+        showMessage('error', 'Network error. Please check your connection and try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (resetStep === 'otp') {
+      if (!formData.otp) {
+        showMessage('error', 'Please enter the OTP');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: formData.email,
+          token: formData.otp,
+          type: 'recovery'
+        });
+        if (error) {
+          showMessage('error', error.message || 'Invalid OTP. Please try again.');
+        } else {
+          showMessage('success', 'OTP verified successfully!');
+          setResetStep('newPassword');
+        }
+      } catch (error) {
+        console.error('OTP verification error:', error);
+        showMessage('error', 'Error verifying OTP. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (resetStep === 'newPassword') {
+      if (formData.newPassword !== formData.confirmNewPassword) {
+        showMessage('error', 'New passwords do not match!');
+        return;
+      }
+
+      if (!formData.newPassword || formData.newPassword.length < 6) {
+        showMessage('error', 'New password must be at least 6 characters long');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password: formData.newPassword
+        });
+
+        if (error) {
+          showMessage('error', error.message || 'Failed to update password. Please try again.');
+        } else {
+          showMessage('success', 'Password updated successfully!');
+          setResetStep('complete');
+        }
+      } catch (error) {
+        console.error('Password update error:', error);
+        showMessage('error', 'Network error. Please check your connection and try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
+  };
 
+  const handleResendOTP = async () => {
     setIsLoading(true);
-
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
       if (error) {
-        showMessage('error', error.message || 'Failed to send reset email. Please try again.');
+        showMessage('error', error.message || 'Failed to resend OTP. Please try again.');
       } else {
-        showMessage('success', 'Password reset email sent! Please check your inbox and click the reset link.');
-        setResetStep('complete');
+        showMessage('success', 'OTP resent to your email!');
       }
     } catch (error) {
-      console.error('Password reset error:', error);
-      showMessage('error', 'Network error. Please check your connection and try again.');
+      console.error('Resend OTP error:', error);
+      showMessage('error', 'Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +261,6 @@ export const AuthModal = ({
             setUser(normalized);
             showMessage('success', `Welcome back, ${normalized.firstName}!`);
           } else {
-            // Fallback if normalization unexpectedly returns null
             setUser(null);
             showMessage('success', 'Welcome back!');
           }
@@ -237,7 +312,6 @@ export const AuthModal = ({
       if (error) {
         showMessage('error', error.message || 'Google authentication failed. Please try again.');
       }
-      // Note: OAuth flow will handle the callback and trigger onAuthStateChange
     } catch (error) {
       console.error('Google auth error:', error);
       showMessage('error', 'Network error. Please check your connection and try again.');
@@ -373,7 +447,7 @@ export const AuthModal = ({
                             className="w-full bg-[#030804] border border-[#000000] rounded-lg md:rounded-[0.5vw] px-4 py-3 md:px-[1vw] md:py-[1vh] text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
                             placeholder="Enter Password" 
                             required 
-                        />
+                          />
                           <button 
                             type="button" 
                             onClick={() => setShowPassword(!showPassword)} 
@@ -434,7 +508,7 @@ export const AuthModal = ({
                         {isLoading ? "Creating Account..." : "Register"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                     <button
+                      <button
                         type="button"
                         onClick={handleGoogleSignIn}
                         disabled={isLoading}
@@ -508,21 +582,21 @@ export const AuthModal = ({
                         {isLoading ? "Signing In..." : "Sign In"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                    <button
-                      type="button"
-                      onClick={handleGoogleSignIn}
-                      disabled={isLoading}
-                      className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
-                                disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
-                                font-semibold transition-all duration-200 border border-gray-300"
-                    >
-                      <img
-                        src="/loginbg/google.png"
-                        alt="Google"
-                        className="w-5 h-5 object-contain"
-                      />
-                      <span className="leading-none">Google</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignIn}
+                        disabled={isLoading}
+                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
+                                  disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
+                                  font-semibold transition-all duration-200 border border-gray-300"
+                      >
+                        <img
+                          src="/loginbg/google.png"
+                          alt="Google"
+                          className="w-5 h-5 object-contain"
+                        />
+                        <span className="leading-none">Google</span>
+                      </button>
 
                     </div>
                   )}
@@ -537,7 +611,7 @@ export const AuthModal = ({
                   <>
                     <h2 className="text-xl md:text-[1.5vw] font-semibold mb-4 text-center">Reset Password</h2>
                     <p className="text-sm md:text-[0.9vw] text-gray-400 mb-6 text-center max-w-sm">
-                      Enter your email address and we'll send you a secure reset link to create a new password.
+                      Enter your email address and we'll send you a one-time password (OTP).
                     </p>
                     <form onSubmit={handlePasswordReset} className="w-full max-w-sm md:w-[25vw] space-y-4">
                       <div>
@@ -560,7 +634,111 @@ export const AuthModal = ({
                         disabled={isLoading} 
                         className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
                       >
-                        {isLoading ? "Sending Reset Link..." : "Send Reset Link"}
+                        {isLoading ? "Sending OTP..." : "Send OTP"}
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setShowResetPassword(false);
+                          setResetStep('email');
+                        }} 
+                        className="w-full text-[#3DFF88] text-sm md:text-[0.9vw] hover:underline mt-2"
+                      >
+                        Back to Login
+                      </button>
+                    </form>
+                  </>
+                ) : resetStep === 'otp' ? (
+                  <>
+                    <h2 className="text-xl md:text-[1.5vw] font-semibold mb-4 text-center">Enter OTP</h2>
+                    <p className="text-sm md:text-[0.9vw] text-gray-400 mb-6 text-center max-w-sm">
+                      We've sent a 6-digit OTP to <span className="text-white font-medium">{formData.email}</span>. Please enter it below.
+                    </p>
+                    <form onSubmit={handlePasswordReset} className="w-full max-w-sm md:w-[25vw] space-y-4">
+                      <div>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          OTP*
+                        </label>
+                        <input 
+                          type="text" 
+                          name="otp" 
+                          value={formData.otp} 
+                          onChange={handleInputChange} 
+                          className="w-full bg-[#030804] border border-[#000000] rounded-lg px-4 py-3 text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
+                          placeholder="Enter 6-digit OTP" 
+                          required 
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        disabled={isLoading} 
+                        className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
+                      >
+                        {isLoading ? "Verifying OTP..." : "Verify OTP"}
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={handleResendOTP}
+                        disabled={isLoading}
+                        className="w-full text-[#3DFF88] text-sm md:text-[0.9vw] hover:underline mt-2"
+                      >
+                        Resend OTP
+                      </button>
+                    </form>
+                  </>
+                ) : resetStep === 'newPassword' ? (
+                  <>
+                    <h2 className="text-xl md:text-[1.5vw] font-semibold mb-4 text-center">Set New Password</h2>
+                    <p className="text-sm md:text-[0.9vw] text-gray-400 mb-6 text-center max-w-sm">
+                      Enter your new password for <span className="text-white font-medium">{formData.email}</span>.
+                    </p>
+                    <form onSubmit={handlePasswordReset} className="w-full max-w-sm md:w-[25vw] space-y-4">
+                      <div>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          New Password*
+                        </label>
+                        <div className="relative">
+                          <input 
+                            type={showPassword ? "text" : "password"} 
+                            name="newPassword" 
+                            value={formData.newPassword} 
+                            onChange={handleInputChange} 
+                            className="w-full bg-[#030804] border border-[#000000] rounded-lg px-4 py-3 text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
+                            placeholder="Enter new password" 
+                            required 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setShowPassword(!showPassword)} 
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                          >
+                            {showPassword ? <EyeOff size={20} className="md:w-[1.5vw] md:h-[1.5vw]" /> : <Eye size={20} className="md:w-[1.5vw] md:h-[1.5vw]" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm md:text-[0.9vw] text-white mb-2 flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          Confirm New Password*
+                        </label>
+                        <input 
+                          type={showPassword ? "text" : "password"} 
+                          name="confirmNewPassword" 
+                          value={formData.confirmNewPassword} 
+                          onChange={handleInputChange} 
+                          className="w-full bg-[#030804] border border-[#000000] rounded-lg px-4 py-3 text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
+                          placeholder="Confirm new password" 
+                          required 
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        disabled={isLoading} 
+                        className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
+                      >
+                        {isLoading ? "Updating Password..." : "Update Password"}
                       </button>
                       <button 
                         type="button" 
@@ -581,39 +759,21 @@ export const AuthModal = ({
                         <CheckCircle className="w-10 h-10 md:w-[2.5vw] md:h-[2.5vw] text-green-400" />
                       </div>
                     </div>
-                    <h2 className="text-xl md:text-[1.5vw] font-semibold mb-4 text-center">Check Your Email</h2>
+                    <h2 className="text-xl md:text-[1.5vw] font-semibold mb-4 text-center">Password Updated</h2>
                     <p className="text-sm md:text-[0.9vw] text-gray-400 mb-6 text-center max-w-sm">
-                      We've sent a password reset link to <span className="text-white font-medium">{formData.email}</span>
+                      Your password has been successfully updated. Please use your new password to log in.
                     </p>
                     <div className="w-full max-w-sm md:w-[25vw] space-y-4">
-                      <div className="bg-[#030804] border border-[#000000] rounded-lg p-4 space-y-2">
-                        <p className="text-xs md:text-[0.8vw] text-gray-400">
-                          ✓ Click the link in the email to reset your password
-                        </p>
-                        <p className="text-xs md:text-[0.8vw] text-gray-400">
-                          ✓ The link will expire in 24 hours
-                        </p>
-                        <p className="text-xs md:text-[0.8vw] text-gray-400">
-                          ✓ Check your spam folder if you don't see it
-                        </p>
-                      </div>
                       <button 
                         type="button"
                         onClick={() => {
                           setShowResetPassword(false);
                           setResetStep('email');
-                          setFormData(prev => ({ ...prev, email: '' }));
+                          setFormData(prev => ({ ...prev, email: '', otp: '', newPassword: '', confirmNewPassword: '' }));
                         }}
                         className="w-full bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] rounded-lg py-3 text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
                       >
                         Back to Login
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setResetStep('email')}
-                        className="w-full text-[#3DFF88] text-sm md:text-[0.9vw] hover:underline"
-                      >
-                        Didn't receive the email? Try again
                       </button>
                     </div>
                   </>

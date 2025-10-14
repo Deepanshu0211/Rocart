@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
 import { Cart } from "../components/Cart";
@@ -6,10 +7,12 @@ import { motion } from "framer-motion";
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import Weblade from "../explain/weblade";
 import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
+import { AuthenticationManager } from "../components/auth"; // Import AuthenticationManager
 
-// Fix import.meta.env typing for Vite
-const domain: string = (import.meta as any).env.VITE_SHOPIFY_DOMAIN;
-const token: string = (import.meta as any).env.VITE_SHOPIFY_STOREFRONT_TOKEN;
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const games = [
   { name: "BladeBall", icon: "/logo/blade.png" },
@@ -29,16 +32,37 @@ const currencyMap = {
   GB: "GBP", DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR",
   NL: "EUR", BE: "EUR", AT: "EUR", PT: "EUR", IE: "EUR",
   GR: "EUR", FI: "EUR", EU: "EUR", SE: "SEK", DK: "DKK",
-  NO: "NOK", CH: "CHF", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON",
+  NO: "NOK", CH: "CHF", PL: "PLN", CZK: "CZK", HU: "HUF", RO: "RON",
   IN: "INR", JP: "JPY", CN: "CNY", KR: "KRW", SG: "SGD",
-  HK: "HKD", TW: "TWD", TH: "THB", MY: "MYR", ID: "IDR",
+  HK: "HKD", TW: "TWD", TH: "THB", MY: "MYR", IDR: "IDR",
   PH: "PHP", VN: "VND", PK: "PKR", BD: "BDT",
   AE: "AED", SA: "SAR", QA: "QAR", KW: "KWD", IL: "ILS",
   TR: "TRY", EG: "EGP",
   AU: "AUD", NZ: "NZD",
-  BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP", PE: "PEN",
+  BR: "BRL", AR: "ARS", CLP: "CLP", CO: "COP", PE: "PEN",
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
+
+type CartItem = {
+  id: string;
+  title: string;
+  price: number;
+  currency: string;
+  image?: string;
+  quantity: number;
+  user_id?: string;
+};
+
+type ProductNode = {
+  id: string;
+  title: string;
+  description?: string;
+  images: { edges: { node: { url: string } }[] };
+  variants: { edges: { node: { id: string; price: { amount: string; currencyCode: string } } }[] };
+  tags: string[];
+};
+
+type Product = { node: ProductNode };
 
 async function fetchExchangeRates(baseCurrency = "USD") {
   try {
@@ -77,82 +101,76 @@ async function fetchExchangeRates(baseCurrency = "USD") {
   };
 }
 
-async function fetchProductById(productId: string) {
-  const query = `
-    {
-      product(id: "${productId}") {
-        id
-        title
-        description
-        images(first: 1) {
-          edges {
-            node {
-              url
+async function fetchProductFromSupabase(
+  gameName: string, 
+  setProduct: (product: Product | null) => void, 
+  setLoading: (loading: boolean) => void, 
+  setError: (error: string | null) => void
+) {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("game", gameName)
+      .eq("is_available", true)
+      .single();
+
+    if (error) {
+      throw new Error(`Error fetching product: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error(`No available product found for ${gameName}`);
+    }
+
+    const productData: Product = {
+      node: {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        images: {
+          edges: [{
+            node: {
+              url: data.image_url
             }
-          }
-        }
-        variants(first: 1) {
-          edges {
-            node {
-              id
-              price {
-                amount
-                currencyCode
+          }]
+        },
+        variants: {
+          edges: [{
+            node: {
+              id: data.id,
+              price: {
+                amount: data.price.toString(),
+                currencyCode: data.currency
               }
             }
-          }
-        }
-        tags
+          }]
+        },
+        tags: data.tags || []
       }
+    };
+
+    setProduct(productData);
+    console.log("✓ Product fetched from Supabase:", data.title);
+  } catch (error) {
+    console.error("Error fetching product from Supabase:", error);
+    if (error instanceof Error) {
+      setError(error.message);
+    } else {
+      setError(String(error));
     }
-  `;
-
-  const res = await fetch(`https://${domain}/api/2024-01/graphql.json`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Storefront-Access-Token": token,
-    },
-    body: JSON.stringify({ query }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
+  } finally {
+    setLoading(false);
   }
-
-  const data = await res.json();
-
-  if (data.errors) {
-    throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
-  }
-
-  const productEdge = {
-    node: data.data.product
-  };
-
-  return [productEdge];
 }
 
-type CartItem = {
-  id: string;
-  title: string;
-  price: number;
-  currency: string;
-  image?: string;
-  quantity: number;
-};
-
-type ProductNode = {
-  id: string;
-  title: string;
-  description?: string;
-  images: { edges: { node: { url: string } }[] };
-  variants: { edges: { node: { id: string; price: { amount: string; currencyCode: string } } }[] };
-  tags: string[];
-};
-type Product = { node: ProductNode };
-
 export const BladeBall = () => {
+  // Initialize AuthenticationManager
+  const auth = AuthenticationManager();
+  
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
@@ -161,13 +179,108 @@ export const BladeBall = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMinQuantityWarning, setShowMinQuantityWarning] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [quantity, setQuantity] = useState<number>(2000); // New state for quantity
+  const [quantity, setQuantity] = useState<number>(2000);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const GUEST_CART_KEY = "guest_cart";
+
+  // Load cart based on authentication status
+  useEffect(() => {
+    const loadCart = async () => {
+      if (auth.user) {
+        // Authenticated user: Load from Supabase
+        const { data, error } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", auth.user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error loading cart:", error.message);
+          return;
+        }
+
+        if (data) {
+          setCart(data as CartItem[]);
+        }
+      } else {
+        // Unauthenticated user: Load from localStorage
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          setCart(JSON.parse(guestCart));
+        } else {
+          setCart([]);
+        }
+      }
+    };
+
+    loadCart();
+  }, [auth.user]);
+
+  // Sync localStorage cart to Supabase on login
+  useEffect(() => {
+    const syncLocalCartToSupabase = async () => {
+      if (auth.user) {
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        if (guestCart) {
+          const localCart: CartItem[] = JSON.parse(guestCart);
+          if (localCart.length > 0) {
+            const { data: existingItems, error: fetchError } = await supabase
+              .from("cart_items")
+              .select("*")
+              .eq("user_id", auth.user.id);
+
+            if (fetchError) {
+              console.error("Error fetching existing cart:", fetchError.message);
+              return;
+            }
+
+            const existingIds = new Set(existingItems?.map((item) => item.id) || []);
+            const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
+
+            if (itemsToSync.length > 0) {
+              const { error: upsertError } = await supabase
+                .from("cart_items")
+                .upsert(
+                  itemsToSync.map((item) => ({
+                    id: item.id,
+                    user_id: auth.user.id,
+                    title: item.title,
+                    price: item.price,
+                    currency: item.currency,
+                    image: item.image,
+                    quantity: item.quantity,
+                  }))
+                );
+
+              if (upsertError) {
+                console.error("Error syncing local cart to Supabase:", upsertError.message);
+              } else {
+                setCart((prevCart) => {
+                  const mergedCart = [...prevCart];
+                  itemsToSync.forEach((item) => {
+                    if (!mergedCart.some((cartItem) => cartItem.id === item.id)) {
+                      mergedCart.push({ ...item, user_id: auth.user.id });
+                    }
+                  });
+                  return mergedCart;
+                });
+                localStorage.removeItem(GUEST_CART_KEY);
+              }
+            }
+          }
+        }
+      }
+    };
+
+    syncLocalCartToSupabase();
+  }, [auth.user]);
 
   useEffect(() => {
     const checkStoredCurrency = () => {
@@ -233,14 +346,7 @@ export const BladeBall = () => {
         const rates = await fetchExchangeRates();
         setExchangeRates(rates);
 
-        setLoading(true);
-        setError(null);
-        const productId = "gid://shopify/Product/9980610281757";
-        const productsData = await fetchProductById(productId);
-        if (productsData.length > 0) {
-          setProduct(productsData[0]);
-        }
-        setLoading(false);
+        await fetchProductFromSupabase("BladeBall", setProduct, setLoading, setError);
       } catch (error) {
         console.error("Error initializing data:", error);
         if (error instanceof Error) {
@@ -327,58 +433,158 @@ export const BladeBall = () => {
       userCurrency,
       exchangeRates
     );
-    const total = convertedAmount * (quantity / 1000); // Assuming price is per 1000 units
+    const total = convertedAmount * (quantity / 1000);
     return formatPrice(total, userCurrency);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     
     const variant = product.node.variants.edges[0].node;
-    
+    const newItem: CartItem = {
+      id: variant.id,
+      title: product.node.title,
+      price: parseFloat(variant.price.amount),
+      currency: variant.price.currencyCode,
+      image: product.node.images.edges[0]?.node.url,
+      quantity: quantity,
+      user_id: auth.user?.id,
+    };
+
     const existingItem = cart.find((item) => item.id === variant.id);
 
-    if (existingItem) {
-      setCart(cart.map((item) =>
-        item.id === variant.id
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      ));
+    if (auth.user) {
+      // Authenticated user: Update Supabase
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + quantity;
+        setCart(cart.map((item) =>
+          item.id === variant.id ? { ...item, quantity: newQuantity } : item
+        ));
+
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: newQuantity })
+          .eq("id", variant.id)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error updating quantity in Supabase:", error.message);
+          return;
+        }
+      } else {
+        setCart([...cart, newItem]);
+
+        const { error } = await supabase
+          .from("cart_items")
+          .upsert({
+            id: newItem.id,
+            user_id: auth.user.id,
+            title: newItem.title,
+            price: newItem.price,
+            currency: newItem.currency,
+            image: newItem.image,
+            quantity: newItem.quantity,
+          });
+
+        if (error) {
+          console.error("Error adding item to Supabase:", error.message);
+          return;
+        }
+      }
     } else {
-      const newItem: CartItem = {
-        id: variant.id,
-        title: product.node.title,
-        price: parseFloat(variant.price.amount),
-        currency: variant.price.currencyCode,
-        image: product.node.images.edges[0]?.node.url,
-        quantity: quantity,
-      };
-      setCart([...cart, newItem]);
+      // Unauthenticated user: Update localStorage
+      if (existingItem) {
+        const updatedCart = cart.map((item) =>
+          item.id === variant.id 
+            ? { ...item, quantity: item.quantity + quantity } 
+            : item
+        );
+        setCart(updatedCart);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      } else {
+        setCart([...cart, newItem]);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify([...cart, newItem]));
+      }
     }
+    
     console.log(`✓ Added to cart: ${product.node.title} (Quantity: ${quantity})`);
   };
 
-  const updateQuantity = (itemId: string, newQuantity: number) => {
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(cart.filter((item) => item.id !== itemId));
+      if (auth.user) {
+        const { error } = await supabase
+          .from("cart_items")
+          .delete()
+          .eq("id", itemId)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error removing item from Supabase:", error.message);
+        }
+      } else {
+        const updatedCart = cart.filter((item) => item.id !== itemId);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     } else {
       setCart(cart.map((item) =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
       ));
+
+      if (auth.user) {
+        const { error } = await supabase
+          .from("cart_items")
+          .update({ quantity: newQuantity })
+          .eq("id", itemId)
+          .eq("user_id", auth.user.id);
+
+        if (error) {
+          console.error("Error updating quantity in Supabase:", error.message);
+        }
+      } else {
+        const updatedCart = cart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
     }
   };
 
-  const removeFromCart = (itemId: string) => {
+  const removeFromCart = async (itemId: string) => {
     setCart(cart.filter((item) => item.id !== itemId));
+    if (auth.user) {
+      const { error } = await supabase
+        .from("cart_items")
+        .delete()
+        .eq("id", itemId)
+        .eq("user_id", auth.user.id);
+
+      if (error) {
+        console.error("Error removing item from Supabase:", error.message);
+      }
+    } else {
+      const updatedCart = cart.filter((item) => item.id !== itemId);
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+    }
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
     if (value === "") {
       setQuantity(0);
+      setShowMinQuantityWarning(false);
     } else {
       const numValue = parseInt(value) || 0;
       setQuantity(numValue);
+      
+      if (numValue < 2000 || numValue > 300000) {
+        setShowMinQuantityWarning(true);
+        setTimeout(() => setShowMinQuantityWarning(false), 3000);
+      } else {
+        setShowMinQuantityWarning(false);
+      }
     }
   };
 
@@ -386,9 +592,9 @@ export const BladeBall = () => {
     return (
       <div className="min-h-screen bg-[#06100A] bg-[url('/bg/mesh.png')] bg-repeat bg-[length:100vw_100vh] relative">
         <Header />
-          <div className="sticky top-0 z-10 border-b border-t border-[#3dff87]/10 bg-[#06100A]/50 backdrop-blur-md ">
-           <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
-           <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
+        <div className="sticky top-0 z-10 border-b border-t border-[#3dff87]/10 bg-[#06100A]/50 backdrop-blur-md ">
+          <div className="max-w-[95vw] mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-4">
+            <div className="flex ml-1 items-center py-1 gap-2 flex-shrink-0">
               <div className="w-9 h-9 flex items-center justify-center">
                 <div
                   className="relative w-24 h-24 flex items-center justify-center"
@@ -447,17 +653,16 @@ export const BladeBall = () => {
               </h1>
             </div>
 
-          <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
+            <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
               Join Discord
             </button>
           </div>
-          </div>
+        </div>
 
-
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 ">
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-12 h-[90vh] ">
           {loading && (
             <div className="text-center py-20">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
@@ -482,7 +687,7 @@ export const BladeBall = () => {
             <div className="flex justify-center items-center">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-[10vw] text-center mx-auto">
                 {/* Image Card */}
-                <div className="w-[30vw] h-[50vh] shadow-2xl rounded-2xl bg-[#030904] overflow-hidden  flex items-center justify-center">
+                <div className="w-[30vw] h-[50vh] shadow-2xl rounded-2xl bg-[#030904] overflow-hidden flex items-center justify-center">
                   {product.node.images.edges[0]?.node.url ? (
                     <img
                       src={product.node.images.edges[0].node.url}
@@ -505,7 +710,7 @@ export const BladeBall = () => {
                   )}
 
                   <p className="font-semibold text-left bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
-                    5$ per 1000
+                    $5 per 1000
                   </p>
 
                   <p className="text-xl sm:text-3xl font-semibold">
@@ -513,12 +718,23 @@ export const BladeBall = () => {
                       {currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency + " "}
                     </span>
                     <span className="text-white ml-1">
-                      {formatPrice(parseFloat(product.node.variants.edges[0].node.price.amount), userCurrency)
-                        .replace(
-                          currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
-                          ""
-                        )
-                        .trim()}
+                      {(() => {
+                        const variant = product.node.variants.edges[0].node;
+                        const originalAmount = parseFloat(variant.price.amount);
+                        const originalCurrency = variant.price.currencyCode;
+                        const convertedAmount = convertPrice(
+                          originalAmount,
+                          originalCurrency,
+                          userCurrency,
+                          exchangeRates
+                        );
+                        return formatPrice(convertedAmount * (quantity / 1000), userCurrency)
+                          .replace(
+                            currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency,
+                            ""
+                          )
+                          .trim();
+                      })()}
                     </span>
                   </p>
 
@@ -526,15 +742,28 @@ export const BladeBall = () => {
                     <p className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent whitespace-nowrap">
                       Quantity
                     </p>
-                      <input
-                        type="text"
-                        value={quantity}
-                        onChange={handleQuantityChange}
-                        className="w-36 py-2 px-4 bg-[#1a2621] text-white border border-[#276838] rounded-2xl focus:outline-none focus:border-[#3dff87]"
-                       
-                      />
-
-
+                    <input
+                      type="text"
+                      value={quantity}
+                      onChange={handleQuantityChange}
+                      className={`w-36 py-2 px-4 bg-[#1a2621] text-white border rounded-2xl focus:outline-none transition-all ${
+                        showMinQuantityWarning 
+                          ? 'border-red-500 focus:border-red-500 bg-red-500/10' 
+                          : 'border-[#276838] focus:border-[#3dff87]'
+                      }`}
+                    />
+                    
+                    {showMinQuantityWarning && quantity < 2000 && (
+                      <span className="text-red-400 text-sm font-semibold animate-pulse">
+                        Minimum quantity is 2000
+                      </span>
+                    )}
+                    
+                    {showMinQuantityWarning && quantity > 300000 && (
+                      <span className="text-red-400 text-sm font-semibold animate-pulse">
+                        Maximum quantity is 300000
+                      </span>
+                    )}
 
                     <span className="font-semibold bg-gradient-to-r from-[#FFFFFF] to-[#999999] bg-clip-text text-transparent">
                       (min 2000 - max 300000)
@@ -550,11 +779,9 @@ export const BladeBall = () => {
                       <span>Add to Cart</span>
                     </button>
 
-
                     <p className="text-md font-medium text-white flex items-center gap-1">
                       Total: <span className="text-[#b9b9b9]">{calculateTotalPrice()}</span>
                     </p>
-
                   </div>
                 </div>
               </div>
@@ -571,6 +798,7 @@ export const BladeBall = () => {
           exchangeRates={exchangeRates}
           onUpdateQuantity={updateQuantity}
           onRemoveItem={removeFromCart}
+          user={auth.user}
         />
       </div>
     );

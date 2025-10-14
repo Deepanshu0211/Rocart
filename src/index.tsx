@@ -30,6 +30,7 @@ createRoot(document.getElementById("app") as HTMLElement).render(
         <Route path="/NinetyNineNights" element={<NinetyNineNights />} />
         <Route path="/StealABrainrot" element={<StealABrainrot />} />
         
+        
         {/* NEW admin route */}
         <Route path="/admin" element={<AdminPage />} />
 

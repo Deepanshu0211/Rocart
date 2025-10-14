@@ -8,11 +8,16 @@ import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/Tru
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import WeAre from "./WeAre";
 import { createClient } from "@supabase/supabase-js";
-import { AuthenticationManager } from "../components/auth"; // Import AuthenticationManager
+import { AuthenticationManager } from "../components/auth";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// FIXED: Module-level caching without hooks
+let exchangeRatesCache: Record<string, number> = {};
+let cacheTimestamp = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const categoryIcons: { [key: string]: string } = {
   "Best Sellers": "/icon/crown.png",
@@ -60,12 +65,26 @@ const currencyMap = {
   ZA: "ZAR", NG: "NGN", KE: "KES", GH: "GHS",
 };
 
-async function fetchExchangeRates(baseCurrency = "USD") {
+// FIXED: Always fetch USD base rates with caching
+async function fetchExchangeRates(forceRefresh = false): Promise<Record<string, number>> {
+  const now = Date.now();
+  
+  // Check cache first
+  if (!forceRefresh && cacheTimestamp > 0 && (now - cacheTimestamp) < CACHE_DURATION && 
+      Object.keys(exchangeRatesCache).length > 0) {
+    console.log("✓ Using cached USD exchange rates");
+    return exchangeRatesCache;
+  }
+
   try {
-    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
+    console.log("Fetching fresh USD exchange rates...");
+    // ALWAYS fetch USD base rates for consistency
+    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
     if (response.ok) {
       const data = await response.json();
-      console.log("✓ Exchange rates fetched from primary API");
+      exchangeRatesCache = data.rates;
+      cacheTimestamp = now;
+      console.log("✓ USD exchange rates fetched from primary API");
       return data.rates;
     }
   } catch (error) {
@@ -73,18 +92,21 @@ async function fetchExchangeRates(baseCurrency = "USD") {
   }
 
   try {
-    const response = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+    // Backup API - always USD base
+    const response = await fetch(`https://open.er-api.com/v6/latest/USD`);
     if (response.ok) {
       const data = await response.json();
-      console.log("✓ Exchange rates fetched from backup API");
+      exchangeRatesCache = data.rates;
+      cacheTimestamp = now;
+      console.log("✓ USD exchange rates fetched from backup API");
       return data.rates;
     }
   } catch (error) {
     console.warn("Backup exchange rate API failed:", error);
   }
 
-  console.warn("Using fallback exchange rates");
-  return {
+  console.warn("Using fallback USD exchange rates");
+  const fallbackRates = {
     USD: 1, INR: 83.50, GBP: 0.78, EUR: 0.91, JPY: 148.20,
     CAD: 1.35, AUD: 1.51, CNY: 7.20, BRL: 5.10, MXN: 17.50,
     KRW: 1330.00, SGD: 1.33, AED: 3.67, SAR: 3.75, HKD: 7.82,
@@ -95,6 +117,45 @@ async function fetchExchangeRates(baseCurrency = "USD") {
     ILS: 3.72, EGP: 48.50, HUF: 355.00, RON: 4.55, COP: 4100.00,
     PEN: 3.75, NGN: 1580.00, KES: 129.00, GHS: 15.20,
   };
+  
+  exchangeRatesCache = fallbackRates;
+  cacheTimestamp = now;
+  return fallbackRates;
+}
+
+// FIXED: Proper price conversion through USD intermediate
+function convertPrice(
+  amount: number,
+  originalCurrency: string,
+  targetCurrency: string,
+  rates: Record<string, number>
+): number {
+  console.log(`🔄 Converting: ${amount} ${originalCurrency} → ${targetCurrency}`);
+  
+  if (originalCurrency === targetCurrency) {
+    console.log(`✓ Same currency, no conversion needed`);
+    return amount;
+  }
+  
+  // Validate rates exist
+  if (!rates[originalCurrency] || !rates[targetCurrency] || !rates.USD) {
+    console.warn(`⚠️ Missing exchange rates for ${originalCurrency} → ${targetCurrency}`);
+    console.warn("Available rates:", Object.keys(rates));
+    return amount; // Fallback to original amount
+  }
+  
+  try {
+    // Convert original → USD → target (proper cross-rate calculation)
+    const usdAmount = originalCurrency === "USD" ? amount : amount / rates[originalCurrency];
+    const targetAmount = usdAmount * rates[targetCurrency];
+    
+    const result = parseFloat(targetAmount.toFixed(2));
+    console.log(`✓ ${amount} ${originalCurrency} = ${result} ${targetCurrency} (via USD: ${usdAmount.toFixed(2)})`);
+    return result;
+  } catch (error) {
+    console.error("❌ Price conversion error:", error);
+    return amount;
+  }
 }
 
 // Types
@@ -105,7 +166,7 @@ type CartItem = {
   currency: string;
   image?: string;
   quantity: number;
-  user_id?: string; // Add user_id for Supabase
+  user_id?: string;
 };
 
 type ProductNode = {
@@ -136,10 +197,8 @@ export const GrowAGarden = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<number | null>(null);
 
-  // Initialize AuthenticationManager
   const auth = AuthenticationManager();
 
-  // Stable mapping of scroll containers
   const scrollRefs = useRef<Record<string, HTMLDivElement | null>>({
     bestSellers: null,
     summerSpecials: null,
@@ -151,124 +210,60 @@ export const GrowAGarden = () => {
   const mainRef = useRef<HTMLDivElement | null>(null);
   const [hideLogo, setHideLogo] = useState<boolean>(false);
 
-  // Cart state management
   const [cart, setCart] = useState<CartItem[]>([]);
   const GUEST_CART_KEY = "guest_cart";
 
-  // Load cart based on authentication status
+  // FIXED: Load exchange rates on mount
   useEffect(() => {
-    const loadCart = async () => {
-      if (auth.user) {
-        // Authenticated user: Load from Supabase
-        const { data, error } = await supabase
-          .from("cart_items")
-          .select("*")
-          .eq("user_id", auth.user.id)
-          .order("created_at", { ascending: false });
+    fetchExchangeRates(true).then(rates => {
+      setExchangeRates(rates);
+      console.log("✓ Initial USD exchange rates loaded");
+    });
+  }, []);
 
-        if (error) {
-          console.error("Error loading cart:", error.message);
-          return;
-        }
-
-        if (data) {
-          setCart(data as CartItem[]);
-        }
-      } else {
-        // Unauthenticated user: Load from localStorage
-        const guestCart = localStorage.getItem(GUEST_CART_KEY);
-        if (guestCart) {
-          setCart(JSON.parse(guestCart));
-        } else {
-          setCart([]);
-        }
-      }
-    };
-
-    loadCart();
-  }, [auth.user]);
-
-  // Sync localStorage cart to Supabase on login
+  // FIXED: Currency change handler - always use USD rates
   useEffect(() => {
-    const syncLocalCartToSupabase = async () => {
-      if (auth.user) {
-        const guestCart = localStorage.getItem(GUEST_CART_KEY);
-        if (guestCart) {
-          const localCart: CartItem[] = JSON.parse(guestCart);
-          if (localCart.length > 0) {
-            // Fetch existing cart items from Supabase
-            const { data: existingItems, error: fetchError } = await supabase
-              .from("cart_items")
-              .select("*")
-              .eq("user_id", auth.user.id);
-
-            if (fetchError) {
-              console.error("Error fetching existing cart:", fetchError.message);
-              return;
-            }
-
-            const existingIds = new Set(existingItems?.map((item) => item.id) || []);
-            const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
-
-            if (itemsToSync.length > 0) {
-              // Add new items to Supabase
-              const { error: upsertError } = await supabase
-                .from("cart_items")
-                .upsert(
-                  itemsToSync.map((item) => ({
-                    id: item.id,
-                    user_id: auth.user.id,
-                    title: item.title,
-                    price: item.price,
-                    currency: item.currency,
-                    image: item.image,
-                    quantity: item.quantity,
-                  }))
-                );
-
-              if (upsertError) {
-                console.error("Error syncing local cart to Supabase:", upsertError.message);
-              } else {
-                // Update local state with merged cart
-                setCart((prevCart) => {
-                  const mergedCart = [...prevCart];
-                  itemsToSync.forEach((item) => {
-                    if (!mergedCart.some((cartItem) => cartItem.id === item.id)) {
-                      mergedCart.push({ ...item, user_id: auth.user.id });
-                    }
-                  });
-                  return mergedCart;
-                });
-                // Clear localStorage after successful sync
-                localStorage.removeItem(GUEST_CART_KEY);
-              }
-            }
-          }
-        }
+    const handleCurrencyChange = async (event: Event) => {
+      const { country, currency } = (event as CustomEvent).detail;
+      console.log(`🌍 Currency changed: ${country} → ${currency}`);
+      
+      setDetectedCountry(country);
+      setUserCurrency(currency);
+      
+      // Always fetch fresh USD rates for conversion
+      try {
+        const usdRates = await fetchExchangeRates(true);
+        setExchangeRates(usdRates);
+        console.log("✓ Fresh USD rates loaded for currency conversion");
+      } catch (error) {
+        console.error("Error fetching exchange rates:", error);
       }
+      
+      sessionStorage.setItem('userCountry', country);
+      sessionStorage.setItem('userCurrency', currency);
     };
+    
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+  }, []);
 
-    syncLocalCartToSupabase();
-  }, [auth.user]);
-
+  // FIXED: Initialize with exchange rates first
   useEffect(() => {
     const checkStoredCurrency = () => {
       const storedCountry = sessionStorage.getItem('userCountry');
       const storedCurrency = sessionStorage.getItem('userCurrency');
 
-      if (storedCountry && storedCurrency) {
+      if (storedCountry && storedCurrency && currencyMap[storedCountry as keyof typeof currencyMap]) {
         setDetectedCountry(storedCountry);
         setUserCurrency(storedCurrency);
-        console.log(`✓ Using stored currency: ${storedCurrency} (${storedCountry})`);
+        console.log(`✓ Using stored currency: ${storedCurrency}`);
         return true;
       }
       return false;
     };
 
     const detectCountryAndCurrency = async () => {
-      if (checkStoredCurrency()) {
-        return;
-      }
+      if (checkStoredCurrency()) return;
 
       const apis = [
         { url: "https://ipapi.co/json/", parser: (data: any) => data.country_code },
@@ -284,70 +279,74 @@ export const GrowAGarden = () => {
             const data = await response.json();
             const countryCode = (api.parser(data) || "").toUpperCase();
 
-            if (countryCode && (currencyMap as Record<string, string>)[countryCode]) {
+            if (countryCode && currencyMap[countryCode as keyof typeof currencyMap]) {
+              const detectedCurrency = currencyMap[countryCode as keyof typeof currencyMap];
               setDetectedCountry(countryCode);
-              const detectedCurrency = (currencyMap as Record<string, string>)[countryCode];
               setUserCurrency(detectedCurrency);
-
               sessionStorage.setItem('userCountry', countryCode);
               sessionStorage.setItem('userCurrency', detectedCurrency);
-
-              console.log(`✓ Detected country: ${countryCode}, Currency: ${detectedCurrency}`);
+              console.log(`✓ Detected: ${countryCode} → ${detectedCurrency}`);
               return;
             }
           }
         } catch (error) {
-          console.warn(`Failed to fetch from ${api.url}:`, error);
-          continue;
+          console.warn(`Geolocation API failed: ${api.url}`, error);
         }
       }
 
-      console.warn("All geolocation APIs failed, defaulting to USD");
+      console.log("Defaulting to USD");
       setUserCurrency("USD");
       setDetectedCountry("US");
-      sessionStorage.setItem('userCountry', "US");
-      sessionStorage.setItem('userCurrency', "USD");
     };
 
     const initializeData = async () => {
       try {
-        await detectCountryAndCurrency();
+        // FIXED: Load exchange rates FIRST
         const rates = await fetchExchangeRates();
         setExchangeRates(rates);
-
+        
+        await detectCountryAndCurrency();
+        
         setLoading(true);
         setError(null);
+        
         const { data, error } = await supabase
           .from("products")
           .select("*")
           .eq("game", "GrowAGarden")
           .order("title", { ascending: true });
 
-        if (error) {
-          throw new Error(`Error fetching products: ${error.message}`);
-        }
+        if (error) throw new Error(`Supabase error: ${error.message}`);
 
+        // FIXED: Ensure USD default for products
         const mappedProducts = (data || []).map((p: any) => ({
           node: {
             id: p.id,
             title: p.title,
             description: p.description,
-            images: { edges: [{ node: { url: p.image_url } }] },
-            variants: { edges: [{ node: { id: p.id, price: { amount: p.price.toString(), currencyCode: p.currency } } }] },
-            tags: p.tags,
+            images: { edges: [{ node: { url: p.image_url || "" } }] },
+            variants: { 
+              edges: [{ 
+                node: { 
+                  id: p.id, 
+                  price: { 
+                    amount: (p.price || 0).toString(),
+                    currencyCode: p.currency || "USD" // Default USD
+                  } 
+                } 
+              }] 
+            },
+            tags: Array.isArray(p.tags) ? p.tags : [],
           },
         }));
 
         setAllProducts(mappedProducts);
         setProducts(mappedProducts);
         setLoading(false);
-      } catch (error) {
-        console.error("Error initializing data:", error);
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError(String(error));
-        }
+        console.log(`✓ Loaded ${mappedProducts.length} products`);
+      } catch (err) {
+        console.error("Initialization error:", err);
+        setError(err instanceof Error ? err.message : "Failed to load data");
         setLoading(false);
       }
     };
@@ -355,63 +354,215 @@ export const GrowAGarden = () => {
     initializeData();
   }, []);
 
+  // Load cart
   useEffect(() => {
-    const handleCurrencyChange = async (event: Event) => {
-      const { country, currency } = (event as CustomEvent).detail;
-      setDetectedCountry(country);
-      setUserCurrency(currency);
-      console.log(`✓ Currency changed to: ${currency} (${country})`);
-      try {
-        const rates = await fetchExchangeRates(currency);
-        setExchangeRates(rates);
-      } catch (error) {
-        console.error("Error fetching exchange rates after currency change:", error);
-      }
-    };
-    window.addEventListener('currencyChanged', handleCurrencyChange);
-    return () => {
-      window.removeEventListener('currencyChanged', handleCurrencyChange);
-    };
-  }, [activeCategory]);
+    const loadCart = async () => {
+      if (auth.user) {
+        const { data, error } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", auth.user.id)
+          .order("created_at", { ascending: false });
 
-  useEffect(() => {
-    const loadProducts = () => {
-      try {
-        setLoading(true);
-        setError(null);
-        if (activeCategory === "All") {
-          setProducts(allProducts);
-        } else {
-          const categoryTag = activeCategory.toLowerCase().replace(/\s+/g, '-');
-          const filteredProducts = allProducts.filter((product: Product) =>
-            product.node.tags.some((tag: string) =>
-              tag.toLowerCase() === categoryTag ||
-              tag.toLowerCase().includes(activeCategory.toLowerCase())
-            )
-          );
-          setProducts(filteredProducts);
+        if (error) {
+          console.error("Error loading cart:", error.message);
+          return;
         }
-      } catch (error) {
-        console.error("Error loading products:", error);
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError(String(error));
-        }
-      } finally {
-        setLoading(false);
+        setCart(data as CartItem[] || []);
+      } else {
+        const guestCart = localStorage.getItem(GUEST_CART_KEY);
+        setCart(guestCart ? JSON.parse(guestCart) : []);
       }
     };
-    loadProducts();
+    loadCart();
+  }, [auth.user]);
+
+  // Sync local cart on login
+  useEffect(() => {
+    if (auth.user) {
+      const guestCart = localStorage.getItem(GUEST_CART_KEY);
+      if (guestCart) {
+        const localCart: CartItem[] = JSON.parse(guestCart);
+        localCart.forEach(async (item) => {
+          await supabase.from("cart_items").upsert({
+            ...item,
+            user_id: auth.user!.id,
+          });
+        });
+        localStorage.removeItem(GUEST_CART_KEY);
+      }
+    }
+  }, [auth.user]);
+
+  // Category filtering
+  useEffect(() => {
+    if (activeCategory === "All") {
+      setProducts(allProducts);
+    } else {
+      const categoryTag = activeCategory.toLowerCase().replace(/\s+/g, '-');
+      const filtered = allProducts.filter((product) =>
+        product.node.tags.some((tag: string) =>
+          tag.toLowerCase() === categoryTag ||
+          tag.toLowerCase().includes(activeCategory.toLowerCase())
+        )
+      );
+      setProducts(filtered);
+    }
   }, [activeCategory, allProducts]);
 
+  // Logo hide on scroll
   useEffect(() => {
-    if (userCurrency && Object.keys(exchangeRates).length === 0) {
-      fetchExchangeRates().then(rates => setExchangeRates(rates));
-    }
-  }, [userCurrency]);
+    const onScroll = () => setHideLogo(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  // Dropdown hover behavior
+  // FIXED: Add to cart with currency conversion
+  const addToCart = async (product: Product) => {
+    const variant = product.node.variants.edges[0].node;
+    const originalPrice = parseFloat(variant.price.amount);
+    const originalCurrency = variant.price.currencyCode;
+    
+    // FIXED: Convert to user's currency for storage
+    const convertedPrice = convertPrice(
+      originalPrice, 
+      originalCurrency, 
+      userCurrency, 
+      exchangeRates
+    );
+    
+    const existingItem = cart.find((item) => item.id === variant.id);
+    const newItem: CartItem = {
+      id: variant.id,
+      title: product.node.title,
+      price: convertedPrice,
+      currency: userCurrency,
+      image: product.node.images.edges[0]?.node.url,
+      quantity: existingItem ? existingItem.quantity + 1 : 1,
+      user_id: auth.user?.id,
+    };
+
+    try {
+      if (auth.user) {
+        if (existingItem) {
+          const newQuantity = existingItem.quantity + 1;
+          setCart(cart.map((item) =>
+            item.id === variant.id ? { ...item, quantity: newQuantity } : item
+          ));
+          await supabase
+            .from("cart_items")
+            .update({ quantity: newQuantity })
+            .eq("id", variant.id)
+            .eq("user_id", auth.user.id);
+        } else {
+          setCart([...cart, newItem]);
+          await supabase.from("cart_items").upsert(newItem);
+        }
+      } else {
+        const updatedCart = existingItem
+          ? cart.map((item) =>
+              item.id === variant.id ? { ...item, quantity: item.quantity + 1 } : item
+            )
+          : [...cart, newItem];
+        setCart(updatedCart);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
+      console.log(`✓ Added: ${product.node.title} (${convertedPrice} ${userCurrency})`);
+    } catch (error) {
+      console.error("Cart error:", error);
+    }
+  };
+
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
+    try {
+      if (newQuantity <= 0) {
+        setCart(cart.filter((item) => item.id !== itemId));
+        if (auth.user) {
+          await supabase.from("cart_items").delete().eq("id", itemId).eq("user_id", auth.user.id);
+        } else {
+          const updatedCart = cart.filter((item) => item.id !== itemId);
+          localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+        }
+      } else {
+        setCart(cart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        ));
+        if (auth.user) {
+          await supabase
+            .from("cart_items")
+            .update({ quantity: newQuantity })
+            .eq("id", itemId)
+            .eq("user_id", auth.user.id);
+        } else {
+          const updatedCart = cart.map((item) =>
+            item.id === itemId ? { ...item, quantity: newQuantity } : item
+          );
+          localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+        }
+      }
+    } catch (error) {
+      console.error("Update quantity error:", error);
+    }
+  };
+
+  const removeFromCart = async (itemId: string) => {
+    try {
+      setCart(cart.filter((item) => item.id !== itemId));
+      if (auth.user) {
+        await supabase.from("cart_items").delete().eq("id", itemId).eq("user_id", auth.user.id);
+      } else {
+        const updatedCart = cart.filter((item) => item.id !== itemId);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      }
+    } catch (error) {
+      console.error("Remove from cart error:", error);
+    }
+  };
+
+  const handlePrev = (section: string) => {
+    scrollRefs.current[section]?.scrollBy({ left: -240, behavior: 'smooth' });
+  };
+
+  const handleNext = (section: string) => {
+    scrollRefs.current[section]?.scrollBy({ left: 240, behavior: 'smooth' });
+  };
+
+  // FIXED: Price formatting with conversion
+  const formatPrice = (product: Product) => {
+    if (!product.node.variants.edges[0]) return null;
+    
+    const variant = product.node.variants.edges[0].node;
+    const originalAmount = parseFloat(variant.price.amount);
+    const originalCurrency = variant.price.currencyCode || "USD";
+    
+    const convertedAmount = convertPrice(
+      originalAmount,
+      originalCurrency,
+      userCurrency,
+      exchangeRates
+    );
+    
+    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency;
+    const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
+    
+    const price = noDecimalCurrencies.includes(userCurrency)
+      ? Math.round(convertedAmount).toLocaleString()
+      : new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(convertedAmount);
+    
+    return { symbol, price };
+  };
+
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : products;
+
+  // Dropdown handlers (unchanged)
   const handleMouseEnter = () => {
     if (dropdownTimeoutRef.current) {
       window.clearTimeout(dropdownTimeoutRef.current);
@@ -425,200 +576,6 @@ export const GrowAGarden = () => {
       setIsDropdownOpen(false);
       dropdownTimeoutRef.current = null;
     }, 180);
-  };
-
-  // Logo hide on scroll
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY || window.pageYOffset;
-      setHideLogo(y > 60);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const addToCart = async (product: Product) => {
-    const variant = product.node.variants.edges[0].node;
-    const existingItem = cart.find((item) => item.id === variant.id);
-    const newItem: CartItem = {
-      id: variant.id,
-      title: product.node.title,
-      price: parseFloat(variant.price.amount),
-      currency: variant.price.currencyCode,
-      image: product.node.images.edges[0]?.node.url,
-      quantity: existingItem ? existingItem.quantity + 1 : 1,
-      user_id: auth.user?.id,
-    };
-
-    if (auth.user) {
-      // Authenticated user: Update Supabase
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + 1;
-        setCart(cart.map((item) =>
-          item.id === variant.id ? { ...item, quantity: newQuantity } : item
-        ));
-
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity: newQuantity })
-          .eq("id", variant.id)
-          .eq("user_id", auth.user.id);
-
-        if (error) {
-          console.error("Error updating quantity in Supabase:", error.message);
-          return;
-        }
-      } else {
-        setCart([...cart, newItem]);
-
-        const { error } = await supabase
-          .from("cart_items")
-          .upsert({
-            id: newItem.id,
-            user_id: auth.user.id,
-            title: newItem.title,
-            price: newItem.price,
-            currency: newItem.currency,
-            image: newItem.image,
-            quantity: newItem.quantity,
-          });
-
-        if (error) {
-          console.error("Error adding item to Supabase:", error.message);
-          return;
-        }
-      }
-    } else {
-      // Unauthenticated user: Update localStorage
-      const updatedCart = existingItem
-        ? cart.map((item) =>
-            item.id === variant.id ? { ...item, quantity: item.quantity + 1 } : item
-          )
-        : [...cart, newItem];
-
-      setCart(updatedCart);
-      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-    }
-
-    console.log(`✓ Added to cart: ${product.node.title}`);
-  };
-
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCart(cart.filter((item) => item.id !== itemId));
-      if (auth.user) {
-        const { error } = await supabase
-          .from("cart_items")
-          .delete()
-          .eq("id", itemId)
-          .eq("user_id", auth.user.id);
-
-        if (error) {
-          console.error("Error removing item from Supabase:", error.message);
-        }
-      } else {
-        const updatedCart = cart.filter((item) => item.id !== itemId);
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-      }
-    } else {
-      setCart(cart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
-
-      if (auth.user) {
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity: newQuantity })
-          .eq("id", itemId)
-          .eq("user_id", auth.user.id);
-
-        if (error) {
-          console.error("Error updating quantity in Supabase:", error.message);
-        }
-      } else {
-        const updatedCart = cart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        );
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-      }
-    }
-  };
-
-  const removeFromCart = async (itemId: string) => {
-    setCart(cart.filter((item) => item.id !== itemId));
-    if (auth.user) {
-      const { error } = await supabase
-        .from("cart_items")
-        .delete()
-        .eq("id", itemId)
-        .eq("user_id", auth.user.id);
-
-      if (error) {
-        console.error("Error removing item from Supabase:", error.message);
-      }
-    } else {
-      const updatedCart = cart.filter((item) => item.id !== itemId);
-      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-    }
-  };
-
-  const handlePrev = (section: string) => {
-    const scrollContainer = scrollRefs.current[section];
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: -240, behavior: 'smooth' });
-    }
-  };
-
-  const handleNext = (section: string) => {
-    const scrollContainer = scrollRefs.current[section];
-    if (scrollContainer) {
-      scrollContainer.scrollBy({ left: 240, behavior: 'smooth' });
-    }
-  };
-
-  // Filter products based on search query
-  const filteredProducts = searchQuery
-    ? products.filter((product) =>
-        product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : products;
-
-  function convertPrice(
-    amount: number,
-    originalCurrency: string,
-    targetCurrency: string,
-    rates: Record<string, number>
-  ): number {
-    if (originalCurrency === targetCurrency) return amount;
-    if (!rates[originalCurrency] || !rates[targetCurrency]) {
-      console.warn(`Exchange rate not found for ${originalCurrency} to ${targetCurrency}`);
-      return amount;
-    }
-    const amountInUSD = originalCurrency === "USD" ? amount : amount / rates[originalCurrency];
-    return amountInUSD * rates[targetCurrency];
-  }
-
-  const formatPrice = (product: Product) => {
-    if (!product.node.variants.edges[0]) return null;
-    const variant = product.node.variants.edges[0].node;
-    const originalAmount = parseFloat(variant.price.amount);
-    const originalCurrency = variant.price.currencyCode;
-    const convertedAmount = convertPrice(
-      originalAmount,
-      originalCurrency,
-      userCurrency,
-      exchangeRates
-    );
-    const symbol = currencySymbols[userCurrency as keyof typeof currencySymbols] || userCurrency;
-    const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR", "CLP"];
-    const price = noDecimalCurrencies.includes(userCurrency)
-      ? Math.round(convertedAmount).toLocaleString()
-      : new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }).format(convertedAmount);
-    return { symbol, price };
   };
 
   const renderSection = (sectionId: string, title: string, icon: string, productsToShow: Product[]) => {
@@ -703,7 +660,6 @@ export const GrowAGarden = () => {
                     initial="initial"
                     animate="initial"
                   >
-                    {/* Save Badge */}
                     <motion.div
                       className="absolute top-3 left-3 flex items-center gap-3 text-white text-[12px] font-bold px-3 py-2 rounded-2xl bg-[url('/icon/savebg.png')] bg-cover bg-center bg-no-repeat min-w-[9vw] z-20"
                       variants={{
@@ -716,7 +672,6 @@ export const GrowAGarden = () => {
                       <span className="text-[11px] tracking-tighter">Save $24.00</span>
                     </motion.div>
 
-                    {/* Background */}
                     <motion.div
                       className="absolute inset-0 bg-[url('/icon/productbg.png')] bg-cover bg-center bg-no-repeat opacity-150"
                       variants={{
@@ -726,7 +681,6 @@ export const GrowAGarden = () => {
                       transition={{ duration: 0.6, ease: "easeOut" }}
                     />
 
-                    {/* Product Image */}
                     {product.node.images.edges[0] ? (
                       <motion.div
                         className="absolute inset-0 flex items-center justify-center z-5"
@@ -753,9 +707,11 @@ export const GrowAGarden = () => {
                       </div>
                     )}
 
-                    {/* Add to Cart Button */}
                     <motion.button
-                      onClick={() => addToCart(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                      }}
                       className="absolute bottom-4 right-9 bg-[#3dff87] text-white font-semibold px-4 py-2 rounded-2xl hover:bg-[#2dd66e] hover:scale-110 flex items-center justify-center"
                       variants={{
                         initial: { y: 20, opacity: 0 },
@@ -777,7 +733,10 @@ export const GrowAGarden = () => {
                         <span className="text-white"> {formatPrice(product)?.price}</span>
                       </span>
                       <button
-                        onClick={() => addToCart(product)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product);
+                        }}
                         className="opacity-100 hover:bg-[#031C0D] transition-all duration-300"
                       >
                         <img
@@ -801,6 +760,38 @@ export const GrowAGarden = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#06100A] flex flex-col">
+        <Header />
+
+        <div className="flex-grow flex flex-col items-center justify-center text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
+          <p className="text-white mt-4">Loading products...</p>
+        </div>
+      </div>
+
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#06100A] flex items-center justify-center">
+        <Header />
+        <div className="text-center text-red-500">
+          <h2 className="text-xl mb-4">Error</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#3dff87] text-black rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#06100A] relative">
       <Header />
@@ -820,7 +811,6 @@ export const GrowAGarden = () => {
                   className="w-8 h-8 rounded-md object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                 />
 
-                {/* Dropdown */}
                 <motion.div
                   ref={dropdownRef}
                   initial={{ opacity: 0, y: -10 }}
@@ -854,14 +844,7 @@ export const GrowAGarden = () => {
                 </motion.div>
               </div>
             </div>
-            <h1
-              className="
-                text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3
-                transition-transform duration-300 ease-in-out
-                hover:scale-105 
-                hover:drop-shadow-lg cursor-pointer
-              "
-            >
+            <h1 className="text-white text-2xl font-bold sm:text-lg whitespace-nowrap ml-3 transition-transform duration-300 ease-in-out hover:scale-105 hover:drop-shadow-lg cursor-pointer">
               {selectedGame.name}
             </h1>
           </div>
@@ -875,7 +858,9 @@ export const GrowAGarden = () => {
                     className={`relative whitespace-nowrap px-4 sm:px-6 sm:py-5 text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1
                       text-gray-400
                       hover:text-white hover:bg-gradient-to-b hover:from-[#d4dcd520] hover:to-[#01460d3d] hover:shadow-md hover:shadow-[#3dff87]/20
-                      hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-['']`}
+                      hover:after:absolute hover:after:bottom-0 hover:after:left-1/2 hover:after:-translate-x-1/2 hover:after:w-6 hover:after:h-[2px] hover:after:bg-white hover:after:rounded-full hover:after:content-[''] ${
+                        activeCategory === category ? 'text-white bg-gradient-to-b from-[#d4dcd520] to-[#01460d3d]' : ''
+                      }`}
                   >
                     {category === "Best Sellers" && (
                       <img
@@ -888,9 +873,7 @@ export const GrowAGarden = () => {
                   </button>
 
                   {category === "Bundles" && (
-                    <div
-                      className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-60 rounded-full"
-                    />
+                    <div className="h-6 w-[2px] mx-2 bg-gradient-to-b from-[#3a3c3b] via-[#3dff87] to-[#3a3c3b] opacity-60 rounded-full" />
                   )}
                 </React.Fragment>
               ))}
@@ -924,6 +907,7 @@ export const GrowAGarden = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search products..."
                   className="bg-transparent text-white text-sm outline-none w-40 placeholder-gray-500"
+                  onKeyDown={(e) => e.key === 'Escape' && setIsSearchActive(false)}
                 />
                 {searchQuery && (
                   <button
@@ -985,26 +969,6 @@ export const GrowAGarden = () => {
           </button>
         )}
 
-        {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#3dff87]/20 border-t-[#3dff87]"></div>
-            <p className="text-gray-400 mt-4">Loading products...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="text-center py-20">
-            <div className="text-red-500 text-xl mb-4">⚠️ Error loading products</div>
-            <p className="text-gray-400">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
         {!loading && !error && filteredProducts.length > 0 && (
           <>
             {(!activeSection || activeSection === "bestSellers") && (
@@ -1051,14 +1015,8 @@ export const GrowAGarden = () => {
         )}
       </div>
 
-      <div
-        className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-      >
-        <img
-          src="/icon/ro.png"
-          alt="Company Logo"
-          className="w-12 h-12 object-contain"
-        />
+      <div className={`fixed bottom-4 left-2 z-50 transition-opacity duration-500 ${hideLogo ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <img src="/icon/ro.png" alt="Company Logo" className="w-12 h-12 object-contain" />
       </div>
 
       <div ref={mainRef} className="relative">
@@ -1074,11 +1032,10 @@ export const GrowAGarden = () => {
         exchangeRates={exchangeRates}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeFromCart}
-        user={auth.user} // Pass user to Cart component
+        user={auth.user}
       />
     </div>
   );
 };
-
 
 export default GrowAGarden;
