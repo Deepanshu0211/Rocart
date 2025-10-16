@@ -1020,7 +1020,7 @@ export const GrowAGarden = () => {
       </div>
 
       <div ref={mainRef} className="relative">
-        <TrustedBySection />
+        {/* <TrustedBySection /> */}
         <FAQSection />
         <WeAre />
         <MainContentSection />
