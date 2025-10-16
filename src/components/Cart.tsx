@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useNavigate } from "react-router-dom";
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // Types
 type CartItem = {
@@ -15,7 +20,7 @@ type CartItem = {
   currency: string;
   image?: string;
   quantity: number;
-  user_id?: string; // Add user_id for Supabase
+  user_id?: string;
 };
 
 // Currency symbols
@@ -34,23 +39,22 @@ export const Cart = ({
   exchangeRates,
   onUpdateQuantity,
   onRemoveItem,
-  user, // Add user prop from AuthenticationManager
+  user,
 }: {
   cart: CartItem[];
   userCurrency: string;
   exchangeRates: Record<string, number>;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
-  user: any; // From AuthenticationManager
+  user: any;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const navigate = useNavigate();
 
   // Local storage key for guest cart
   const GUEST_CART_KEY = "guest_cart";
@@ -59,7 +63,6 @@ export const Cart = ({
   useEffect(() => {
     const loadCart = async () => {
       if (user) {
-        // Authenticated user: Load from Supabase
         const { data, error } = await supabase
           .from("cart_items")
           .select("*")
@@ -75,7 +78,6 @@ export const Cart = ({
           setCart(data as CartItem[]);
         }
       } else {
-        // Unauthenticated user: Load from localStorage
         const guestCart = localStorage.getItem(GUEST_CART_KEY);
         if (guestCart) {
           setCart(JSON.parse(guestCart));
@@ -96,12 +98,10 @@ export const Cart = ({
       );
 
       if (user) {
-        // Authenticated user: Sync to Supabase
         const prevCartIds = new Set(cart.map((item) => item.id));
         const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
 
         if (newItems.length > 0) {
-          // Update local state immediately (optimistic update)
           setCart((prevCart) => {
             const updatedCart = [...prevCart];
             newItems.forEach((newItem) => {
@@ -116,7 +116,6 @@ export const Cart = ({
             return updatedCart;
           });
 
-          // Sync to Supabase in background
           newItems.forEach(async (item) => {
             const { error } = await supabase
               .from("cart_items")
@@ -133,7 +132,6 @@ export const Cart = ({
           });
         }
       } else {
-        // Unauthenticated user: Sync to localStorage
         const prevCartIds = new Set(cart.map((item) => item.id));
         const newItems = validInitialCart.filter((item) => !prevCartIds.has(item.id));
 
@@ -167,7 +165,6 @@ export const Cart = ({
         if (guestCart) {
           const localCart: CartItem[] = JSON.parse(guestCart);
           if (localCart.length > 0) {
-            // Merge local cart with Supabase cart
             const { data: existingItems, error: fetchError } = await supabase
               .from("cart_items")
               .select("*")
@@ -182,7 +179,6 @@ export const Cart = ({
             const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
 
             if (itemsToSync.length > 0) {
-              // Add new items to Supabase
               const { error: upsertError } = await supabase
                 .from("cart_items")
                 .upsert(
@@ -200,7 +196,6 @@ export const Cart = ({
               if (upsertError) {
                 console.error("Error syncing local cart to Supabase:", upsertError.message);
               } else {
-                // Update local state with merged cart
                 setCart((prevCart) => {
                   const mergedCart = [...prevCart];
                   itemsToSync.forEach((item) => {
@@ -210,7 +205,6 @@ export const Cart = ({
                   });
                   return mergedCart;
                 });
-                // Clear localStorage after successful sync
                 localStorage.removeItem(GUEST_CART_KEY);
               }
             }
@@ -225,12 +219,10 @@ export const Cart = ({
   // Update quantity with instant local update
   const updateLocalQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      // Remove from local state immediately
       setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
       onRemoveItem(itemId);
 
       if (user) {
-        // Delete from Supabase in background
         supabase
           .from("cart_items")
           .delete()
@@ -240,12 +232,10 @@ export const Cart = ({
             if (error) console.error("Error removing item:", error.message);
           });
       } else {
-        // Update localStorage
         const updatedCart = cart.filter((item) => item.id !== itemId);
         localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
       }
     } else {
-      // Update local state immediately
       setCart((prevCart) =>
         prevCart.map((item) =>
           item.id === itemId ? { ...item, quantity: newQuantity } : item
@@ -254,7 +244,6 @@ export const Cart = ({
       onUpdateQuantity(itemId, newQuantity);
 
       if (user) {
-        // Update Supabase in background
         supabase
           .from("cart_items")
           .update({ quantity: newQuantity })
@@ -264,7 +253,6 @@ export const Cart = ({
             if (error) console.error("Error updating quantity:", error.message);
           });
       } else {
-        // Update localStorage
         const updatedCart = cart.map((item) =>
           item.id === itemId ? { ...item, quantity: newQuantity } : item
         );
@@ -302,32 +290,89 @@ export const Cart = ({
     return total > 10 ? total * 0.1 : 0;
   };
 
-  // Handle checkout (keep items in cart)
-  const handleCheckout = () => {
+  // Handle checkout with Stripe
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       setCheckoutError("Your cart is empty.");
-      setIsCheckoutOpen(true);
       return;
     }
 
     setIsProcessing(true);
     setCheckoutError(null);
-    setCheckoutSuccess("Checkout successful! (Simulated for demo)");
 
-    setTimeout(() => {
+    try {
+      // Prepare line items for Stripe
+      const lineItems = cart.map((item) => ({
+        name: item.title,
+        amount: Math.round(convertPrice(item.price, item.currency, "USD") * 100), // Stripe expects cents
+        currency: "usd",
+        quantity: item.quantity,
+      }));
+
+      // Call backend to create Stripe checkout session
+            const response = await fetch("http://localhost:5173/api/create-checkout-session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                lineItems,
+                userId: user?.id || null,
+                successUrl: `${window.location.origin}/checkout/success`,
+                cancelUrl: `${window.location.origin}/cart`,
+              }),
+            });
+      
+            // support backends that return either { sessionId } or { url }
+            const { sessionId, url } = await response.json();
+            const stripe = await stripePromise;
+      
+            if (!stripe && !url) {
+              setCheckoutError("Failed to initialize Stripe.");
+              setIsProcessing(false);
+              return;
+            }
+      
+            // Redirect to Stripe Checkout using available method (cast to any to satisfy types)
+            if (stripe && typeof (stripe as any).redirectToCheckout === "function") {
+              const { error } = await (stripe as any).redirectToCheckout({ sessionId });
+              if (error) {
+                setCheckoutError((error as any).message || "Failed to redirect to Stripe Checkout.");
+                setIsProcessing(false);
+              }
+            } else if (stripe && (stripe as any).checkout && typeof (stripe as any).checkout.redirectToCheckout === "function") {
+              const { error } = await (stripe as any).checkout.redirectToCheckout({ sessionId });
+              if (error) {
+                setCheckoutError((error as any).message || "Failed to redirect to Stripe Checkout.");
+                setIsProcessing(false);
+              }
+            } else if (url) {
+              // Fallback to direct URL returned by backend
+              window.location.href = url;
+            } else {
+              setCheckoutError("Unable to redirect to Stripe Checkout.");
+              setIsProcessing(false);
+            }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      setCheckoutError("Network error. Please try again.");
       setIsProcessing(false);
-      setIsCheckoutOpen(true);
-    }, 2000);
-  };
-
-  const handleCloseCheckout = () => {
-    setIsCheckoutOpen(false);
-    setCheckoutError(null);
-    setCheckoutSuccess(null);
+    }
   };
 
   const handleOpenCart = () => {
     setIsOpen(true);
+  };
+
+  const handleOpenCheckout = () => {
+    if (cart.length === 0) {
+      setCheckoutError("Your cart is empty.");
+      return;
+    }
+    // Store cart data in localStorage for checkout page
+    localStorage.setItem("checkout_cart", JSON.stringify(cart));
+    localStorage.setItem("checkout_currency", userCurrency);
+    navigate("/checkout");
   };
 
   return (
@@ -532,7 +577,7 @@ export const Cart = ({
                 </div>
               </div>
               <button
-                onClick={handleCheckout}
+                onClick={handleOpenCheckout}
                 disabled={isProcessing}
                 className="w-full h-[8vh] bg-[#00A241] hover:bg-[#259951] text-white font-bold py-3 rounded-[1vw] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -548,83 +593,29 @@ export const Cart = ({
         </div>
       </div>
 
-      {isCheckoutOpen && (
+      {checkoutError && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-[#1a2621] rounded-lg w-full max-w-md p-6 border border-[#3dff87]/20">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-white font-bold text-lg">Checkout</h3>
+              <h3 className="text-white font-bold text-lg">Error</h3>
               <button
-                onClick={handleCloseCheckout}
+                onClick={() => setCheckoutError(null)}
                 className="text-gray-400 hover:text-white"
               >
                 <img src="/icon/close.png" alt="Close" className="w-6 h-6 object-contain" />
               </button>
             </div>
-
-            <div className="mb-6">
-              <h4 className="text-white font-semibold mb-3">Order Summary</h4>
-              <div className="space-y-3">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex justify-between text-gray-300 text-sm">
-                    <span className="line-clamp-2">{item.title} (x{item.quantity})</span>
-                    <span>
-                      {currencySymbols[userCurrency] || "$"}
-                      {(convertPrice(item.price, item.currency, userCurrency) * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-                {getDiscountAmount() > 0 && (
-                  <div className="flex justify-between text-[#3dff87] text-sm pt-2 border-t border-gray-600">
-                    <span>Discount</span>
-                    <span>
-                      -{currencySymbols[userCurrency] || "$"}
-                      {getDiscountAmount().toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between text-white font-bold text-sm pt-2 border-t border-gray-600">
-                  <span>Total</span>
-                  <span>
-                    {currencySymbols[userCurrency] || "$"}
-                    {getDiscountedTotal().toFixed(2)}
-                  </span>
-                </div>
-              </div>
+            <div className="bg-red-500/10 p-3 rounded-lg text-red-300 text-sm mb-4">
+              {checkoutError}
             </div>
-
-            {checkoutError && (
-              <div className="bg-red-500/10 p-3 rounded-lg text-red-300 text-sm mb-4">
-                {checkoutError}
-              </div>
-            )}
-            {checkoutSuccess && (
-              <div className="bg-green-500/10 p-3 rounded-lg text-green-300 text-sm mb-4">
-                {checkoutSuccess}
-              </div>
-            )}
-
-            {!checkoutSuccess && (
-              <button
-                onClick={handleCheckout}
-                disabled={isProcessing}
-                className="w-full bg-[#3dff87] hover:bg-[#259951] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Try Checkout Again
-              </button>
-            )}
-
-            <div className="text-center mt-4 text-xs text-gray-400">
-              <p>🔒 Secure checkout • SSL encrypted • 256-bit encryption</p>
-            </div>
+            <button
+              onClick={() => setCheckoutError(null)}
+              className="w-full bg-[#3dff87] hover:bg-[#259951] text-white font-bold py-3 rounded-lg"
+            >
+              Close
+            </button>
           </div>
         </div>
-      )}
-
-      {(isOpen || isCheckoutOpen) && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={isCheckoutOpen ? handleCloseCheckout : () => setIsOpen(false)}
-        />
       )}
     </>
   );

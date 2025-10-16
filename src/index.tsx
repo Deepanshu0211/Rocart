@@ -13,6 +13,7 @@ import  MurderMystery  from "./Pages/MurderMystery2";
 import  NinetyNineNights  from "./Pages/NinetyNineNights";
 import  StealABrainrot from "./Pages/StealABrainrot";
 import AdminPage from "./Pages/admin"; // Import the new admin page
+import Checkout from "./components/Checkout";
 
 createRoot(document.getElementById("app") as HTMLElement).render(
   <StrictMode>
@@ -29,7 +30,8 @@ createRoot(document.getElementById("app") as HTMLElement).render(
         <Route path="/murderMystery" element={<MurderMystery />} />
         <Route path="/NinetyNineNights" element={<NinetyNineNights />} />
         <Route path="/StealABrainrot" element={<StealABrainrot />} />
-        
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/checkout/success" element={<div>Payment Successful!</div>} />
         
         {/* NEW admin route */}
         <Route path="/admin" element={<AdminPage />} />

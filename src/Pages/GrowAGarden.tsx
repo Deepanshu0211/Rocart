@@ -4,7 +4,7 @@ import MainContentSection from "../screens/Frame/sections/MainContentSection/Mai
 import { Cart } from "../components/Cart";
 import { motion } from "framer-motion";
 import React from "react";
-import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
+// import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import WeAre from "./WeAre";
 import { createClient } from "@supabase/supabase-js";
