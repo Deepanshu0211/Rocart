@@ -66,9 +66,9 @@ const games = [
     gradient: "linear-gradient(90deg, #2ECC71, #27AE60)",
   },
   {
-    name: "Anime Vanguards",
-    icon: "/logo/anime.png",
-    bgImage: "/logo/anime-main.png",
+    name: "Plant vs Brainrot",
+    icon: "/game/plant.png",
+    bgImage: "/logo/plant-main.png",
     gradient: "linear-gradient(90deg, #FF8132, #E9E9E9)",
   },
   {
@@ -322,7 +322,7 @@ export const WelcomeBannerSection = () => {
               </div>
 
               {/* Footer Rocart Logo */}
-              <div className="flex justify-center mt-[3vh] sm:mt-[1.5vh]">
+              <div className="flex justify-center mt-[3vh] sm:mt-[3vh]">
                 <img
                   src="/logo/rocart.png"
                   alt="Rocart logo"

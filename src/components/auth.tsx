@@ -489,7 +489,7 @@ export const AuthModal = ({
                           </span>
                         </label>
                       </div>
-                      <div className="w-full max-w-sm md:w-[25vw]">
+                      {/* <div className="w-full max-w-sm md:w-[25vw]">
                         <label className="block text-sm md:text-[0.9vw] text-white mb-2 md:mb-[0.5vh]">Referral Code (Optional)</label>
                         <input 
                           type="text" 
@@ -499,30 +499,40 @@ export const AuthModal = ({
                           className="w-full bg-[#030804] border border-[#000000] rounded-lg md:rounded-[0.5vw] px-4 py-3 md:px-[1vw] md:py-[1vh] text-sm md:text-[0.9vw] text-white placeholder-gray-500 focus:border-[#3DFF88] focus:outline-none" 
                           placeholder="Enter Code" 
                         />
-                      </div>
-                      <button 
-                        type="submit" 
-                        disabled={isLoading || !formData.agreeToTerms} 
-                        className="w-full max-w-sm md:w-[25vw] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
-                      >
-                        {isLoading ? "Creating Account..." : "Register"}
-                      </button>
-                      <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <button
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        disabled={isLoading}
-                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
-                                  disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
-                                  font-semibold transition-all duration-200 border border-gray-300"
-                      >
-                        <img
-                          src="/loginbg/google.png"
-                          alt="Google"
-                          className="w-5 h-5 object-contain"
-                        />
-                        <span className="leading-none">Google</span>
-                      </button>
+                      </div> */}
+                 <div className="flex flex-col items-center space-y-3">
+                    <button 
+                      type="submit" 
+                      disabled={isLoading || !formData.agreeToTerms} 
+                      className="w-full max-w-sm md:w-[25vw] bg-[linear-gradient(180deg,rgba(61,255,136,1)_0%,rgba(37,153,81,1)_100%)] 
+                                hover:bg-[linear-gradient(180deg,rgba(61,255,136,0.9)_0%,rgba(37,153,81,0.9)_100%)] 
+                                disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] 
+                                text-base md:text-[1vw] font-semibold text-white transition-all duration-200"
+                    >
+                      {isLoading ? "Creating Account..." : "Register"}
+                    </button>
+
+                    <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
+
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-2 px-7 py-2.5 
+                                border border-white/60 rounded-md text-white bg-transparent 
+                                hover:bg-white/10 transition-all duration-200 
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <img
+                        src="/loginbg/google.png"
+                        alt="Google"
+                        className="w-5 h-5 object-contain"
+                      />
+                      <span className="text-sm font-medium">Google</span>
+                    </button>
+                  </div>
+
+
 
                     </div>
                   ) : (
@@ -582,22 +592,23 @@ export const AuthModal = ({
                         {isLoading ? "Signing In..." : "Sign In"}
                       </button>
                       <span className="text-gray-400 text-sm md:text-[0.9vw]">or continue with</span>
-                      <button
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        disabled={isLoading}
-                        className="w-full max-w-sm md:w-[25vw] flex items-center justify-center gap-1 bg-white text-gray-700 hover:bg-gray-50 
-                                  disabled:opacity-50 disabled:cursor-not-allowed rounded-lg py-3 md:py-[1.5vh] text-base md:text-[1vw] 
-                                  font-semibold transition-all duration-200 border border-gray-300"
-                      >
-                        <img
-                          src="/loginbg/google.png"
-                          alt="Google"
-                          className="w-5 h-5 object-contain"
-                        />
-                        <span className="leading-none">Google</span>
-                      </button>
-
+                     <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isLoading}
+                      className="flex items-center justify-center gap-2 px-7 py-2.5 
+                                border border-white/60 rounded-md text-white bg-transparent 
+                                hover:bg-white/10 transition-all duration-200 
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <img
+                        src="/loginbg/google.png"
+                        alt="Google"
+                        className="w-5 h-5 object-contain"
+                      />
+                      <span className="text-sm font-medium">Google</span>
+                    </button>
+                    
                     </div>
                   )}
                   <div className="md:hidden text-center mt-6 px-4">

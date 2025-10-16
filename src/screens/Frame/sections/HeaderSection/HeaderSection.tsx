@@ -58,12 +58,13 @@ export const GameSelector = ({
     { id: 1, name: "Murder Mystery 2", subtitle: "🔪", icon: "/game/murder.png", route: "/murderMystery" },
     { id: 2, name: "Grow A Garden", subtitle: "🌱", icon: "/game/garden.png", route: "/GrowAGarden" },
     { id: 3, name: "Steal A Brainrot", subtitle: "💎", icon: "/logo/steal.png", route: "/StealABrainrot" },
-    { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/logo/adopt.png", route: "/AdoptMe" },
+    { id: 4, name: "Adopt Me!", subtitle: "🐾", icon: "/game/adopt.png", route: "/AdoptMe" },
     { id: 5, name: "Blade Ball", subtitle: "⚔️", icon: "/logo/blade.png", route: "/BladeBall" },
     { id: 6, name: "Blox Fruits", subtitle: "🍍", icon: "/logo/blox.png", useIcon: true, route: "/BloxFruits" },
     { id: 7, name: "99 Nights In The Forest", subtitle: "🌲", icon: "/logo/99.png", route: "/NinetyNineNights" },
-    { id: 8, name: "Anime Vanguards", subtitle: "🔥", icon: "/logo/anime.png", route: "/AnimeVanguards" },
+  { id: 10, name: "Plant vs Brainrot", subtitle: "👗", icon: "/game/plant.png", route: "/DressToImpress" },
     { id: 9, name: "Dress To Impress", subtitle: "👗", icon: "/logo/impress.png", route: "/DressToImpress" },
+   
   ];
 
   const handleGameSelect = (game: Game) => {

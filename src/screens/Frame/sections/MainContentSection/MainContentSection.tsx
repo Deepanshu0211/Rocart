@@ -12,7 +12,7 @@ const socialMediaIcons = [
 const aboutUsLinks = [
   { name: "How we work", href: "#" },
   { name: "why us", href: "#" },
-  { name: "frequently Asked", href: "#" },
+  { name: "FAQ", href: "#" },
 ];
 
 const platformLinks = [

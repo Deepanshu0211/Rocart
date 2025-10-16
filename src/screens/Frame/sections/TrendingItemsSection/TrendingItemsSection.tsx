@@ -211,7 +211,8 @@ export const TrendingItemsSection = () => {
   };
 
   return (
-    <section className="relative w-full min-h-screen bg-[#06100A] py-[5vh] scrollbar-none">
+   <section className="relative w-full min-h-screen bg-[#06100A] pt-[2vh] pb-[5vh] scrollbar-none">
+
       <div
         className="
           absolute inset-0 
