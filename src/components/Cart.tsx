@@ -218,6 +218,36 @@ export const Cart = ({
 
   // Update quantity with instant local update
   const updateLocalQuantity = async (itemId: string, newQuantity: number) => {
+    // Fetch the BladeBall product ID dynamically from Supabase
+    const { data: productData, error: productError } = await supabase
+      .from("products")
+      .select("id")
+      .eq("game", "BladeBall")
+      .eq("is_available", true)
+      .single();
+
+    if (productError) {
+      console.error("Error fetching BladeBall product ID:", productError.message);
+      return;
+    }
+
+    const BLADEBALL_PRODUCT_ID = productData?.id;
+
+    // Find the item to check if it's a BladeBall item
+    const item = cart.find((cartItem) => cartItem.id === itemId);
+    if (!item) {
+      console.warn(`Cart item with id ${itemId} not found.`);
+      return;
+    }
+    const isBladeBallItem = item.id === BLADEBALL_PRODUCT_ID;
+
+    // For BladeBall items, adjust quantity by 2000 when decreasing
+    if (isBladeBallItem && newQuantity < item.quantity) {
+      newQuantity = item.quantity - 2000;
+    } else if (isBladeBallItem && newQuantity > item.quantity) {
+      newQuantity = item.quantity + 2000;
+    }
+
     if (newQuantity <= 0) {
       setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
       onRemoveItem(itemId);
@@ -236,6 +266,11 @@ export const Cart = ({
         localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
       }
     } else {
+      // Ensure BladeBall quantity is within bounds (2000 to 300000)
+      if (isBladeBallItem && (newQuantity < 2000 || newQuantity > 300000)) {
+        return; // Prevent invalid quantities
+      }
+
       setCart((prevCart) =>
         prevCart.map((item) =>
           item.id === itemId ? { ...item, quantity: newQuantity } : item
@@ -301,61 +336,50 @@ export const Cart = ({
     setCheckoutError(null);
 
     try {
-      // Prepare line items for Stripe
+      // Prepare line items for Stripe checkout session
       const lineItems = cart.map((item) => ({
-        name: item.title,
-        amount: Math.round(convertPrice(item.price, item.currency, "USD") * 100), // Stripe expects cents
-        currency: "usd",
+        price_data: {
+          currency: userCurrency.toLowerCase(),
+          product_data: {
+            name: item.title,
+            images: item.image ? [item.image] : undefined,
+          },
+          unit_amount: Math.round(convertPrice(item.price, item.currency, userCurrency) * 100),
+        },
         quantity: item.quantity,
       }));
 
-      // Call backend to create Stripe checkout session
-            const response = await fetch("http://localhost:5173/api/create-checkout-session", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                lineItems,
-                userId: user?.id || null,
-                successUrl: `${window.location.origin}/checkout/success`,
-                cancelUrl: `${window.location.origin}/cart`,
-              }),
-            });
-      
-            // support backends that return either { sessionId } or { url }
-            const { sessionId, url } = await response.json();
-            const stripe = await stripePromise;
-      
-            if (!stripe && !url) {
-              setCheckoutError("Failed to initialize Stripe.");
-              setIsProcessing(false);
-              return;
-            }
-      
-            // Redirect to Stripe Checkout using available method (cast to any to satisfy types)
-            if (stripe && typeof (stripe as any).redirectToCheckout === "function") {
-              const { error } = await (stripe as any).redirectToCheckout({ sessionId });
-              if (error) {
-                setCheckoutError((error as any).message || "Failed to redirect to Stripe Checkout.");
-                setIsProcessing(false);
-              }
-            } else if (stripe && (stripe as any).checkout && typeof (stripe as any).checkout.redirectToCheckout === "function") {
-              const { error } = await (stripe as any).checkout.redirectToCheckout({ sessionId });
-              if (error) {
-                setCheckoutError((error as any).message || "Failed to redirect to Stripe Checkout.");
-                setIsProcessing(false);
-              }
-            } else if (url) {
-              // Fallback to direct URL returned by backend
-              window.location.href = url;
-            } else {
-              setCheckoutError("Unable to redirect to Stripe Checkout.");
-              setIsProcessing(false);
-            }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      setCheckoutError("Network error. Please try again.");
+      const cancelUrl = document.referrer || window.location.origin;
+
+      // Call backend to create checkout session URL
+      const response = await fetch("http://localhost:3000/api/create-payment-intent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lineItems,
+          customerEmail: user?.email,
+          userId: user?.id,
+          successUrl: `${window.location.origin}/checkout/success`,
+          cancelUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorResp = await response.json();
+        throw new Error(errorResp.error || `Checkout failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.url) throw new Error("Missing checkout URL from response");
+
+      // Redirect to Stripe hosted checkout page by setting window.location.href
+      window.location.href = data.url;
+    } catch (error: any) {
+      setCheckoutError(error.message || "Error during checkout. Please try again.");
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -531,8 +555,7 @@ export const Cart = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
-                          const newQuantity = item.quantity - 1;
-                          updateLocalQuantity(item.id, newQuantity);
+                          updateLocalQuantity(item.id, item.quantity - 1);
                         }}
                         className="w-8 h-8 bg-[url('/icon/bg.png')] bg-cover bg-center rounded flex items-center justify-center"
                         disabled={item.quantity <= 0}
@@ -577,7 +600,7 @@ export const Cart = ({
                 </div>
               </div>
               <button
-                onClick={handleOpenCheckout}
+                onClick={handleCheckout}
                 disabled={isProcessing}
                 className="w-full h-[8vh] bg-[#00A241] hover:bg-[#259951] text-white font-bold py-3 rounded-[1vw] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >

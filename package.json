@@ -38,13 +38,15 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/node": "^24.5.2",
+    "@types/node": "^24.8.1",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
     "@vitejs/plugin-react": "4.3.4",
     "esbuild": "0.24.0",
     "globals": "15.12.0",
     "tailwindcss": "3.4.16",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
     "vite": "6.0.4"
   },
   "alias": {
