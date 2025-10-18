@@ -16,6 +16,7 @@
     "@stripe/stripe-js": "^8.0.0",
     "@supabase/stripe-sync-engine": "^0.45.0",
     "@supabase/supabase-js": "^2.75.0",
+    "@tailwindcss/vite": "^4.1.14",
     "class-variance-authority": "^0.7.0",
     "clsx": "2.1.1",
     "cors": "^2.8.5",
