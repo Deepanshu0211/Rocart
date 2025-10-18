@@ -7,7 +7,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: "https://rocart.vercel.app" }));
 app.use(express.json());
 
 app.post("/api/create-payment-intent", createPaymentIntentHandler);
