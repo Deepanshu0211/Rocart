@@ -10,8 +10,8 @@ const socialMediaIcons = [
 ];
 
 const aboutUsLinks = [
-  { name: "How we work", href: "#" },
-  { name: "why us", href: "#" },
+  { name: "How We Work", href: "#" },
+  { name: "Why Us", href: "#" },
   { name: "FAQ", href: "#" },
 ];
 

@@ -56,7 +56,7 @@ const AdminPanel = () => {
   });
 
   const selectedGame = useWatch({ control, name: "game" });
-  const { register: registerLogin, handleSubmit: handleSubmitLogin } = useForm<{ password: string }>();
+  const { register: registerLogin, handleSubmit: handleSubmitLogin } = useForm<{ email: string; password: string }>();
 
   // Auto-set BladeBall price when game changes
   useEffect(() => {
@@ -65,7 +65,7 @@ const AdminPanel = () => {
     }
   }, [selectedGame, setValue]);
 
-  // Fixed: Only select columns that exist in your table
+  // Fetch products when authenticated
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -89,7 +89,6 @@ const AdminPanel = () => {
         throw new Error(`Error fetching products: ${error.message}`);
       }
 
-      // Add BladeBall defaults for display
       const mappedProducts = (data || []).map((product: any) => ({
         ...product,
         tags: Array.isArray(product.tags) ? product.tags : (product.tags ? product.tags.split(',').map((t: string) => t.trim()) : []),
@@ -106,19 +105,51 @@ const AdminPanel = () => {
     setLoading(false);
   };
 
+  // Handle authentication state
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchProducts();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      if (session) fetchProducts();
+      else setLoading(false);
+    };
+    checkAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      if (session) fetchProducts();
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const onLoginSubmit = async (data: { email: string; password: string }) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) throw error;
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.");
     }
-  }, [isAuthenticated]);
+  };
 
   const uploadImage = async (file: File) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error("User is not authenticated. Please log in.");
+    }
     const filePath = `product-images/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage
       .from("product-images")
       .upload(filePath, file, { upsert: true });
 
     if (error) {
+      console.error("Upload error:", error);
       throw new Error(`Error uploading image: ${error.message}`);
     }
 
@@ -129,8 +160,12 @@ const AdminPanel = () => {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (!isAuthenticated) {
+      setError("Please log in to perform this action.");
+      return;
+    }
+
     setError(null);
-    
     let imageUrl = editingProduct?.image_url || "";
     if (data.image && data.image.length > 0) {
       try {
@@ -146,17 +181,16 @@ const AdminPanel = () => {
       .map((tag) => tag.trim())
       .filter(Boolean);
 
-    // FIXED: Auto-calculate final price for BladeBall - bypass form validation
     let finalPrice = parseFloat(data.price.toString());
     if (data.game === "BladeBall") {
-      finalPrice = 5; // Always $5 for BladeBall regardless of form value
+      finalPrice = 5;
     }
 
     const productData = {
       title: data.title,
       description: data.description || null,
       image_url: imageUrl,
-      price: finalPrice, // Use calculated final price
+      price: finalPrice,
       currency: "USD",
       tags: tagsArray,
       game: data.game,
@@ -231,7 +265,7 @@ const AdminPanel = () => {
     reset({
       title: product.title,
       description: product.description || "",
-      price: product.price, // Will show actual DB price, but BladeBall gets overridden on save
+      price: product.price,
       tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
       game: product.game,
       stock_quantity: product.stock_quantity || 0,
@@ -263,16 +297,6 @@ const AdminPanel = () => {
     reset();
   };
 
-  const onLoginSubmit = (data: { password: string }) => {
-    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
-    if (data.password === correctPassword) {
-      setIsAuthenticated(true);
-      setError(null);
-    } else {
-      setError("Incorrect password. Please try again.");
-    }
-  };
-
   const filteredProducts = activeTab === 'bladeball' 
     ? products.filter(p => p.game === 'BladeBall')
     : products;
@@ -285,6 +309,14 @@ const AdminPanel = () => {
         <div className="bg-[#1a2621] p-8 rounded-lg shadow-lg border border-[#3dff87]/20 w-full max-w-md">
           <h1 className="text-2xl font-bold text-center text-white mb-6">Admin Login</h1>
           <form onSubmit={handleSubmitLogin(onLoginSubmit)} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Email</label>
+              <input
+                type="email"
+                {...registerLogin("email", { required: "Email is required" })}
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:border-[#3dff87]"
+              />
+            </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Password</label>
               <input
@@ -529,7 +561,6 @@ const AdminPanel = () => {
           </form>
         )}
 
-        {/* Rest of the component remains the same - products grid, etc. */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <div key={product.id} className="p-4 bg-[#1a2621] rounded-lg border border-[#3dff87]/20 hover:shadow-xl transition relative">

@@ -2,12 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Header from "../screens/Frame/sections/HeaderSection/HeaderSection";
 import MainContentSection from "../screens/Frame/sections/MainContentSection/MainContentSection";
-import { Cart } from "../components/Cart";
 import { motion } from "framer-motion";
 import { FAQSection } from "../screens/Frame/sections/FAQSection/FAQSection";
 import Weblade from "../explain/weblade";
 import { TrustedBySection } from "../screens/Frame/sections/TrustedBySection/TrustedBySection";
-import { AuthenticationManager } from "../components/auth"; // Import AuthenticationManager
+import { AuthenticationManager } from "../components/auth";
+import { useNavigate } from "react-router-dom";
 
 // Initialize Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -102,15 +102,15 @@ async function fetchExchangeRates(baseCurrency = "USD") {
 }
 
 async function fetchProductFromSupabase(
-  gameName: string, 
-  setProduct: (product: Product | null) => void, 
-  setLoading: (loading: boolean) => void, 
+  gameName: string,
+  setProduct: (product: Product | null) => void,
+  setLoading: (loading: boolean) => void,
   setError: (error: string | null) => void
 ) {
   try {
     setLoading(true);
     setError(null);
-    
+
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -168,14 +168,13 @@ async function fetchProductFromSupabase(
 }
 
 export const BladeBall = () => {
-  // Initialize AuthenticationManager
   const auth = AuthenticationManager();
-  
+  const navigate = useNavigate();
+
   const [userCurrency, setUserCurrency] = useState<string>("USD");
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [detectedCountry, setDetectedCountry] = useState<string>("");
   const [selectedGame] = useState<{ name: string; icon: string }>(games[0]);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,109 +183,16 @@ export const BladeBall = () => {
   const [isSearchActive, setIsSearchActive] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(2000);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const GUEST_CART_KEY = "guest_cart";
-
-  // Load cart based on authentication status
-  useEffect(() => {
-    const loadCart = async () => {
-      if (auth.user) {
-        // Authenticated user: Load from Supabase
-        const { data, error } = await supabase
-          .from("cart_items")
-          .select("*")
-          .eq("user_id", auth.user.id)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Error loading cart:", error.message);
-          return;
-        }
-
-        if (data) {
-          setCart(data as CartItem[]);
-        }
-      } else {
-        // Unauthenticated user: Load from localStorage
-        const guestCart = localStorage.getItem(GUEST_CART_KEY);
-        if (guestCart) {
-          setCart(JSON.parse(guestCart));
-        } else {
-          setCart([]);
-        }
-      }
-    };
-
-    loadCart();
-  }, [auth.user]);
-
-  // Sync localStorage cart to Supabase on login
-  useEffect(() => {
-    const syncLocalCartToSupabase = async () => {
-      if (auth.user) {
-        const guestCart = localStorage.getItem(GUEST_CART_KEY);
-        if (guestCart) {
-          const localCart: CartItem[] = JSON.parse(guestCart);
-          if (localCart.length > 0) {
-            const { data: existingItems, error: fetchError } = await supabase
-              .from("cart_items")
-              .select("*")
-              .eq("user_id", auth.user.id);
-
-            if (fetchError) {
-              console.error("Error fetching existing cart:", fetchError.message);
-              return;
-            }
-
-            const existingIds = new Set(existingItems?.map((item) => item.id) || []);
-            const itemsToSync = localCart.filter((item) => !existingIds.has(item.id));
-
-            if (itemsToSync.length > 0) {
-              const { error: upsertError } = await supabase
-                .from("cart_items")
-                .upsert(
-                  itemsToSync.map((item) => ({
-                    id: item.id,
-                    user_id: auth.user.id,
-                    title: item.title,
-                    price: item.price,
-                    currency: item.currency,
-                    image: item.image,
-                    quantity: item.quantity,
-                  }))
-                );
-
-              if (upsertError) {
-                console.error("Error syncing local cart to Supabase:", upsertError.message);
-              } else {
-                setCart((prevCart) => {
-                  const mergedCart = [...prevCart];
-                  itemsToSync.forEach((item) => {
-                    if (!mergedCart.some((cartItem) => cartItem.id === item.id)) {
-                      mergedCart.push({ ...item, user_id: auth.user.id });
-                    }
-                  });
-                  return mergedCart;
-                });
-                localStorage.removeItem(GUEST_CART_KEY);
-              }
-            }
-          }
-        }
-      }
-    };
-
-    syncLocalCartToSupabase();
-  }, [auth.user]);
 
   useEffect(() => {
     const checkStoredCurrency = () => {
       const storedCountry = sessionStorage.getItem('userCountry');
       const storedCurrency = sessionStorage.getItem('userCurrency');
-      
+
       if (storedCountry && storedCurrency) {
         setDetectedCountry(storedCountry);
         setUserCurrency(storedCurrency);
@@ -314,15 +220,15 @@ export const BladeBall = () => {
           if (response.ok) {
             const data = await response.json();
             const countryCode = (api.parser(data) || "").toUpperCase();
-            
+
             if (countryCode && (currencyMap as Record<string, string>)[countryCode]) {
               setDetectedCountry(countryCode);
               const detectedCurrency = (currencyMap as Record<string, string>)[countryCode];
               setUserCurrency(detectedCurrency);
-              
+
               sessionStorage.setItem('userCountry', countryCode);
               sessionStorage.setItem('userCurrency', detectedCurrency);
-              
+
               console.log(`✓ Detected country: ${countryCode}, Currency: ${detectedCurrency}`);
               return;
             }
@@ -332,7 +238,7 @@ export const BladeBall = () => {
           continue;
         }
       }
-      
+
       console.warn("All geolocation APIs failed, defaulting to USD");
       setUserCurrency("USD");
       setDetectedCountry("US");
@@ -438,147 +344,85 @@ export const BladeBall = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!product) return;
-    
-    const variant = product.node.variants.edges[0].node;
-    const newItem: CartItem = {
-      id: variant.id,
-      title: product.node.title,
-      price: parseFloat(variant.price.amount),
-      currency: variant.price.currencyCode,
-      image: product.node.images.edges[0]?.node.url,
-      quantity: quantity,
-      user_id: auth.user?.id,
-    };
-
-    const existingItem = cart.find((item) => item.id === variant.id);
-
-    if (auth.user) {
-      // Authenticated user: Update Supabase
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + quantity;
-        setCart(cart.map((item) =>
-          item.id === variant.id ? { ...item, quantity: newQuantity } : item
-        ));
-
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity: newQuantity })
-          .eq("id", variant.id)
-          .eq("user_id", auth.user.id);
-
-        if (error) {
-          console.error("Error updating quantity in Supabase:", error.message);
-          return;
-        }
-      } else {
-        setCart([...cart, newItem]);
-
-        const { error } = await supabase
-          .from("cart_items")
-          .upsert({
-            id: newItem.id,
-            user_id: auth.user.id,
-            title: newItem.title,
-            price: newItem.price,
-            currency: newItem.currency,
-            image: newItem.image,
-            quantity: newItem.quantity,
-          });
-
-        if (error) {
-          console.error("Error adding item to Supabase:", error.message);
-          return;
-        }
-      }
-    } else {
-      // Unauthenticated user: Update localStorage
-      if (existingItem) {
-        const updatedCart = cart.map((item) =>
-          item.id === variant.id 
-            ? { ...item, quantity: item.quantity + quantity } 
-            : item
-        );
-        setCart(updatedCart);
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-      } else {
-        setCart([...cart, newItem]);
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify([...cart, newItem]));
-      }
+    if (!product || quantity < 2000 || quantity > 300000) {
+      setShowMinQuantityWarning(true);
+      setTimeout(() => setShowMinQuantityWarning(false), 3000);
+      return;
     }
-    
-    console.log(`✓ Added to cart: ${product.node.title} (Quantity: ${quantity})`);
-  };
 
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCart(cart.filter((item) => item.id !== itemId));
-      if (auth.user) {
-        const { error } = await supabase
-          .from("cart_items")
-          .delete()
-          .eq("id", itemId)
-          .eq("user_id", auth.user.id);
+    setIsProcessing(true);
+    setError(null);
 
-        if (error) {
-          console.error("Error removing item from Supabase:", error.message);
-        }
-      } else {
-        const updatedCart = cart.filter((item) => item.id !== itemId);
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+    try {
+      const variant = product.node.variants.edges[0].node;
+      const checkoutItem = {
+        id: variant.id,
+        title: product.node.title,
+        price: parseFloat(variant.price.amount),
+        currency: variant.price.currencyCode,
+        image: product.node.images.edges[0]?.node.url,
+        quantity: quantity,
+        user_id: auth.user?.id,
+      };
+
+      const lineItems = [{
+        price_data: {
+          currency: userCurrency.toLowerCase(),
+          product_data: {
+            name: checkoutItem.title,
+            images: checkoutItem.image ? [checkoutItem.image] : undefined,
+          },
+          unit_amount: Math.round(
+            convertPrice(checkoutItem.price, checkoutItem.currency, userCurrency, exchangeRates) * 100
+          ),
+        },
+        quantity: checkoutItem.quantity,
+      }];
+
+      const cancelUrl = document.referrer || window.location.origin;
+
+      const response = await fetch("http://localhost:3000/api/create-payment-intent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lineItems,
+          customerEmail: auth.user?.email,
+          userId: auth.user?.id,
+          successUrl: `${window.location.origin}/checkout/success`,
+          cancelUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorResp = await response.json();
+        throw new Error(errorResp.error || `Checkout failed with status ${response.status}`);
       }
-    } else {
-      setCart(cart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
 
-      if (auth.user) {
-        const { error } = await supabase
-          .from("cart_items")
-          .update({ quantity: newQuantity })
-          .eq("id", itemId)
-          .eq("user_id", auth.user.id);
+      const data = await response.json();
 
-        if (error) {
-          console.error("Error updating quantity in Supabase:", error.message);
-        }
-      } else {
-        const updatedCart = cart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        );
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
-      }
-    }
-  };
+      if (!data.url) throw new Error("Missing checkout URL from response");
 
-  const removeFromCart = async (itemId: string) => {
-    setCart(cart.filter((item) => item.id !== itemId));
-    if (auth.user) {
-      const { error } = await supabase
-        .from("cart_items")
-        .delete()
-        .eq("id", itemId)
-        .eq("user_id", auth.user.id);
-
-      if (error) {
-        console.error("Error removing item from Supabase:", error.message);
-      }
-    } else {
-      const updatedCart = cart.filter((item) => item.id !== itemId);
-      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(updatedCart));
+      window.location.href = data.url;
+    } catch (error: any) {
+      setError(error.message || "Error during checkout. Please try again.");
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     if (value === "") {
       setQuantity(0);
       setShowMinQuantityWarning(false);
     } else {
       const numValue = parseInt(value) || 0;
       setQuantity(numValue);
-      
+
       if (numValue < 2000 || numValue > 300000) {
         setShowMinQuantityWarning(true);
         setTimeout(() => setShowMinQuantityWarning(false), 3000);
@@ -653,7 +497,7 @@ export const BladeBall = () => {
               </h1>
             </div>
 
-            <button  className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
+            <button className="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40 flex-shrink-0">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
@@ -672,8 +516,7 @@ export const BladeBall = () => {
 
           {error && (
             <div className="text-center py-20">
-              <div className="text-red-500 text-xl mb-4">⚠️ Error loading product</div>
-              <p className="text-gray-400">{error}</p>
+              <div className="text-red-500 text-xl mb-4">⚠️ {error}</div>
               <button
                 onClick={() => window.location.reload()}
                 className="mt-4 px-4 py-2 bg-[#3dff87] text-black rounded-lg font-semibold hover:bg-[#2dd66e]"
@@ -747,18 +590,19 @@ export const BladeBall = () => {
                       value={quantity}
                       onChange={handleQuantityChange}
                       className={`w-36 py-2 px-4 bg-[#1a2621] text-white border rounded-2xl focus:outline-none transition-all ${
-                        showMinQuantityWarning 
-                          ? 'border-red-500 focus:border-red-500 bg-red-500/10' 
+                        showMinQuantityWarning
+                          ? 'border-red-500 focus:border-red-500 bg-red-500/10'
                           : 'border-[#276838] focus:border-[#3dff87]'
                       }`}
+                      disabled={isProcessing}
                     />
-                    
+
                     {showMinQuantityWarning && quantity < 2000 && (
                       <span className="text-red-400 text-sm font-semibold animate-pulse">
                         Minimum quantity is 2000
                       </span>
                     )}
-                    
+
                     {showMinQuantityWarning && quantity > 300000 && (
                       <span className="text-red-400 text-sm font-semibold animate-pulse">
                         Maximum quantity is 300000
@@ -773,10 +617,11 @@ export const BladeBall = () => {
                   <div className="flex items-center justify-center sm:justify-start gap-4">
                     <button
                       onClick={handleAddToCart}
-                      className="flex items-center justify-center gap-2 w-4/5 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors"
+                      className="flex items-center justify-center gap-2 w-4/5 px-6 py-3 bg-[#00a241] text-white rounded-2xl font-semibold hover:bg-[#2dd66e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isProcessing}
                     >
                       <img src="/icon/car2.png" alt="cart" className="w-6 h-6" />
-                      <span>Add to Cart</span>
+                      <span>{isProcessing ? "Processing..." : "Checkout Now"}</span>
                     </button>
 
                     <p className="text-md font-medium text-white flex items-center gap-1">
@@ -792,14 +637,6 @@ export const BladeBall = () => {
         <FAQSection />
         <Weblade />
         <MainContentSection />
-        <Cart
-          cart={cart}
-          userCurrency={userCurrency}
-          exchangeRates={exchangeRates}
-          onUpdateQuantity={updateQuantity}
-          onRemoveItem={removeFromCart}
-          user={auth.user}
-        />
       </div>
     );
   };

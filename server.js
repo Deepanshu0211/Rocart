@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import createPaymentIntentHandler from "./create-payment-intent.js";
+import createPaymentIntentHandler from "./src/Pages/api/create-payment-intent.js";
 import dotenv from "dotenv";
 
 dotenv.config();
