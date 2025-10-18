@@ -352,7 +352,7 @@ export const Cart = ({
       const cancelUrl = document.referrer || window.location.origin;
 
       // Call backend to create checkout session URL
-      const response = await fetch("http://localhost:3000/api/create-payment-intent", {
+      const response = await fetch("https://rocart.onrender.com/api/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
