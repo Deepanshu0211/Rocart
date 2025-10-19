@@ -1,13 +1,15 @@
+// In create-checkout-session.js
 import Stripe from "stripe";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
+  apiVersion: '2024-09-30.acacia',
 });
 
-export default async function createPaymentIntentHandler(req, res) {
+
+export default async function createCheckoutSessionHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_BASE_URL || "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -28,14 +30,35 @@ export default async function createPaymentIntentHandler(req, res) {
       return res.status(400).json({ error: "Line items are required" });
     }
 
+    // Calculate total to apply discount
+    const totalAmount = lineItems.reduce((sum, item) => {
+      return sum + (item.price_data.unit_amount * item.quantity) / 100;
+    }, 0);
+    const discountAmount = totalAmount > 10 ? totalAmount * 0.1 : 0;
+
+    // Apply discount to line items
+    const adjustedLineItems = discountAmount > 0
+      ? [
+          ...lineItems,
+          {
+            price_data: {
+              currency: lineItems[0].price_data.currency,
+              product_data: { name: "Discount" },
+              unit_amount: Math.round(-discountAmount * 100), // Negative amount for discount
+            },
+            quantity: 1,
+          },
+        ]
+      : lineItems;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: customerEmail || undefined,
-      line_items: lineItems,
+      line_items: adjustedLineItems,
       success_url:
         successUrl || `${process.env.NEXT_PUBLIC_BASE_URL}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_BASE_URL}`, // Dynamic cancel redirect to home or referrer
+      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_BASE_URL}`,
       metadata: {
         userId: userId || "guest",
         timestamp: new Date().toISOString(),

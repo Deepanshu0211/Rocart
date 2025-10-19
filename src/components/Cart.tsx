@@ -336,6 +336,15 @@ export const Cart = ({
     setCheckoutError(null);
 
     try {
+      // Calculate totals
+      const subtotal = cart.reduce((total, item) => {
+        const convertedPrice = convertPrice(item.price, item.currency, userCurrency);
+        return total + convertedPrice * item.quantity;
+      }, 0);
+
+      const discount = subtotal > 10 ? subtotal * 0.1 : 0;
+      const total = subtotal - discount;
+
       // Prepare line items for Stripe checkout session
       const lineItems = cart.map((item) => ({
         price_data: {
@@ -352,15 +361,17 @@ export const Cart = ({
       const cancelUrl = document.referrer || window.location.origin;
 
       // Call backend to create checkout session URL
-      const response = await fetch("https://rocart.onrender.com/api/create-payment-intent", {
+      const response = await fetch("http://localhost:3000/api/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          amount: Math.round(total * 100), // Total amount in cents
+          currency: userCurrency.toLowerCase(),
           lineItems,
-          customerEmail: user?.email,
-          userId: user?.id,
+          customerEmail: user?.email || "guest@example.com",
+          userId: user?.id || "guest",
           successUrl: `${window.location.origin}/checkout/success`,
           cancelUrl,
         }),
@@ -375,13 +386,17 @@ export const Cart = ({
 
       if (!data.url) throw new Error("Missing checkout URL from response");
 
-      // Redirect to Stripe hosted checkout page by setting window.location.href
+      // Redirect to Stripe hosted checkout page
       window.location.href = data.url;
     } catch (error: any) {
+      console.error("Checkout error:", error);
       setCheckoutError(error.message || "Error during checkout. Please try again.");
     } finally {
       setIsProcessing(false);
     }
+
+    // Navigate to the checkout page
+       navigate("/checkout");
   };
 
   const handleOpenCart = () => {
