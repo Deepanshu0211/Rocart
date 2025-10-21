@@ -52,12 +52,14 @@ const CheckoutForm = ({
   cart, 
   userCurrency, 
   clientSecret,
-  user 
+  user,
+  guestEmail
 }: { 
   cart: CartItem[]; 
   userCurrency: string; 
   clientSecret: string;
   user: any;
+  guestEmail: string;
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -104,7 +106,8 @@ const CheckoutForm = ({
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `https://rocart.vercel.app/checkout-success`, // Update for production
+          return_url: `https://rocart.vercel.app/checkout-success`,
+          receipt_email: user?.email || guestEmail,
         },
         redirect: "if_required",
       });
@@ -121,6 +124,7 @@ const CheckoutForm = ({
         }
         localStorage.removeItem("checkout_cart");
         localStorage.removeItem("checkout_currency");
+        localStorage.removeItem("checkout_guest_email");
         navigate("/checkout-success");
       } else {
         setError("Payment status is unknown. Please check your email for confirmation.");
@@ -166,11 +170,13 @@ const Checkout = () => {
   const [userCurrency, setUserCurrency] = useState("USD");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  const hasCreatedPaymentIntent = useRef(false); // Prevent duplicate API calls
+  const hasCreatedPaymentIntent = useRef(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -179,7 +185,6 @@ const Checkout = () => {
     };
     getUser();
 
-    // Detailed logging for debugging
     console.log("=== STRIPE KEY DEBUG ===");
     const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
     console.log("Key exists:", !!key);
@@ -191,6 +196,7 @@ const Checkout = () => {
   useEffect(() => {
     const storedCart = localStorage.getItem("checkout_cart");
     const storedCurrency = localStorage.getItem("checkout_currency");
+    const storedEmail = localStorage.getItem("checkout_guest_email");
 
     if (!storedCart) {
       navigate("/");
@@ -209,15 +215,22 @@ const Checkout = () => {
     }
 
     if (storedCurrency) setUserCurrency(storedCurrency);
+    if (storedEmail) setGuestEmail(storedEmail);
   }, [navigate]);
 
   useEffect(() => {
     if (cart.length === 0 || hasCreatedPaymentIntent.current) return;
 
+    // If user is not logged in and no email is provided, don't create payment intent yet
+    if (!user && !guestEmail) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchClientSecret = async () => {
       setIsLoading(true);
       setError(null);
-      hasCreatedPaymentIntent.current = true; // Mark as started
+      hasCreatedPaymentIntent.current = true;
 
       try {
         const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -236,17 +249,19 @@ const Checkout = () => {
           quantity: item.quantity,
         }));
 
+        const customerEmail = user?.email || guestEmail;
+
         const requestBody = {
           amount: Math.round(discountedTotal * 100),
           currency: userCurrency.toLowerCase(),
           lineItems,
-          customerEmail: user?.email || "guest@example.com",
+          customerEmail,
           userId: user?.id || "guest",
         };
 
         console.log("Creating payment intent (once):", { amount: discountedTotal, currency: userCurrency });
 
-        const response = await fetch("http://localhost:3000/api/create-payment-intent", { // Update to production server URL
+        const response = await fetch("http://localhost:3000/api/create-payment-intent", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",
@@ -280,14 +295,35 @@ const Checkout = () => {
       } catch (error: any) {
         console.error("Error fetching client secret:", error);
         setError(error.message || "Failed to initialize payment. Please try again.");
-        hasCreatedPaymentIntent.current = false; // Allow retry
+        hasCreatedPaymentIntent.current = false;
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchClientSecret();
-  }, [cart, userCurrency, user]); // Only run when these dependencies change
+  }, [cart, userCurrency, user, guestEmail]);
+
+  const handleEmailSubmit = () => {
+    setEmailError(null);
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!guestEmail) {
+      setEmailError("Email is required");
+      return;
+    }
+    if (!emailRegex.test(guestEmail)) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+
+    // Store email in localStorage
+    localStorage.setItem("checkout_guest_email", guestEmail);
+    
+    // Trigger payment intent creation by resetting the flag
+    hasCreatedPaymentIntent.current = false;
+  };
 
   const getCartTotal = (): number =>
     cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -307,7 +343,6 @@ const Checkout = () => {
     );
   }
 
-  // Check if Stripe key is configured
   if (!stripePublishableKey || !stripePublishableKey.startsWith('pk_')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center px-4">
@@ -348,18 +383,69 @@ const Checkout = () => {
   return (
     <div className="checkout min-h-screen bg-[#06100A] py-12 px-4">
       <div className="max-w-6xl mx-auto">
-     <img
-        src="/checkout/top.png"
-        alt=""
-        className="absolute top-0 left-0 w-full object-cover z-10"
-      />
+        <img
+          src="/checkout/top.png"
+          alt=""
+          className="absolute top-0 left-0 w-full object-cover z-10"
+        />
 
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 relative z-20">
           {/* Payment Form Section */}
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
-            <h2 className="text-2xl font-bold mb-6 text-white">Payment Details</h2>
+            {/* <h2 className="text-2xl font-bold mb-6 text-white">Payment Details</h2> */}
             
+            {/* Guest Email Input - Only show if user is not logged in */}
+            {!user && !clientSecret && (
+              <div className="mb-6 bg-white/5 p-4 rounded-lg border border-white/20">
+                <label htmlFor="guestEmail" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address *
+                </label>
+                <p className="text-xs text-gray-400 mb-3">
+                  We'll send your receipt to this email
+                </p>
+                <input
+                  id="guestEmail"
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => {
+                    setGuestEmail(e.target.value);
+                    setEmailError(null);
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleEmailSubmit();
+                    }
+                  }}
+                  className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent mb-2"
+                  placeholder="your.email@example.com"
+                  required
+                />
+                {emailError && (
+                  <p className="text-red-400 text-xs mb-2">{emailError}</p>
+                )}
+                <button
+                  onClick={handleEmailSubmit}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 rounded-lg transition font-semibold"
+                >
+                  Continue to Payment
+                </button>
+              </div>
+            )}
+
+            {/* Show user email if logged in */}
+            {user && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <p className="text-green-300 text-sm flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                  Receipt will be sent to: <span className="font-semibold">{user.email}</span>
+                </p>
+              </div>
+            )}
+
             {error && (
               <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
                 <p className="text-red-300 text-sm">{error}</p>
@@ -389,7 +475,7 @@ const Checkout = () => {
               </div>
             ) : clientSecret ? (
               <Elements
-                key={clientSecret} // Force remount when clientSecret changes
+                key={clientSecret}
                 stripe={stripePromise}
                 options={{
                   clientSecret,
@@ -411,33 +497,26 @@ const Checkout = () => {
                   userCurrency={userCurrency} 
                   clientSecret={clientSecret}
                   user={user}
+                  guestEmail={guestEmail}
                 />
               </Elements>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                <p className="text-red-400">Failed to load payment form</p>
-                <button
-                  onClick={() => {
-                    hasCreatedPaymentIntent.current = false;
-                    window.location.reload();
-                  }}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
-                >
-                  Retry
-                </button>
-              </div>
+              !user && !guestEmail && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <p className="text-gray-400">Please enter your email to continue</p>
+                </div>
+              )
             )}
           </div>
 
           {/* Order Summary Section */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
-            {/* <h2 className="text-2xl font-bold mb-6 text-white">Order Summary</h2> */}
-            
+         <div className="bg-[#030804] p-6 shadow-xl border-l-4 border-[#3DFF88] w-full">
+          
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
               {cart.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-4 bg-white/5 p-4 rounded-lg"
+                  className="flex items-center gap-4  p-4 rounded-lg"
                 >
                   <div className="relative w-16 h-15 bg-[url('/checkout/cartbg.png')] bg-contain bg-[position:0%_center]">
                     <img
@@ -445,36 +524,31 @@ const Checkout = () => {
                       alt={item.title}
                       className="absolute inset-0 w-10 h-10 m-auto object-cover z-10"
                     />
-
-                    {/* Quantity Badge */}
-                    <span className="absolute -top-1 -right-1 bg-[url('/checkout/qnty.png')] bg-contain text-white text-[10px] font-semibold px-2 py-[2px] ">
+                    <span className="absolute -top-1 -right-1 bg-[url('/checkout/qnty.png')] bg-contain text-white text-[10px] font-semibold px-2 py-[2px]">
                       {item.quantity}
                     </span>
                   </div>
 
                   <div className="flex-1">
                     <h4 className="text-white font-bold text-xl">{item.title}</h4>
-                    {/* <p className="text-gray-400 text-sm">Qty: {item.quantity}</p> */}
                   </div>
 
-                  <p className="text-green-400 font-semibold">
-                    {currencySymbols[userCurrency] || "$"}
-                    {(item.price * item.quantity).toFixed(2)}
-                  </p>
+               <div className="flex items-center gap-1.5 text-right">
+                <span className="text-[#3DFF88] font-medium">
+                  {currencySymbols[userCurrency] || "$"}
+                </span>
+                <span className="text-white font-bold text-lg">
+                  {(item.price * item.quantity).toFixed(2)}
+                </span>
+              </div>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-white/20 pt-4 space-y-3">
-              <div className="flex justify-between text-gray-300">
-                <span>Subtotal:</span>
-                <span>
-                  {currencySymbols[userCurrency] || "$"}
-                  {getCartTotal().toFixed(2)}
-                </span>
-              </div>
+            <div className=" pt-4 space-y-3">
+
               
-              {getDiscountAmount() > 0 && (
+              {/* {getDiscountAmount() > 0 && (
                 <div className="flex justify-between text-green-400">
                   <span>Discount (10%):</span>
                   <span>
@@ -482,15 +556,15 @@ const Checkout = () => {
                     {getDiscountAmount().toFixed(2)}
                   </span>
                 </div>
-              )}
+              )} */}
               
-              <div className="flex justify-between font-bold text-white text-lg pt-2 border-t border-white/20">
+              {/* <div className="flex justify-between font-bold text-white text-lg pt-2 border-t border-white/20">
                 <span>Total:</span>
                 <span>
                   {currencySymbols[userCurrency] || "$"}
                   {getDiscountedTotal().toFixed(2)}
                 </span>
-              </div>
+              </div> */}
 
               {/* Referral Code Input */}
               <div className="mt-4">
@@ -506,6 +580,26 @@ const Checkout = () => {
                   placeholder="Enter referral code"
                 />
               </div>
+
+                   <div className="flex font-bold justify-between text-gray-300">
+                    <span>Total:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-400 text-sm ml-1">
+                        {userCurrency?.toUpperCase() || "USD"}
+                      </span>
+
+                      <span className="text-[#3DFF88] font-medium">
+                        {currencySymbols[userCurrency] || "$"}
+                      </span>
+                      <span className="text-white font-bold text-lg">
+                        {getCartTotal().toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+             <div className="flex font-bold justify-between text-gray-300">
+                <img src="/checkout/stuff.png" alt="Discount" className="object-contain" />
+              </div>
+
             </div>
           </div>
         </div>
