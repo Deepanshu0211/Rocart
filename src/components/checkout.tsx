@@ -392,7 +392,6 @@ const Checkout = () => {
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 relative z-20">
           {/* Payment Form Section */}
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
-            {/* <h2 className="text-2xl font-bold mb-6 text-white">Payment Details</h2> */}
             
             {/* Guest Email Input - Only show if user is not logged in */}
             {!user && !clientSecret && (
@@ -513,59 +512,45 @@ const Checkout = () => {
          <div className="bg-[#030804] p-6 shadow-xl border-l-4 border-[#3DFF88] w-full">
           
             <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-4  p-4 rounded-lg"
-                >
-                  <div className="relative w-16 h-15 bg-[url('/checkout/cartbg.png')] bg-contain bg-[position:0%_center]">
-                    <img
-                      src={item.image || '/placeholder.png'}
-                      alt={item.title}
-                      className="absolute inset-0 w-10 h-10 m-auto object-cover z-10"
-                    />
-                    <span className="absolute -top-1 -right-1 bg-[url('/checkout/qnty.png')] bg-contain text-white text-[10px] font-semibold px-2 py-[2px]">
-                      {item.quantity}
-                    </span>
-                  </div>
+              {cart.length > 0 ? (
+                cart.map((item, index) => (
+                  <div
+                    key={`${item.id}-${index}`}
+                    className="flex items-center gap-4 p-4 rounded-lg"
+                  >
+                    <div className="relative w-16 h-15 bg-[url('/checkout/cartbg.png')] bg-contain bg-[position:0%_center]">
+                      <img
+                        src={item.image || '/placeholder.png'}
+                        alt={item.title}
+                        className="absolute inset-0 w-10 h-10 m-auto object-cover z-10"
+                      />
+                      <span className="absolute -top-1 -right-1 bg-[url('/checkout/qnty.png')] bg-contain text-white text-[10px] font-semibold px-2 py-[2px]">
+                        {item.quantity}
+                      </span>
+                    </div>
 
-                  <div className="flex-1">
-                    <h4 className="text-white font-bold text-xl">{item.title}</h4>
-                  </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-bold text-xl">{item.title}</h4>
+                    </div>
 
-               <div className="flex items-center gap-1.5 text-right">
-                <span className="text-[#3DFF88] font-medium">
-                  {currencySymbols[userCurrency] || "$"}
-                </span>
-                <span className="text-white font-bold text-lg">
-                  {(item.price * item.quantity).toFixed(2)}
-                </span>
-              </div>
+                    <div className="flex items-center gap-1.5 text-right">
+                      <span className="text-[#3DFF88] font-medium">
+                        {currencySymbols[userCurrency] || "$"}
+                      </span>
+                      <span className="text-white font-bold text-lg">
+                        {(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  No items in cart
                 </div>
-              ))}
+              )}
             </div>
 
-            <div className=" pt-4 space-y-3">
-
-              
-              {/* {getDiscountAmount() > 0 && (
-                <div className="flex justify-between text-green-400">
-                  <span>Discount (10%):</span>
-                  <span>
-                    -{currencySymbols[userCurrency] || "$"}
-                    {getDiscountAmount().toFixed(2)}
-                  </span>
-                </div>
-              )} */}
-              
-              {/* <div className="flex justify-between font-bold text-white text-lg pt-2 border-t border-white/20">
-                <span>Total:</span>
-                <span>
-                  {currencySymbols[userCurrency] || "$"}
-                  {getDiscountedTotal().toFixed(2)}
-                </span>
-              </div> */}
-
+            <div className="pt-4 space-y-3">
               {/* Referral Code Input */}
               <div className="mt-4">
                 <label htmlFor="referralCode" className="block text-sm font-medium text-gray-300 mb-2">
@@ -581,25 +566,25 @@ const Checkout = () => {
                 />
               </div>
 
-                   <div className="flex font-bold justify-between text-gray-300">
-                    <span>Total:</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-gray-400 text-sm ml-1">
-                        {userCurrency?.toUpperCase() || "USD"}
-                      </span>
+              <div className="flex font-bold justify-between text-gray-300">
+                <span>Total:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-400 text-sm ml-1">
+                    {userCurrency?.toUpperCase() || "USD"}
+                  </span>
 
-                      <span className="text-[#3DFF88] font-medium">
-                        {currencySymbols[userCurrency] || "$"}
-                      </span>
-                      <span className="text-white font-bold text-lg">
-                        {getCartTotal().toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-             <div className="flex font-bold justify-between text-gray-300">
+                  <span className="text-[#3DFF88] font-medium">
+                    {currencySymbols[userCurrency] || "$"}
+                  </span>
+                  <span className="text-white font-bold text-lg">
+                    {getCartTotal().toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex font-bold justify-between text-gray-300">
                 <img src="/checkout/stuff.png" alt="Discount" className="object-contain" />
               </div>
-
             </div>
           </div>
         </div>
